@@ -17,13 +17,18 @@ struct Token{
        TokenKind kind;//type of token
        Token *next;//next input token
        int val;//token value if TK_NUM
-       char *str;//token string
+       char *str;//token position
 };
 
 Token *token;//current token
 
-void error(char *fmt,...){
+char *user_input;
+void error_at(char *loc,char *fmt,...){
        va_list ap;
+       fprintf(stderr,"%s\n",user_input);
+       int pos=loc-user_input;
+       fprintf(stderr,"%*s",pos," ");//output white space
+       fprintf(stderr,"^ ");//output white space
        va_start(ap,fmt);
        vfprintf(stderr,fmt,ap);
        fprintf(stderr,"\n");
@@ -37,12 +42,13 @@ bool consume(char op){//if next == op, advance & return true;
 }
 void expect(char op){//if next == op, advance
        if(!token || token->kind!=TK_RESERVED)
-               error("token is not '%c'",op);
+               error_at(token->str,"token is not '%c'",op);
        token=token->next;
 }
 int expect_num(){//
-       if(!token || token->kind!=TK_NUM)
-               error("token is not number");
+       if(!token || token->kind!=TK_NUM){
+               error_at(token->str,"token is not number");
+       }
        int ans=token->val;
        token=token->next;
        return ans;
@@ -74,7 +80,7 @@ Token *tokenize(char *p){
                        continue;
                }
                //printf("eee");
-               error("can not tokenize");
+               error_at(p,"can not tokenize");
        }
        cur = new_token(TK_EOF,cur,p);
        return head.next;
@@ -90,6 +96,7 @@ int main(int argc,char **argv){
     printf("main:\n");
 
     char *p=argv[1];
+    user_input=argv[1];
     token=tokenize(p);
     printf("  mov rax, %d\n",expect_num());
     while(!at_eof()){
