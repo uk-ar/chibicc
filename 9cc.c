@@ -18,6 +18,7 @@ struct Token{
        Token *next;//next input token
        int val;//token value if TK_NUM
        char *str;//token position
+       int len;//token length
 };
 
 Token *token;//current token
@@ -34,15 +35,20 @@ void error_at(char *loc,char *fmt,...){
        fprintf(stderr,"\n");
        exit(1);
 }
-bool consume(char op){//if next == op, advance & return true;
-       if(!token || token->kind!=TK_RESERVED || token->str[0]!=op)
+bool consume(char *op){//if next == op, advance & return true;
+       if(!token || token->kind!=TK_RESERVED)
+               return false;
+       //printf("%s:%s:%d\n",op,token->str,token->len);
+       if(strncmp(op,token->str,token->len)!=0)
                return false;
        token=token->next;
        return true;
 }
-void expect(char op){//if next == op, advance
+void expect(char *op){//if next == op, advance
        if(!token || token->kind!=TK_RESERVED)
-               error_at(token->str,"token is not '%c'",op);
+               error_at(token->str,"token is not '%s'",op);
+       if(strncmp(op,token->str,token->len)!=0)
+               error_at(token->str,"token is not '%s'",op);
        token=token->next;
 }
 int expect_num(){//
@@ -53,10 +59,11 @@ int expect_num(){//
        token=token->next;
        return ans;
 }
-Token *new_token(TokenKind kind,Token *cur,char *str){
+Token *new_token(TokenKind kind,Token *cur,char *str,int len){
        Token*tok=calloc(1,sizeof(Token));
        tok->kind=kind;
        tok->str=str;//token->next=NULL;
+       tok->len=len;
        cur->next=tok;
        return tok;
 }
@@ -70,19 +77,28 @@ Token *tokenize(char *p){
                        p++;
                        continue;
                }
-               if(*p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')'){
-                       cur = new_token(TK_RESERVED,cur,p++);
+               if(!strncmp(p,"<=",2) || !strncmp(p,">=",2) ||
+                  !strncmp(p,"==",2) || !strncmp(p,"!=",2)){
+                       cur = new_token(TK_RESERVED,cur,p,2);
+                       p+=2;
+                       continue;
+               }
+               if(*p=='<' || *p=='>' || *p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')'){
+                       cur = new_token(TK_RESERVED,cur,p++,1);
                        continue;
                }
                if(isdigit(*p)){
-                       cur = new_token(TK_NUM,cur,p);
+                       char *pre=p;
+                       cur = new_token(TK_NUM,cur,p,0);
                        cur->val=strtol(p,&p,10);
+                       cur->len=p-pre;
+                       //printf("%d",p-pre);
                        continue;
                }
                //printf("eee");
                error_at(p,"can not tokenize");
        }
-       cur = new_token(TK_EOF,cur,p);
+       cur = new_token(TK_EOF,cur,p,0);
        return head.next;
 }
 
@@ -116,24 +132,27 @@ Node *new_node_num(int val){
        ans->val=val;
        return ans;
 }
-/* expr    = mul ("+" mul | "-" mul)* */
+/* expr       = equality */
+/* equality   = relational ("==" relational | "!=" relational)* */
+/* relational = add ("<" add | "<=" add | ">" add | ">=" add)* */
+/* add        = mul ("+" mul | "-" mul)* */
 /* mul     = unary ("*" unary | "/" unary)* */
 /* unary   = ( "-" | "+" )? primary */
 /* primary = num | "(" expr ")" */
 Node *expr();
 Node *primary(){
-       if(consume('(')){
+       if(consume("(")){
                Node*ans = expr();
-               expect(')');//important
+               expect(")");//important
                return ans;
        }
        return  new_node_num(expect_num());
 }
 Node *unary(){
-       if(consume('+')){
+       if(consume("+")){
                return primary();
        }
-       if(consume('-')){
+       if(consume("-")){
                //important
                return new_node(ND_SUB,new_node_num(0),primary());//0-primary()
        }
@@ -142,30 +161,52 @@ Node *unary(){
 Node *mul(){
        Node *node=unary();
        for(;;){
-               if(consume('*')){
+               if(consume("*")){
                        node=new_node(ND_MUL,node,unary());
                }
-               if(consume('/')){
+               if(consume("/")){
                        node=new_node(ND_DIV,node,unary());
                }
                return node;
        }
 }
-Node *expr(){
+Node *add(){
        Node *node=mul();
        for(;;){
-               if(consume('-')){
+               if(consume("-")){
                        node=new_node(ND_SUB,node,mul());
                        continue;
                }
-               if(consume('+')){
+               if(consume("+")){
                        node=new_node(ND_ADD,node,mul());
                        continue;
                }
                return node;
        }
 }
+Node *relational(){
+       Node *node=add();
+       for(;;){
+               if(consume("<=")){
+                       node=new_node(ND_SUB,node,mul());
+                       continue;
+               }
+               if(consume("<")){
+                       node=new_node(ND_SUB,node,mul());
+                       continue;
+               }
+               if(consume("+")){
+                       node=new_node(ND_ADD,node,mul());
+                       continue;
+               }
+               return node;
+       }
+}
+Node *expr(){
+       return add();
+}
 void gen(Node *node){
+       //printf("%d:%d\n",node->kind,node->val);//debug
        if(node->kind==ND_NUM){
                printf("  push %d\n",node->val);
                return;

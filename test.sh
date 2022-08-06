@@ -16,9 +16,11 @@ assert(){
     fi
 }
 
-assert 0 0
-assert 42 42
 assert 3 "1+2"
+assert 0 0
+assert 4 4
+assert 42 42
+
 assert 6 "1+2+3"
 assert 2 "5 - 3"
 assert 7 "1+2*3"
