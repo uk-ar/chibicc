@@ -108,7 +108,27 @@ typedef enum {
        ND_MUL,
        ND_DIV,
        ND_NUM,
+       ND_LT,
+       ND_GT,
+       ND_EQ,
+       ND_NE,
+       ND_LE,
+       ND_GE
 } NodeKind;
+
+char *nodeKind[]={
+       "ND_ADD",
+       "ND_SUB",
+       "ND_MUL",
+       "ND_DIV",
+       "ND_NUM",
+       "ND_LT",
+       "ND_GT",
+       "ND_EQ",
+       "ND_NE",
+       "ND_LE",
+       "ND_GE",
+};
 
 typedef struct Node Node;
 
@@ -188,33 +208,54 @@ Node *relational(){
        Node *node=add();
        for(;;){
                if(consume("<=")){
-                       node=new_node(ND_SUB,node,mul());
+                       node=new_node(ND_LE,node,add());
+                       continue;
+               }
+               if(consume(">=")){
+                       node=new_node(ND_LE,add(),node);//swap!
                        continue;
                }
                if(consume("<")){
-                       node=new_node(ND_SUB,node,mul());
+                       node=new_node(ND_LT,node,add());
                        continue;
                }
-               if(consume("+")){
-                       node=new_node(ND_ADD,node,mul());
+               if(consume(">")){
+                       node=new_node(ND_LT,add(),node);//swap!
+                       continue;
+               }
+               return node;
+       }
+}
+Node *equality(){
+       Node *node=relational();
+       for(;;){
+               if(consume("==")){
+                       node=new_node(ND_EQ,node,relational());
+                       continue;
+               }
+               if(consume("!=")){
+                       node=new_node(ND_NE,node,relational());
                        continue;
                }
                return node;
        }
 }
 Node *expr(){
-       return add();
+       return equality();
 }
+static FILE *tout;
+
 void gen(Node *node){
        //printf("%d:%d\n",node->kind,node->val);//debug
        if(node->kind==ND_NUM){
+               //fprintf(tout,"<%s>%d</%s>\n",nodeKind[node->kind],node->val,nodeKind[node->kind]);
                printf("  push %d\n",node->val);
                return;
        }
-
+       //fprintf(tout,"<%s>\n",nodeKind[node->kind]);
        gen(node->lhs);
        gen(node->rhs);
-
+       //fprintf(tout,"</%s>\n",nodeKind[node->kind]);
        printf("  pop rdi\n");//rhs
        printf("  pop rax\n");//lhs
 
@@ -232,10 +273,31 @@ void gen(Node *node){
                printf("  cgo\n");
                printf("  idiv rdi\n");
                break;
+       case ND_LT:
+               printf("  cmp rax, rdi\n");
+               printf("  setl al\n");
+               printf("  movzb rax, al\n");
+               break;
+       case ND_LE:
+               printf("  cmp rax, rdi\n");
+               printf("  setle al\n");
+               printf("  movzb rax, al\n");
+               break;
+       case ND_EQ:
+               printf("  cmp rax, rdi\n");
+               printf("  sete al\n");
+               printf("  movzb rax, al\n");
+               break;
+       case ND_NE:
+               printf("  cmp rax, rdi\n");
+               printf("  setne al\n");
+               printf("  movzb rax, al\n");
+               break;
        }
        printf("  push rax\n");
 }
 int main(int argc,char **argv){
+       tout=stdout;
     if(argc!=2){
         fprintf(stderr,"wrong number of argument\n.");
         return 1;
