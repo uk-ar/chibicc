@@ -70,7 +70,7 @@ Token *tokenize(char *p){
                        p++;
                        continue;
                }
-               if(*p=='+' || *p=='-'){
+               if(*p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')'){
                        cur = new_token(TK_RESERVED,cur,p++);
                        continue;
                }
@@ -86,6 +86,103 @@ Token *tokenize(char *p){
        return head.next;
 }
 
+typedef enum {
+       ND_ADD,
+       ND_SUB,
+       ND_MUL,
+       ND_DIV,
+       ND_NUM,
+} NodeKind;
+
+typedef struct Node Node;
+
+struct Node{//binary tree node
+       NodeKind kind;
+       Node *lhs;//left hand side;
+       Node *rhs;//left hand side;
+       int val; // enable iff kind == ND_NUM
+};
+Node *new_node(NodeKind kind,Node *lhs,Node *rhs){
+       Node *ans=calloc(1,sizeof(Node));
+       ans->kind=kind;
+       ans->lhs=lhs;
+       ans->rhs=rhs;
+       return ans;
+}
+Node *new_node_num(int val){
+       //leaf node
+       Node *ans=calloc(1,sizeof(Node));
+       ans->kind=ND_NUM;
+       ans->val=val;
+       return ans;
+}
+/* expr    = mul ("+" mul | "-" mul)* */
+/* mul     = primary ("*" primary | "/" primary)* */
+/* primary = num | "(" expr ")" */
+Node *expr();
+Node *primary(){
+       if(consume('(')){
+               Node*ans = expr();
+               expect(')');
+               return ans;
+       }
+       return  new_node_num(expect_num());
+}
+Node *mul(){
+       Node *node=primary();
+       for(;;){
+               if(consume('*')){
+                       node=new_node(ND_MUL,node,primary());
+               }
+               if(consume('/')){
+                       node=new_node(ND_DIV,node,primary());
+               }
+               return node;
+       }
+}
+Node *expr(){
+       Node *node=mul();
+       for(;;){
+               if(consume('-')){
+                       node=new_node(ND_SUB,node,mul());
+                       continue;
+               }
+               if(consume('+')){
+                       node=new_node(ND_ADD,node,mul());
+                       continue;
+               }
+               return node;
+       }
+}
+void gen(Node *node){
+       if(node->kind==ND_NUM){
+               printf("  push %d\n",node->val);
+               return;
+       }
+
+       gen(node->lhs);
+       gen(node->rhs);
+
+       printf("  pop rdi\n");//rhs
+       printf("  pop rax\n");//lhs
+
+       switch(node->kind){
+       case ND_ADD:
+               printf("  add rax, rdi\n");
+               break;
+       case ND_SUB:
+               printf("  sub rax, rdi\n");
+               break;
+       case ND_MUL:
+               printf("  imul rax, rdi\n");
+               break;
+       case ND_DIV:
+               printf("  cgo\n");
+               printf("  idiv rdi\n");
+               break;
+       }
+       printf("  push rax\n");
+}
 int main(int argc,char **argv){
     if(argc!=2){
         fprintf(stderr,"wrong number of argument\n.");
@@ -98,19 +195,10 @@ int main(int argc,char **argv){
     char *p=argv[1];
     user_input=argv[1];
     token=tokenize(p);
-    printf("  mov rax, %d\n",expect_num());
-    while(!at_eof()){
-           if(consume('-')){
-                   printf("  sub rax, %d\n",expect_num());
-                   continue;
-           }
-           if(consume('+')){
-                   printf("  add rax, %d\n",expect_num());
-                   continue;
-           }
-           fprintf(stderr,"unexpected token\n.");
-           exit(1);
-    }
+    Node *root=expr();
+    gen(root);
+
+    printf("  pop rax\n");//lhs
     printf("  ret\n");
     return 0;
 }
