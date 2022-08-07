@@ -40,6 +40,7 @@ Token *consume_ident(){//if next == op, advance & return true;
        token=token->next;
        return ans;
 }
+
 void expect(char *op){//if next == op, advance
        if(!token || token->kind!=TK_RESERVED)
                error_at(token->str,"token is not '%s'",op);
@@ -95,7 +96,11 @@ Token *tokenize(char *p){
                        continue;
                }
                if(isalpha(*p)){
-                       cur = new_token(TK_IDENT,cur,p++,1);
+                       char *pre=p;
+                       while(isalpha(*p)||isdigit(*p)){
+                               p++;
+                       }
+                       cur = new_token(TK_IDENT,cur,pre,p-pre);
                        continue;
                }
                //printf("eee");
@@ -119,6 +124,16 @@ Node *new_node_num(int val){
        ans->val=val;
        return ans;
 }
+LVar *locals=NULL;
+
+LVar *find_lvar(Token *tok){
+       for(LVar *var=locals;var;var=var->next){
+               if(tok->len==var->len && !memcmp(tok->str,var->name,tok->len)){
+                       return var;
+               }
+       }
+       return NULL;
+}
 /* program    = stmt* */
 /* stmt       = expr ";" */
 /* expr       = assign */
@@ -141,8 +156,24 @@ Node *primary(){
        Token* tok=consume_ident();
        if(tok){
                Node*ans = new_node(ND_LVAR,NULL,NULL);
-               ans->offset=(tok->str[0]-'a'+1)*8;
+               LVar *var=find_lvar(tok);
+               if(var){
+                       ans->offset=var->offset;
+               }else{
+                       /* LVar *next; */
+                       /* char *name;//start pos */
+                       /* int len; */
+                       /* int offset;//offset from RBP */
+                       var=calloc(1,sizeof(LVar));
+                       var->next=locals;
+                       var->name=tok->str;
+                       var->len=tok->len;
+                       var->offset=locals->offset+8;//last offset+1;
+                       ans->offset=var->offset;
+                       locals=var;
+               }
                fprintf(tout,"</%s>\n",__func__);
+               //ans->offset=(tok->str[0]-'a'+1)*8;
                return ans;
        }
        fprintf(tout,"</%s>\n",__func__);

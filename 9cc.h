@@ -41,6 +41,15 @@ struct Node{//binary tree node
        int offset; // enable iff kind == ND_LVAR
 };
 
+typedef struct LVar LVar;
+
+struct LVar{
+       LVar *next;
+       char *name;//start pos
+       int len;
+       int offset;//offset from RBP
+};
+
 Token *tokenize(char *p);
 Node *expr();
 void gen(Node *root);
