@@ -19,6 +19,7 @@ int main(int argc,char **argv){
         return 1;
     }
     char *p=argv[1];
+    fprintf(tout,"%s\n",p);
     locals=calloc(1,sizeof(LVar));
     user_input=argv[1];
     token=tokenize(p);

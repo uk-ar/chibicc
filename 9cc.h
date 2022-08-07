@@ -1,4 +1,8 @@
 typedef enum {
+       TK_IF,
+       TK_ELSE,
+       TK_WHILE,
+       TK_FOR,
        TK_RESERVED,//symbol
        TK_RETURN,//return
        TK_IDENT,//identifier
@@ -17,6 +21,10 @@ struct Token{
 };
 
 typedef enum {
+       ND_IF,
+       ND_ELSE,
+       ND_WHILE,
+       ND_FOR,
        ND_ADD,
        ND_SUB,
        ND_MUL,
@@ -38,7 +46,10 @@ typedef struct Node Node;
 struct Node{//binary tree node
        NodeKind kind;
        Node *lhs;//left hand side;
-       Node *rhs;//left hand side;
+       Node *rhs;//right hand side;
+       Node *cond;//if cond
+       Node *then;//if then
+       Node *els;//if else
        int val; // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
 };

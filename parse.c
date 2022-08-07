@@ -89,6 +89,26 @@ Token *tokenize(char *p){
                        p+=6;
                        continue;
                }
+               if(!strncmp(p,"if",2) && !isIdent(p[2])){
+                       cur = new_token(TK_IF,cur,p,2);
+                       p+=2;
+                       continue;
+               }
+               if(!strncmp(p,"else",4) && !isIdent(p[4])){
+                       cur = new_token(TK_ELSE,cur,p,4);
+                       p+=4;
+                       continue;
+               }
+               if(!strncmp(p,"while",5) && !isIdent(p[5])){
+                       cur = new_token(TK_WHILE,cur,p,5);
+                       p+=5;
+                       continue;
+               }
+               if(!strncmp(p,"for",3) && !isIdent(p[3])){
+                       cur = new_token(TK_FOR,cur,p,3);
+                       p+=3;
+                       continue;
+               }
                if(!strncmp(p,"<=",2) || !strncmp(p,">=",2) ||
                   !strncmp(p,"==",2) || !strncmp(p,"!=",2)){
                        cur = new_token(TK_RESERVED,cur,p,2);
@@ -147,7 +167,11 @@ LVar *find_lvar(Token *tok){
        return NULL;
 }
 /* program    = stmt* */
-/* stmt       = expr ";" */
+/* stmt       = expr ";"
+              | "if" "(" expr ")" stmt ("else" stmt)?
+              | "while" "(" expr ")" stmt
+              | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+              | "return" expr ";" */
 /* expr       = assign */
 /* assign     = equality ("=" assign)? */
 /* equality   = relational ("==" relational | "!=" relational)* */
@@ -286,11 +310,36 @@ Node *expr(){
        return node;
 }
 Node *stmt(){
+       /* stmt       = expr ";"
+          | "if" "(" expr ")" stmt ("else" stmt)?
+          | "while" "(" expr ")" stmt
+          | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+          | "return" expr ";" */
        Node *node=NULL;
        fprintf(tout,"<%s>\n",__func__);
        if(consume_Token(TK_RETURN)){
                node=new_node(ND_RETURN,node,expr());
                expect(";");
+               fprintf(tout,"</%s>\n",__func__);
+               return node;
+       }
+       if(consume_Token(TK_IF)){
+               expect("(");
+               node=new_node(ND_IF,NULL,NULL);
+               node->cond=expr();
+               expect(")");
+               node->then=stmt();
+               if(consume_Token(TK_ELSE)){
+                       node->els=stmt();
+               }
+               fprintf(tout,"</%s>\n",__func__);
+               return node;
+       }
+       if(consume_Token(TK_WHILE)){
+               expect("(");
+               node=new_node(ND_WHILE,node,expr());
+               expect(")");
+               stmt();
                fprintf(tout,"</%s>\n",__func__);
                return node;
        }

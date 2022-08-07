@@ -16,6 +16,8 @@ assert(){
     fi
 }
 
+assert 1 "if(1==1)return 1;"
+assert 2 "if(1!=1)return 1;else return 2;"
 assert 3 "return 3;"
 assert 3 "foo=3;"
 assert 3 "foo=3;foo;"
