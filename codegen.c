@@ -43,6 +43,7 @@ int count(){
        static int cnt=0;
        return cnt++;
 }
+static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 void gen(Node *node){
        fprintf(tout,"<%s>\n",nodeKind[node->kind]);
        if(node->kind==ND_NUM){
@@ -133,6 +134,13 @@ void gen(Node *node){
                }
                return;
        }else if(node->kind==ND_FUNCALL){
+               for(int i=0;i<6 && node->params[i];i++){
+                       gen(node->params[i]);
+               }
+               for(int i=0;i<6 && node->params[i];i++){
+                       printf("  pop %s\n",argreg[i]);
+               }
+               //TODO: align rsp
                printf("  call %s\n",node->name);
                return;
        }

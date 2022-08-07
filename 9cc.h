@@ -55,6 +55,7 @@ struct Node{//binary tree node
        Node *init;//for init
        Node *next;//for next
        Node **stmts;//block
+       Node **params;//funcall
        int val; // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        char *name; // enable iff kind == ND_FUNCALL

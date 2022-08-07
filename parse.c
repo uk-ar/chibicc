@@ -116,7 +116,7 @@ Token *tokenize(char *p){
                        p+=2;
                        continue;
                }
-               if(*p=='<' || *p=='>' || *p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')' || *p=='=' || *p==';' || *p=='{' || *p=='}'){
+               if(*p=='<' || *p=='>' || *p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')' || *p=='=' || *p==';' || *p=='{' || *p=='}' || *p==','){
                        cur = new_token(TK_RESERVED,cur,p++,1);
                        continue;
                }
@@ -173,6 +173,7 @@ LVar *find_lvar(Token *tok){
               | "while" "(" expr ")" stmt
               | "for" "(" expr? ";" expr? ";" expr? ")" stmt
               | "return" expr ";" */
+/* exprs      = expr ("," expr)* */
 /* expr       = assign */
 /* assign     = equality ("=" assign)? */
 /* equality   = relational ("==" relational | "!=" relational)* */
@@ -180,8 +181,10 @@ LVar *find_lvar(Token *tok){
 /* add        = mul ("+" mul | "-" mul)* */
 /* mul     = unary ("*" unary | "/" unary)* */
 /* unary   = ( "-" | "+" )? primary */
-/* primary = num | ident ("(" ")")? | "(" expr ")" */
+/* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 Node *expr();
+/* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
+/* exprs      = expr ("," expr)* */
 Node *primary(){
        fprintf(tout,"<%s>\n",__func__);
        if(consume("(")){
@@ -195,7 +198,17 @@ Node *primary(){
                if(consume("(")){//call
                        Node*ans = new_node(ND_FUNCALL,NULL,NULL);
                        ans->name=strndup(tok->str,tok->len);
-                       consume(")");
+                       if(consume(")")){
+                               fprintf(tout,"</%s>\n",__func__);
+                               return ans;
+                       }
+                       ans->params=calloc(6,sizeof(Node*));
+                       int i=0;
+                       ans->params[i++]=expr();
+                       for(;i<6 && !consume(")");i++){
+                               consume(",");
+                               ans->params[i]=expr();
+                       }
                        fprintf(tout,"</%s>\n",__func__);
                        return ans;
                }
