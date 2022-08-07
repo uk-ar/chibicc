@@ -281,7 +281,7 @@ Node *unary(){
                if(t->ty==TY_INT){
                        return new_node_num(4,NULL);
                }else if(t->ty==TY_ARRAY){
-                       return new_node_num(t->array_size,NULL);
+                       return new_node_num(t->array_size*4,NULL);
                }
                fprintf(tout,"# sizeof</%s>\n",__func__);
                return new_node_num(8,NULL);
@@ -426,9 +426,9 @@ Node *stmt(){
                        var->next=locals;
                        var->name=tok->str;
                        var->len=tok->len;
-                       var->offset=locals->offset+8;//last offset+1;
+                       var->offset=locals->offset+8*n;//last offset+1;
                        var->type=new_type(TY_ARRAY,t);
-                       var->type->array_size=4*n;
+                       var->type->array_size=n;
                        //ans->offset=var->offset;
                        locals=var;
                        expect("]");

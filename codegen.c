@@ -75,11 +75,7 @@ Type *gen(Node *node){
                fprintf(tout,"# %d</%s>\n",node->val,nodeKind[node->kind]);
                return node->type;
        }else if(node->kind==ND_LVAR){//local value
-               Type *t=gen_lval(node);
-               if(t && t->ty==TY_ARRAY){
-                       fprintf(tout,"# </%s>\n",nodeK);
-                       return t;
-               }
+               Type *t=gen_lval(node);//get address
                printf("  pop rax\n");//get address
                printf("  mov rax, [rax]\n");//get data from address
                printf("  push rax\n");//save local variable value
@@ -191,8 +187,10 @@ Type *gen(Node *node){
        Type *t=gen(node->rhs);
        printf("  pop rdi\n");//rhs
        printf("  pop rax\n");//lhs
-
-       if(t && (t->ty==TY_PTR)){
+       if(t)
+               fprintf(tout,"# ty:%d\n",t->ty);
+       if(t && (t->ty==TY_PTR || t->ty==TY_ARRAY)){
+               fprintf(tout,"# ptr_to->ty:%d\n",t->ptr_to->ty);
                if(t->ptr_to->ty==TY_INT){
                        printf("  imul rdi, 4\n");
                }else{
