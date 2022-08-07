@@ -16,6 +16,15 @@ assert(){
        exit 1
     fi
 }
+assert 3 "main(){x=3;y=&x;return *y;}"
+assert 3 "main(){x=3;y=5;z=&y+8;return *z;}"
+assert 3 "quxx(){return 3;}qux(){return quxx();}main(){return qux();}"
+assert 1 "fib(x){if(x<=1)return x;return fib(x-2)+fib(x-1);}main(){return fib(1);}"
+assert 1 "fib(x){if(x<=1)return x;return fib(x-2)+fib(x-1);}main(){return fib(2);}"
+assert 2 "fib(x){if(x<=1)return x;return fib(x-2)+fib(x-1);}main(){return fib(3);}"
+assert 3 "fib(x){if(x<=1)return x;return fib(x-2)+fib(x-1);}main(){return fib(4);}"
+assert 5 "fib(x){if(x<=1)return x;return fib(x-2)+fib(x-1);}main(){return fib(5);}"
+assert 8 "fib(x){if(x<=1)return x;return fib(x-2)+fib(x-1);}main(){return fib(6);}"
 assert 4 "main(){return 4;}"
 assert 0 "main(){return 0;}"
 assert 3 "main(){return 1+2;}"

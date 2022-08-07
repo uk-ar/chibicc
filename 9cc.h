@@ -21,6 +21,8 @@ struct Token{
 };
 
 typedef enum {
+       ND_DEREF,
+       ND_ADDR,
        ND_FUNC,
        ND_FUNCALL,
        ND_BLOCK,

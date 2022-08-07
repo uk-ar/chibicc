@@ -8,6 +8,8 @@
 
 FILE *tout;
 char *nodeKind[]={
+       "ND_DEREF",
+       "ND_ADDR",
        "ND_FUNC",
        "ND_FUNCALL",
        "ND_BLOCK",
@@ -147,7 +149,7 @@ void gen(Node *node){
        }else if(node->kind==ND_BLOCK){
                for(int i=0;i<100 && node->stmts[i];i++){
                        gen(node->stmts[i]);
-                       printf("  pop rax\n");//move result to rax
+                       //printf("  pop rax\n");//move result to rax
                }
                fprintf(tout,"# </%s>\n",nodeK);
                return;
@@ -163,10 +165,19 @@ void gen(Node *node){
                printf("  push rax\n");//save result to sp
                fprintf(tout,"# </%s>\n",nodeK);
                return;
+       }else if(node->kind==ND_ADDR){//"&"
+               gen_lval(node->lhs);//address is in stack
+               fprintf(tout,"# </%s>\n",nodeK);
+               return;
+       }else if(node->kind==ND_DEREF){
+               gen(node->lhs);//address is in stack
+               printf("  pop rdi\n");
+               printf("  mov rax,[rdi]\n");//get data from address
+               printf("  push rax\n");//expression result */
+               return;
        }
        gen(node->lhs);
        gen(node->rhs);
-       fprintf(tout,"# </%s>\n",nodeKind[node->kind]);
        printf("  pop rdi\n");//rhs
        printf("  pop rax\n");//lhs
 
@@ -206,4 +217,5 @@ void gen(Node *node){
                break;
        }
        printf("  push rax\n");
+       fprintf(tout,"# </%s>\n",nodeKind[node->kind]);
 }

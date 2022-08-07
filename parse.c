@@ -117,7 +117,8 @@ Token *tokenize(char *p){
                        p+=2;
                        continue;
                }
-               if(*p=='<' || *p=='>' || *p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')' || *p=='=' || *p==';' || *p=='{' || *p=='}' || *p==','){
+               if(*p=='<' || *p=='>' || *p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')'
+                  || *p=='=' || *p==';' || *p=='{' || *p=='}' || *p==',' || *p=='&'){
                        cur = new_token(TK_RESERVED,cur,p++,1);
                        continue;
                }
@@ -182,7 +183,7 @@ LVar *find_lvar(Token *tok){
 /* relational = add ("<" add | "<=" add | ">" add | ">=" add)* */
 /* add        = mul ("+" mul | "-" mul)* */
 /* mul     = unary ("*" unary | "/" unary)* */
-/* unary   = ( "-" | "+" )? primary */
+/* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 Node *expr();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
@@ -241,6 +242,7 @@ Node *primary(){
        fprintf(tout,"# </%s>\n",__func__);
        return  new_node_num(expect_num());
 }
+///* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
 Node *unary(){
        if(consume("+")){
                return primary();
@@ -248,6 +250,12 @@ Node *unary(){
        if(consume("-")){
                //important
                return new_node(ND_SUB,new_node_num(0),primary());//0-primary()
+       }
+       if(consume("*")){
+               return new_node(ND_DEREF,unary(),NULL);
+       }
+       if(consume("&")){
+               return new_node(ND_ADDR,unary(),NULL);
        }
        return primary();
 }
