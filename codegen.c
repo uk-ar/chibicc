@@ -7,22 +7,62 @@
 #include "9cc.h"
 
 FILE *tout;
+char *nodeKind[]={
+       "ND_ADD",
+       "ND_SUB",
+       "ND_MUL",
+       "ND_DIV",
+       "ND_NUM",
+       "ND_LVAR",//variable
+       "ND_ASSIGN",//variable
+       "ND_LT",
+       "ND_GT",
+       "ND_EQ",
+       "ND_NE",
+       "ND_LE",
+       "ND_GE",
+};
+
+void gen_lval(Node *node){
+       if(node->kind!=ND_LVAR){
+               printf("node not lvalue");
+               abort();
+       }
+       printf("  mov rax, rbp\n");//base pointer
+       printf("  sub rax, %d\n",node->offset);
+       printf("  push rax\n");//save local variable address
+}
 
 void gen(Node *node){
-       //printf("%d:%d\n",node->kind,node->val);//debug
+       fprintf(tout,"g<%s>\n",nodeKind[node->kind]);
        if(node->kind==ND_NUM){
-               //fprintf(tout,"<%s>%d</%s>\n",nodeKind[node->kind],node->val,nodeKind[node->kind]);
                printf("  push %d\n",node->val);
+               fprintf(tout,"%d</%s>\n",node->val,nodeKind[node->kind]);
+               return;
+       }else if(node->kind==ND_LVAR){
+               gen_lval(node);
+               printf("  pop rax\n");//get address
+               printf("  mov rax, [rax]\n");//get data from address
+               printf("  push rax\n");//save local variable value
+               fprintf(tout,"g</%s>\n",nodeKind[node->kind]);
+               return;
+       }else if(node->kind==ND_ASSIGN){
+               gen_lval(node->lhs);
+               gen(node->rhs);
+               printf("  pop rdi\n");//rhs
+               printf("  pop rax\n");//lhs
+               printf("  mov [rax],rdi\n");
+               printf("  push rdi\n");//expression result
+               fprintf(tout,"g</%s>\n",nodeKind[node->kind]);
                return;
        }
-       //fprintf(tout,"<%s>\n",nodeKind[node->kind]);
        gen(node->lhs);
        gen(node->rhs);
-       //fprintf(tout,"</%s>\n",nodeKind[node->kind]);
+       fprintf(tout,"g</%s>\n",nodeKind[node->kind]);
        printf("  pop rdi\n");//rhs
        printf("  pop rax\n");//lhs
 
-       switch(node->kind){
+              switch(node->kind){
        case ND_ADD:
                printf("  add rax, rdi\n");
                break;
@@ -33,7 +73,7 @@ void gen(Node *node){
                printf("  imul rax, rdi\n");
                break;
        case ND_DIV:
-               printf("  cgo\n");
+               printf("  cqo\n");
                printf("  idiv rdi\n");
                break;
        case ND_LT:

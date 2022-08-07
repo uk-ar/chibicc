@@ -4,7 +4,16 @@
         {
             "label": "Build Main",
             "type": "shell",
-            "command": "gcc -g 9cc.c main.c codegen.c -o main.out",
+            "command": "make 9cc",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "make test",
             "group": {
                 "kind": "build",
                 "isDefault": true

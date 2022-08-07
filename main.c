@@ -9,23 +9,40 @@
 extern FILE *tout;
 extern char* user_input;
 extern Token* token;
+extern Node *code[];
+
 int main(int argc,char **argv){
-       tout=stdout;
+       //tout=stdout;
+       tout=stderr;
     if(argc!=2){
         fprintf(stderr,"wrong number of argument\n.");
         return 1;
     }
+    //header
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");
     printf("main:\n");
+    //prepare variables
+    printf("  push rbp\n");//save base pointer
+    printf("  mov rbp, rsp\n");//save stack pointer
+    printf("  sub rsp, 208\n");//26*8byte
 
     char *p=argv[1];
     user_input=argv[1];
     token=tokenize(p);
-    Node *root=expr();
-    gen(root);
+    program();
 
-    printf("  pop rax\n");//lhs
+    for(int i=0;code[i];i++){
+           //rfprintf(stderr,"c0:%d\n",i);
+            //fprintf(stderr,"c0:%d:%d\n",i,code[i]->kind);
+            gen(code[i]);
+
+            //pop each result in order not to over flow
+            printf("  pop rax\n");
+    }
+
+    printf("  mov rsp,rbp\n");//restore stack pointer
+    printf("  pop rbp\n");//restore base pointer
     printf("  ret\n");
     return 0;
 }

@@ -1,5 +1,6 @@
 typedef enum {
        TK_RESERVED,//symbol
+       TK_IDENT,//identifier
        TK_NUM,//int
        TK_EOF,
 } TokenKind;
@@ -19,8 +20,10 @@ typedef enum {
        ND_SUB,
        ND_MUL,
        ND_DIV,
-       ND_NUM,
-       ND_LT,
+       ND_NUM,//integer
+       ND_LVAR,//variable
+       ND_ASSIGN,//=
+       ND_LT,//??
        ND_GT,
        ND_EQ,
        ND_NE,
@@ -35,4 +38,11 @@ struct Node{//binary tree node
        Node *lhs;//left hand side;
        Node *rhs;//left hand side;
        int val; // enable iff kind == ND_NUM
+       int offset; // enable iff kind == ND_LVAR
 };
+
+Token *tokenize(char *p);
+Node *expr();
+void gen(Node *root);
+extern FILE *tout;
+void program();
