@@ -1,5 +1,8 @@
+typedef enum { TY_INT, TY_PTR } TypeKind;
+
+typedef struct Type Type;
 struct Type {
-       enum { INT, PTR } ty;
+       TypeKind ty;
        struct Type *ptr_to;
 };
 
@@ -65,6 +68,7 @@ struct Node{//binary tree node
        Node *next;//for next
        Node **stmts;//block
        Node **params;//funcall
+       Type *type;
        int val; // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        char *name; // enable iff kind == ND_FUNCALL
@@ -76,13 +80,14 @@ typedef struct LVar LVar;
 struct LVar{
        LVar *next;
        char *name;//start pos
+       Type *type;
        int len;
        int offset;//offset from RBP
 };
 
 Token *tokenize(char *p);
 Node *expr();
-void gen(Node *root);
+Type *gen(Node *root);
 extern FILE *tout;
 void program();
 void error_at(char *loc,char *fmt,...);

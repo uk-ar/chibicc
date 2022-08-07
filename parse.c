@@ -173,6 +173,13 @@ LVar *find_lvar(Token *tok){
        }
        return NULL;
 }
+Type *new_type(TypeKind ty,Type*ptr_to){//
+       Type*type=calloc(1,sizeof(Type));
+       type->ty=ty;
+       type->ptr_to=ptr_to;
+       return type;
+}
+
 /* program    = stmt* */
 /* stmt       = expr ";"
               | "{" stmt* "}"
@@ -222,11 +229,12 @@ Node *primary(){
                        }
                        fprintf(tout,"# </%s>\n",__func__);
                        return ans;
-               }else{//var
+               }else{//var ref
                        Node *ans = new_node(ND_LVAR,NULL,NULL,tok);
                        LVar *var = find_lvar(tok);
                        if(var){
                                ans->offset=var->offset;
+                               ans->type=var->type;
                        }else{
                                error_at(tok->str,"token '%s' is not defined",tok->str);
                        }
@@ -236,22 +244,24 @@ Node *primary(){
                }
        }
        fprintf(tout,"# </%s>\n",__func__);
-       return  new_node_num(expect_num(),NULL);
+       Node *ans=new_node_num(expect_num(),NULL);
+       ans->type=new_type(TY_INT,NULL);
+       return ans;
 }
 ///* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
 Node *unary(){
        Token *tok=NULL;
-       if(tok=consume("+")){
+       if((tok=consume("+"))){
                return primary();
        }
-       if(tok=consume("-")){
+       if((tok=consume("-"))){
                //important
                return new_node(ND_SUB,new_node_num(0,NULL),primary(),tok);//0-primary()
        }
-       if(tok=consume("*")){
+       if((tok=consume("*"))){
                return new_node(ND_DEREF,unary(),NULL,tok);
        }
-       if(tok=consume("&")){
+       if((tok=consume("&"))){
                return new_node(ND_ADDR,unary(),NULL,tok);
        }
        return primary();
@@ -260,10 +270,10 @@ Node *mul(){
        Token *tok=NULL;
        Node *node=unary();
        for(;;){
-               if(tok=consume("*")){
+               if((tok=consume("*"))){
                        node=new_node(ND_MUL,node,unary(),tok);
                }
-               if(tok=consume("/")){
+               if((tok=consume("/"))){
                        node=new_node(ND_DIV,node,unary(),tok);
                }
                return node;
@@ -273,11 +283,11 @@ Node *add(){
        Token *tok=NULL;
        Node *node=mul();
        for(;;){
-               if(tok=consume("-")){
+               if((tok=consume("-"))){
                        node=new_node(ND_SUB,node,mul(),tok);
                        continue;
                }
-               if(tok=consume("+")){
+               if((tok=consume("+"))){
                        node=new_node(ND_ADD,node,mul(),tok);
                        continue;
                }
@@ -289,19 +299,19 @@ Node *relational(){
        Token *tok=NULL;
        Node *node=add();
        for(;;){
-               if(tok=consume("<=")){
+               if((tok=consume("<="))){
                        node=new_node(ND_LE,node,add(),tok);
                        continue;
                }
-               if(tok=consume(">=")){
+               if((tok=consume(">="))){
                        node=new_node(ND_LE,add(),node,tok);//swap!
                        continue;
                }
-               if(tok=consume("<")){
+               if((tok=consume("<"))){
                        node=new_node(ND_LT,node,add(),tok);
                        continue;
                }
-               if(tok=consume(">")){
+               if((tok=consume(">"))){
                        node=new_node(ND_LT,add(),node,tok);//swap!
                        continue;
                }
@@ -314,11 +324,11 @@ Node *equality(){
        Token *tok=NULL;
        Node *node=relational();
        for(;;){
-               if(tok=consume("==")){
+               if((tok=consume("=="))){
                        node=new_node(ND_EQ,node,relational(),tok);
                        continue;
                }
-               if(tok=consume("!=")){
+               if((tok=consume("!="))){
                        node=new_node(ND_NE,node,relational(),tok);
                        continue;
                }
@@ -331,7 +341,7 @@ Node *assign(){
        fprintf(tout,"# <%s>\n",__func__);
        Token *tok=NULL;
        Node *node=equality();
-       if(tok=consume("=")){
+       if((tok=consume("="))){
                node=new_node(ND_ASSIGN,node,assign(),tok);
                fprintf(tout,"# </%s>\n",__func__);
                return node;
@@ -345,6 +355,7 @@ Node *expr(){
        fprintf(tout,"# </%s>\n",__func__);
        return node;
 }
+
 Node *stmt(){
        /* stmt       = expr ";"
           | "if" "(" expr ")" stmt ("else" stmt)?
@@ -355,8 +366,10 @@ Node *stmt(){
        Node *node=NULL;
        Token *tok=NULL;
        fprintf(tout,"# <%s>\n",__func__);
-       if(consume_Token(TK_TYPE)){
-               while(consume("*"));
+       if(consume_Token(TK_TYPE)){//var dec
+               Type *t=new_type(TY_INT,NULL);
+               while(consume("*"))
+                       t=new_type(TY_PTR,t);
                Token*tok = consume_ident();//ident
                LVar *var = find_lvar(tok);//
                if(var){
@@ -367,6 +380,7 @@ Node *stmt(){
                        var->name=tok->str;
                        var->len=tok->len;
                        var->offset=locals->offset+8;//last offset+1;
+                       var->type=t;
                        //ans->offset=var->offset;
                        locals=var;
                }
@@ -375,13 +389,13 @@ Node *stmt(){
                return stmt();
                //skip token
        }
-       if(tok=consume_Token(TK_RETURN)){
+       if((tok=consume_Token(TK_RETURN))){
                node=new_node(ND_RETURN,node,expr(),tok);
                expect(";");
                fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
-       if(tok=consume_Token(TK_IF)){
+       if((tok=consume_Token(TK_IF))){
                expect("(");
                node=new_node(ND_IF,NULL,NULL,tok);
                node->cond=expr();
@@ -393,7 +407,7 @@ Node *stmt(){
                fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
-       if(tok=consume_Token(TK_WHILE)){
+       if((tok=consume_Token(TK_WHILE))){
                expect("(");
                node=new_node(ND_WHILE,NULL,NULL,tok);
                node->cond=expr();
@@ -402,7 +416,7 @@ Node *stmt(){
                fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
-       if(tok=consume_Token(TK_FOR)){
+       if((tok=consume_Token(TK_FOR))){
                /* Node *init;//for init */
                /* Node *cond;//if,while,for cond */
                /* Node *next;//for next */
@@ -434,7 +448,7 @@ Node *stmt(){
                return node;
        }
        // "{" stmt* "}"
-       if(tok=consume("{")){
+       if((tok=consume("{"))){
                fprintf(tout,"# <{>\n",__func__);
                node=new_node(ND_BLOCK,NULL,NULL,tok);
                Node **stmts=calloc(100,sizeof(Node*));
