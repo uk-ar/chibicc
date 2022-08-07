@@ -21,6 +21,12 @@ void error_at(char *loc,char *fmt,...){
        fprintf(stderr,"\n");
        exit(1);
 }
+Type *new_type(TypeKind ty,Type*ptr_to){//
+       Type*type=calloc(1,sizeof(Type));
+       type->ty=ty;
+       type->ptr_to=ptr_to;
+       return type;
+}
 
 Token *consume_Token(TokenKind kind){
        if(!token || token->kind!=kind)
@@ -81,6 +87,11 @@ Token *tokenize(char *p){
                fprintf(tout,"# t:%c\n",*p);
                if(isspace(*p)){
                        p++;
+                       continue;
+               }
+               if(!strncmp(p,"sizeof",6) && !isIdent(p[6])){
+                       cur = new_token(TK_SIZEOF,cur,p,6);
+                       p+=6;
                        continue;
                }
                if(!strncmp(p,"int",3) && !isIdent(p[3])){
@@ -153,6 +164,8 @@ Node *new_node(NodeKind kind,Node *lhs,Node *rhs,Token *token){
        ans->lhs=lhs;
        ans->rhs=rhs;
        ans->token=token;
+       if(lhs)
+               ans->type=lhs->type;
        return ans;
 }
 Node *new_node_num(int val,Token *token){
@@ -161,6 +174,7 @@ Node *new_node_num(int val,Token *token){
        ans->kind=ND_NUM;
        ans->val=val;
        ans->token=token;
+       ans->type=new_type(TY_INT,NULL);
        return ans;
 }
 LVar *locals=NULL;
@@ -172,12 +186,6 @@ LVar *find_lvar(Token *tok){
                }
        }
        return NULL;
-}
-Type *new_type(TypeKind ty,Type*ptr_to){//
-       Type*type=calloc(1,sizeof(Type));
-       type->ty=ty;
-       type->ptr_to=ptr_to;
-       return type;
 }
 
 /* program    = stmt* */
@@ -248,9 +256,17 @@ Node *primary(){
        ans->type=new_type(TY_INT,NULL);
        return ans;
 }
-///* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
+/* unary   = "-"? primary | "+"? primary
+           | "*" unary | "&" unary  | "sizeof" unary */
 Node *unary(){
        Token *tok=NULL;
+       if((tok=consume_Token(TK_SIZEOF))){
+               Node *node = unary();
+               if(node->type->ty==TY_INT){
+                       return new_node_num(4,NULL);
+               }
+               return new_node_num(8,NULL);
+       }
        if((tok=consume("+"))){
                return primary();
        }
@@ -259,10 +275,16 @@ Node *unary(){
                return new_node(ND_SUB,new_node_num(0,NULL),primary(),tok);//0-primary()
        }
        if((tok=consume("*"))){
-               return new_node(ND_DEREF,unary(),NULL,tok);
+               Node *lhs=unary();
+               Node *node=new_node(ND_DEREF,lhs,NULL,tok);
+               node->type=lhs->type->ptr_to;
+               return node;
        }
        if((tok=consume("&"))){
-               return new_node(ND_ADDR,unary(),NULL,tok);
+               Node *lhs=unary();
+               return new_node(ND_ADDR,lhs,NULL,tok);
+               Node *node=new_type(TY_PTR,lhs->type);
+               return node;
        }
        return primary();
 }

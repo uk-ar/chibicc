@@ -16,6 +16,14 @@ assert(){
        exit 1
     fi
 }
+assert 4 "main(){int x;return sizeof(x);}"
+assert 8 "main(){int x;int *y;return sizeof(y);}"
+assert 4 "main(){int x;return sizeof(x+3);}"
+assert 8 "main(){int x;int *y;return sizeof(y+3);}"
+assert 4 "main(){int x;int *y;return sizeof(*y);}"
+assert 4 "main(){int x;return sizeof(1);}"
+assert 4 "main(){int x;return sizeof(sizeof(1));}"
+
 assert 14 "main(){int a;int b;a=3;b=5*6-8;return a+b/2;}"
 assert 2 "int main(){int *p;alloc4(&p,1,2,4,8);int *q;q=p+2;return 2;}"
 assert 2 "int main(){int *p;alloc4(&p,1,2,4,8);int *q;q=p+2;printI(p);printI(q);return 2;}"

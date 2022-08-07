@@ -7,6 +7,7 @@ struct Type {
 };
 
 typedef enum {
+       TK_SIZEOF,
        TK_TYPE,
        TK_IF,
        TK_ELSE,
