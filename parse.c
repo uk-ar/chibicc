@@ -180,7 +180,7 @@ LVar *find_lvar(Token *tok){
 /* add        = mul ("+" mul | "-" mul)* */
 /* mul     = unary ("*" unary | "/" unary)* */
 /* unary   = ( "-" | "+" )? primary */
-/* primary = num | ident | "(" expr ")" */
+/* primary = num | ident ("(" ")")? | "(" expr ")" */
 Node *expr();
 Node *primary(){
        fprintf(tout,"<%s>\n",__func__);
@@ -192,6 +192,13 @@ Node *primary(){
        }
        Token* tok=consume_ident();
        if(tok){
+               if(consume("(")){//call
+                       Node*ans = new_node(ND_FUNCALL,NULL,NULL);
+                       ans->name=strndup(tok->str,tok->len);
+                       consume(")");
+                       fprintf(tout,"</%s>\n",__func__);
+                       return ans;
+               }
                Node*ans = new_node(ND_LVAR,NULL,NULL);
                LVar *var=find_lvar(tok);
                if(var){

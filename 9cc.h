@@ -21,6 +21,7 @@ struct Token{
 };
 
 typedef enum {
+       ND_FUNCALL,
        ND_BLOCK,
        ND_IF,
        ND_ELSE,
@@ -56,6 +57,7 @@ struct Node{//binary tree node
        Node **stmts;//block
        int val; // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
+       char *name; // enable iff kind == ND_FUNCALL
 };
 
 typedef struct LVar LVar;

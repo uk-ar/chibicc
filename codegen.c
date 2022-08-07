@@ -8,6 +8,7 @@
 
 FILE *tout;
 char *nodeKind[]={
+       "ND_FUNCALL",
        "ND_BLOCK",
        "ND_IF",
        "ND_ELSE",
@@ -130,6 +131,9 @@ void gen(Node *node){
                        gen(node->stmts[i]);
                        printf("  pop rax\n");//move result to rax
                }
+               return;
+       }else if(node->kind==ND_FUNCALL){
+               printf("  call %s\n",node->name);
                return;
        }
        gen(node->lhs);
