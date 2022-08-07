@@ -229,17 +229,7 @@ Node *primary(){
                if(var){
                        ans->offset=var->offset;
                }else{
-                       /* LVar *next; */
-                       /* char *name;//start pos */
-                       /* int len; */
-                       /* int offset;//offset from RBP */
-                       var=calloc(1,sizeof(LVar));
-                       var->next=locals;
-                       var->name=tok->str;
-                       var->len=tok->len;
-                       var->offset=locals->offset+8;//last offset+1;
-                       ans->offset=var->offset;
-                       locals=var;
+                       error_at(tok->str,"token '%s' is not defined",tok->str);
                }
                fprintf(tout,"# </%s>\n",__func__);
                //ans->offset=(tok->str[0]-'a'+1)*8;
