@@ -131,7 +131,7 @@ Token *tokenize(char *p){
                        continue;
                }
                if(*p=='<' || *p=='>' || *p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')'
-                  || *p=='=' || *p==';' || *p=='{' || *p=='}' || *p==',' || *p=='&'){
+                  || *p=='=' || *p==';' || *p=='{' || *p=='}' || *p==',' || *p=='&' || *p=='[' || *p==']'){
                        cur = new_token(TK_RESERVED,cur,p++,1);
                        continue;
                }
@@ -195,6 +195,7 @@ LVar *find_lvar(Token *tok){
               | "while" "(" expr ")" stmt
               | "for" "(" expr? ";" expr? ";" expr? ")" stmt
               | "int" ident ";"
+              | "int" ident "[" expr "]" ";"
               | "return" expr ";" */
 /* exprs      = expr ("," expr)* */
 /* expr       = assign */
@@ -204,7 +205,7 @@ LVar *find_lvar(Token *tok){
 /* add        = mul ("+" mul | "-" mul)* */
 /* mul     = unary ("*" unary | "/" unary)* */
 /* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
-/* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
+/* primary = num | ident | ident "(" exprs? ")" |ident "[" expr "]" | "(" expr ")" */
 Node *expr();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 /* exprs      = expr ("," expr)* */
@@ -237,6 +238,11 @@ Node *primary(){
                        }
                        fprintf(tout,"# </%s>\n",__func__);
                        return ans;
+               /* }else if(consume("[")){ */
+               /*      Node *ans = new_node(ND_ARRAY,NULL,NULL,tok); */
+               /*      expect("]");//important */
+               /*      fprintf(tout,"# </%s>\n",__func__); */
+               /*      return ans; */
                }else{//var ref
                        Node *ans = new_node(ND_LVAR,NULL,NULL,tok);
                        LVar *var = find_lvar(tok);
@@ -262,8 +268,11 @@ Node *unary(){
        Token *tok=NULL;
        if((tok=consume_Token(TK_SIZEOF))){
                Node *node = unary();
-               if(node->type->ty==TY_INT){
+               Type *t=node->type;
+               if(t->ty==TY_INT){
                        return new_node_num(4,NULL);
+               }else if(t->ty==TY_ARRAY){
+                       return new_node_num(t->array_size,NULL);
                }
                return new_node_num(8,NULL);
        }
@@ -396,6 +405,18 @@ Node *stmt(){
                LVar *var = find_lvar(tok);//
                if(var){
                        error_at(tok->str,"token '%s' is already defined",tok->str);
+               }else if(consume("[")){
+                       int n=expect_num();
+                       var=calloc(1,sizeof(LVar));
+                       var->next=locals;
+                       var->name=tok->str;
+                       var->len=tok->len;
+                       var->offset=locals->offset+8*n;//last offset+1;
+                       var->type=new_type(TY_ARRAY,t);
+                       var->type->array_size=4*n;
+                       //ans->offset=var->offset;
+                       locals=var;
+                       expect("]");
                }else{
                        var=calloc(1,sizeof(LVar));
                        var->next=locals;

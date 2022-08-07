@@ -1,9 +1,10 @@
-typedef enum { TY_INT, TY_PTR } TypeKind;
+typedef enum { TY_INT, TY_PTR, TY_ARRAY } TypeKind;
 
 typedef struct Type Type;
 struct Type {
        TypeKind ty;
        struct Type *ptr_to;
+       size_t array_size;
 };
 
 typedef enum {

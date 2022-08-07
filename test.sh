@@ -16,6 +16,10 @@ assert(){
        exit 1
     fi
 }
+assert 3 "main(){int a[10];return 3;}"
+assert 40 "main(){int a[10];return sizeof(a);}"
+#assert 4 "main(){int a[10];return sizeof(a[0]);}"
+
 assert 4 "main(){int x;return sizeof(x);}"
 assert 8 "main(){int x;int *y;return sizeof(y);}"
 assert 4 "main(){int x;return sizeof(x+3);}"
