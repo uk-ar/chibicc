@@ -86,6 +86,11 @@ Token *tokenize(char *p){
                        p++;
                        continue;
                }
+               if(!strncmp(p,"int",3) && !isIdent(p[3])){
+                       cur = new_token(TK_TYPE,cur,p,3);
+                       p+=3;
+                       continue;
+               }
                if(!strncmp(p,"return",6) && !isIdent(p[6])){
                        cur = new_token(TK_RETURN,cur,p,6);
                        p+=6;
@@ -175,6 +180,7 @@ LVar *find_lvar(Token *tok){
               | "if" "(" expr ")" stmt ("else" stmt)?
               | "while" "(" expr ")" stmt
               | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+              | "int" ident ";"
               | "return" expr ";" */
 /* exprs      = expr ("," expr)* */
 /* expr       = assign */
@@ -348,9 +354,29 @@ Node *stmt(){
           | "if" "(" expr ")" stmt ("else" stmt)?
           | "while" "(" expr ")" stmt
           | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+          | "int" ident ";"
           | "return" expr ";" */
        Node *node=NULL;
        fprintf(tout,"# <%s>\n",__func__);
+       if(consume_Token(TK_TYPE)){
+               Token*tok = consume_ident();//ident
+               LVar *var = find_lvar(tok);
+               if(var){
+                       error_at(tok->str,"token '%s' is already defined",tok->str);
+               }else{
+                       var=calloc(1,sizeof(LVar));
+                       var->next=locals;
+                       var->name=tok->str;
+                       var->len=tok->len;
+                       var->offset=locals->offset+8;//last offset+1;
+                       //ans->offset=var->offset;
+                       locals=var;
+               }
+               fprintf(tout,"# </%s>\n",__func__);
+               expect(";");
+               return stmt();
+               //skip token
+       }
        if(consume_Token(TK_RETURN)){
                node=new_node(ND_RETURN,node,expr());
                expect(";");
@@ -431,12 +457,28 @@ Node *stmt(){
 }
 Node *arg(){
        fprintf(tout,"# <%s>\n",__func__);
-       Node *ans=expr();
+       consume_Token(TK_TYPE);
+       Token*tok = consume_ident();
+       Node *ans = new_node(ND_LVAR,NULL,NULL);
+       LVar *var = find_lvar(tok);
+       if(var){
+               ans->offset=var->offset;//TODO: shadow
+       }else{
+               var=calloc(1,sizeof(LVar));
+               var->next=locals;
+               var->name=tok->str;
+               var->len=tok->len;
+               var->offset=locals->offset+8;//last offset+1;
+               ans->offset=var->offset;
+               locals=var;
+       }
        fprintf(tout,"# </%s>\n",__func__);
        return ans;
 }
+
 Node *func(){
        fprintf(tout,"# <%s>\n",__func__);
+       consume_Token(TK_TYPE);
        Token* tok=consume_ident();
        if(tok){
                expect("(");//dec

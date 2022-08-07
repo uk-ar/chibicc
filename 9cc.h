@@ -1,4 +1,5 @@
 typedef enum {
+       TK_TYPE,
        TK_IF,
        TK_ELSE,
        TK_WHILE,
