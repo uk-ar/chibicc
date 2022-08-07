@@ -81,6 +81,7 @@ bool isIdent(char c){
 Token *tokenize(char *p){
        Token head,*cur=&head;
        while(*p){
+               fprintf(tout,"t:%c\n",*p);
                if(isspace(*p)){
                        p++;
                        continue;
@@ -414,13 +415,39 @@ Node *stmt(){
        fprintf(tout,"</%s>\n",__func__);
        return node;
 }
+Node *arg(){
+       fprintf(tout,"<%s>\n",__func__);
+       Node *ans=expr();
+       fprintf(tout,"</%s>\n",__func__);
+       return ans;
+}
+Node *func(){
+       fprintf(tout,"<%s>\n",__func__);
+       Token* tok=consume_ident();
+       if(tok){
+               expect("(");//dec
+               Node*ans = new_node(ND_FUNC,NULL,NULL);
+               ans->name=strndup(tok->str,tok->len);
+               ans->params=NULL;
+               ans->params=calloc(6,sizeof(Node*));
+               int i=0;
+               ans->params[i++]=arg();
+               for(;i<6 && !consume(")");i++){
+                       consume(",");
+                       ans->params[i]=arg();
+               }
+               ans->then=stmt();//block
+               fprintf(tout,"</%s>\n",__func__);
+               return ans;
+       }
+}
 Node *code[100]={0};
 void program(){
        int i=0;
        while(!at_eof()){
-               fprintf(tout,"c:%d\n",i);
+               fprintf(tout,"c:%d:%s\n",i,token->str);
                //fprintf(tout,"c:%d:%d\n",i,code[i]->kind);
-               code[i++]=stmt();
+               code[i++]=func();
        }
        code[i]=NULL;
 }

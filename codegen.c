@@ -8,6 +8,7 @@
 
 FILE *tout;
 char *nodeKind[]={
+       "ND_FUNC",
        "ND_FUNCALL",
        "ND_BLOCK",
        "ND_IF",

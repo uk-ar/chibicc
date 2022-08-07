@@ -16,11 +16,14 @@ assert(){
        exit 1
     fi
 }
-
+assert 4 "main(){4;}"
+assert 0 "main(){0;}"
+assert 5 "qux(x,y){return x+y;}main(){qux(2+3);}"
 assert 2 "foo();"
 assert 2 "return foo();"
 assert 3 "bar(1,2);"
 assert 5 "bar(1+2,2);"
+assert 3 "baz(3);"
 assert 3 "if(1==1){2;return 3;}"
 assert 4 "if(1==1){2;3;}return 4;"
 assert 2 "for(a=1;a;a=a-1)return 2;"
