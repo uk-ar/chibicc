@@ -21,6 +21,7 @@ struct Token{
 };
 
 typedef enum {
+       ND_BLOCK,
        ND_IF,
        ND_ELSE,
        ND_WHILE,
@@ -52,6 +53,7 @@ struct Node{//binary tree node
        Node *els;//if else
        Node *init;//for init
        Node *next;//for next
+       Node **stmts;//block
        int val; // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
 };

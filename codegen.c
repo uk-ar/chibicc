@@ -8,6 +8,7 @@
 
 FILE *tout;
 char *nodeKind[]={
+       "ND_BLOCK",
        "ND_IF",
        "ND_ELSE",
        "ND_WHILE",
@@ -123,6 +124,12 @@ void gen(Node *node){
                fprintf(tout,"</then>\n");
                printf("  jmp .Lbegin%d\n",num);
                printf(".Lend%d:\n",num);
+               return;
+       }else if(node->kind==ND_BLOCK){
+               for(int i=0;i<100 && node->stmts[i];i++){
+                       gen(node->stmts[i]);
+                       printf("  pop rax\n");//move result to rax
+               }
                return;
        }
        gen(node->lhs);

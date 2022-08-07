@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "9cc.h"
 
 Token *token;//current token
@@ -115,7 +116,7 @@ Token *tokenize(char *p){
                        p+=2;
                        continue;
                }
-               if(*p=='<' || *p=='>' || *p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')' || *p=='=' || *p==';'){
+               if(*p=='<' || *p=='>' || *p=='+' || *p=='-' || *p=='*' || *p=='/' || *p=='(' || *p==')' || *p=='=' || *p==';' || *p=='{' || *p=='}'){
                        cur = new_token(TK_RESERVED,cur,p++,1);
                        continue;
                }
@@ -372,6 +373,18 @@ Node *stmt(){
                fprintf(tout,"</next>\n",__func__);
                node->then=stmt();
                fprintf(tout,"</for>\n",__func__);
+               fprintf(tout,"</%s>\n",__func__);
+               return node;
+       }
+       if(consume("{")){
+               node=new_node(ND_BLOCK,NULL,NULL);
+               Node **stmts=calloc(100,sizeof(Node*));
+               int i;
+               for(i=0;i<100 && !consume("}");i++){
+                       stmts[i]=stmt();
+               }
+               assert(i!=100);
+               node->stmts=stmts;
                fprintf(tout,"</%s>\n",__func__);
                return node;
        }
