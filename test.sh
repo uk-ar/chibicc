@@ -16,6 +16,8 @@ assert(){
        exit 1
     fi
 }
+assert 3 "int main(){int x;int *y;y=&x;return 3;}"
+assert 3 "int main(){int x;int *y;y=&x;*y=3;return x;}"
 assert 4 "int main(){return 4;}"
 assert 3 "int qux(int x){return 3;}int main(){return qux(3);}"
 assert 3 "int main(){int a;a=3;return a;}"

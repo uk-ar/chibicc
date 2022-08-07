@@ -1,3 +1,8 @@
+struct Type {
+       enum { INT, PTR } ty;
+       struct Type *ptr_to;
+};
+
 typedef enum {
        TK_TYPE,
        TK_IF,
@@ -63,6 +68,7 @@ struct Node{//binary tree node
        int val; // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        char *name; // enable iff kind == ND_FUNCALL
+       Token *token;
 };
 
 typedef struct LVar LVar;
@@ -79,3 +85,4 @@ Node *expr();
 void gen(Node *root);
 extern FILE *tout;
 void program();
+void error_at(char *loc,char *fmt,...);

@@ -34,13 +34,16 @@ char *nodeKind[]={
 };
 
 void gen_lval(Node *node){
-       if(node->kind!=ND_LVAR){
-               printf("node not lvalue");
+       if(node->kind==ND_LVAR){
+               printf("  mov rax, rbp\n");//base pointer
+               printf("  sub rax, %d\n",node->offset);
+               printf("  push rax\n");//save local variable address
+       }else if(node->kind==ND_DEREF){
+               gen(node->lhs);//address is in stack
+       }else{
+               error_at(node->token->str,"token is not lvalue\n",node->token->str);
                abort();
        }
-       printf("  mov rax, rbp\n");//base pointer
-       printf("  sub rax, %d\n",node->offset);
-       printf("  push rax\n");//save local variable address
 }
 int count(){
        static int cnt=0;
