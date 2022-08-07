@@ -1,4 +1,4 @@
-typedef enum { TY_INT, TY_PTR, TY_ARRAY } TypeKind;
+typedef enum { TY_CHAR, TY_INT, TY_PTR, TY_ARRAY } TypeKind;
 
 typedef struct Type Type;
 struct Type {

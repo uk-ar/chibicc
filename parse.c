@@ -99,6 +99,11 @@ Token *tokenize(char *p){
                        p+=3;
                        continue;
                }
+                if(!strncmp(p,"char",4) && !isIdent(p[4])){
+                       cur = new_token(TK_TYPE,cur,p,4);
+                       p+=4;
+                       continue;
+               }
                if(!strncmp(p,"return",6) && !isIdent(p[6])){
                        cur = new_token(TK_RETURN,cur,p,6);
                        p+=6;
@@ -168,13 +173,13 @@ Node *new_node(NodeKind kind,Node *lhs,Node *rhs,Token *token){
                ans->type=lhs->type;
        return ans;
 }
-Node *new_node_num(int val,Token *token){
+Node *new_node_num(int val,Token *token, TypeKind type){
        //leaf node
        Node *ans=calloc(1,sizeof(Node));
        ans->kind=ND_NUM;
        ans->val=val;
        ans->token=token;
-       ans->type=new_type(TY_INT,NULL);
+       ans->type=new_type(type,NULL);
        return ans;
 }
 LVar *locals=NULL;
@@ -286,7 +291,7 @@ Node *primary(){
                        return ans;
                }
        }
-       Node *ans=new_node_num(expect_num(),NULL);
+       Node *ans=new_node_num(expect_num(),NULL,TY_INT);
        ans->type=new_type(TY_INT,NULL);
        fprintf(tout,"# </%s>\n",__func__);
        return ans;
@@ -299,13 +304,15 @@ Node *unary(){
        if((tok=consume_Token(TK_SIZEOF))){
                Node *node = unary();
                Type *t=node->type;
+                fprintf(tout,"# sizeof %d</%s>\n",t->ty,__func__);
                if(t->ty==TY_INT){
-                       return new_node_num(4,NULL);
+                  return new_node_num(4,NULL,TY_INT);
                }else if(t->ty==TY_ARRAY){
-                       return new_node_num(t->array_size*4,NULL);
-               }
-               fprintf(tout,"# sizeof</%s>\n",__func__);
-               return new_node_num(8,NULL);
+                  return new_node_num(t->array_size*4,NULL,TY_ARRAY);
+               }else if(t->ty==TY_CHAR){
+                  return new_node_num(1,NULL,TY_CHAR);
+                }
+               return new_node_num(8,NULL,TY_PTR);
        }
        if((tok=consume("+"))){
                fprintf(tout,"# +</%s>\n",__func__);
@@ -314,7 +321,7 @@ Node *unary(){
        if((tok=consume("-"))){
                //important
                fprintf(tout,"# -</%s>\n",__func__);
-               return new_node(ND_SUB,new_node_num(0,NULL),primary(),tok);//0-primary()
+               return new_node(ND_SUB,new_node_num(0,NULL,TY_INT),primary(),tok);//0-primary()
        }
        if((tok=consume("*"))){
                fprintf(tout,"# *</%s>\n",__func__);
@@ -433,8 +440,12 @@ Node *stmt(){
        Node *node=NULL;
        Token *tok=NULL;
        fprintf(tout,"# <%s>\n",__func__);
-       if(consume_Token(TK_TYPE)){//var dec
-               Type *t=new_type(TY_INT,NULL);
+        Type *t=NULL;
+        if(consume("int"))
+          t=new_type(TY_INT,NULL);
+        else if(consume("char"))
+          t=new_type(TY_CHAR,NULL);
+        if(t){
                while(consume("*"))
                        t=new_type(TY_PTR,t);
                Token*tok = consume_ident();//ident
@@ -575,8 +586,13 @@ Node *arg(){
 
 Node *decl(){
        fprintf(tout,"# <%s>\n",__func__);
-       consume_Token(TK_TYPE);
-       Type *t=new_type(TY_INT,NULL);
+       //consume_Token(TK_TYPE);
+        Type *t=NULL;
+        if(consume("int")){
+          t=new_type(TY_INT,NULL);
+        }else if(consume("char")){
+          t=new_type(TY_CHAR,NULL);
+        }
        while(consume("*"))
                t=new_type(TY_PTR,t);
        Token* tok=consume_ident();

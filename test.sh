@@ -19,6 +19,11 @@ assert(){
        exit 1
     fi
 }
+assert 1 "char x;int main(){return sizeof(x);}"
+assert 1 "int main(){char x;return sizeof(x);}"
+assert 8 "int main(){char x;char *y;return sizeof(y);}"
+assert 1 "int main(){char x;char *y;return sizeof(*y);}"
+
 assert 3 "int main(){int a[10];return 3;}"
 assert 3 "int a;int main(){return 3;}"
 assert 0 "int a;int main(){return a;}"
