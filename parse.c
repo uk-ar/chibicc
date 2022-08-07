@@ -81,7 +81,7 @@ bool isIdent(char c){
 Token *tokenize(char *p){
        Token head,*cur=&head;
        while(*p){
-               fprintf(tout,"t:%c\n",*p);
+               fprintf(tout,"# t:%c\n",*p);
                if(isspace(*p)){
                        p++;
                        continue;
@@ -170,6 +170,7 @@ LVar *find_lvar(Token *tok){
 }
 /* program    = stmt* */
 /* stmt       = expr ";"
+              | "{" stmt* "}"
               | "if" "(" expr ")" stmt ("else" stmt)?
               | "while" "(" expr ")" stmt
               | "for" "(" expr? ";" expr? ";" expr? ")" stmt
@@ -187,21 +188,23 @@ Node *expr();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 /* exprs      = expr ("," expr)* */
 Node *primary(){
-       fprintf(tout,"<%s>\n",__func__);
+       fprintf(tout,"# <%s>\n",__func__);
        if(consume("(")){
                Node*ans = expr();
                expect(")");//important
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return ans;
        }
        Token* tok=consume_ident();
        if(tok){
                if(consume("(")){//call
                        Node*ans = new_node(ND_FUNCALL,NULL,NULL);
-                       ans->name=strndup(tok->str,tok->len);
+                       //ans->name=strndup(tok->str,tok->len);
+                       ans->name=malloc(sizeof(char)*tok->len+1);
+                       strncpy(ans->name,tok->str,tok->len);
                        ans->params=NULL;
                        if(consume(")")){
-                               fprintf(tout,"</%s>\n",__func__);
+                               fprintf(tout,"# </%s>\n",__func__);
                                return ans;
                        }
                        ans->params=calloc(6,sizeof(Node*));
@@ -211,11 +214,11 @@ Node *primary(){
                                consume(",");
                                ans->params[i]=expr();
                        }
-                       fprintf(tout,"</%s>\n",__func__);
+                       fprintf(tout,"# </%s>\n",__func__);
                        return ans;
                }
-               Node*ans = new_node(ND_LVAR,NULL,NULL);
-               LVar *var=find_lvar(tok);
+               Node *ans = new_node(ND_LVAR,NULL,NULL);
+               LVar *var = find_lvar(tok);
                if(var){
                        ans->offset=var->offset;
                }else{
@@ -231,11 +234,11 @@ Node *primary(){
                        ans->offset=var->offset;
                        locals=var;
                }
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                //ans->offset=(tok->str[0]-'a'+1)*8;
                return ans;
        }
-       fprintf(tout,"</%s>\n",__func__);
+       fprintf(tout,"# </%s>\n",__func__);
        return  new_node_num(expect_num());
 }
 Node *unary(){
@@ -275,7 +278,7 @@ Node *add(){
        }
 }
 Node *relational(){
-       fprintf(tout,"<%s>\n",__func__);
+       fprintf(tout,"# <%s>\n",__func__);
        Node *node=add();
        for(;;){
                if(consume("<=")){
@@ -294,12 +297,12 @@ Node *relational(){
                        node=new_node(ND_LT,add(),node);//swap!
                        continue;
                }
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
 }
 Node *equality(){
-       fprintf(tout,"<%s>\n",__func__);
+       fprintf(tout,"# <%s>\n",__func__);
        Node *node=relational();
        for(;;){
                if(consume("==")){
@@ -310,26 +313,26 @@ Node *equality(){
                        node=new_node(ND_NE,node,relational());
                        continue;
                }
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
 }
 
 Node *assign(){
-       fprintf(tout,"<%s>\n",__func__);
+       fprintf(tout,"# <%s>\n",__func__);
        Node *node=equality();
        if(consume("=")){
                node=new_node(ND_ASSIGN,node,assign());
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
-       fprintf(tout,"</%s>\n",__func__);
+       fprintf(tout,"# </%s>\n",__func__);
        return node;
 }
 Node *expr(){
-       fprintf(tout,"<%s>\n",__func__);
+       fprintf(tout,"# <%s>\n",__func__);
        Node*node=assign();
-       fprintf(tout,"</%s>\n",__func__);
+       fprintf(tout,"# </%s>\n",__func__);
        return node;
 }
 Node *stmt(){
@@ -339,11 +342,11 @@ Node *stmt(){
           | "for" "(" expr? ";" expr? ";" expr? ")" stmt
           | "return" expr ";" */
        Node *node=NULL;
-       fprintf(tout,"<%s>\n",__func__);
+       fprintf(tout,"# <%s>\n",__func__);
        if(consume_Token(TK_RETURN)){
                node=new_node(ND_RETURN,node,expr());
                expect(";");
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
        if(consume_Token(TK_IF)){
@@ -355,7 +358,7 @@ Node *stmt(){
                if(consume_Token(TK_ELSE)){
                        node->els=stmt();
                }
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
        if(consume_Token(TK_WHILE)){
@@ -364,7 +367,7 @@ Node *stmt(){
                node->cond=expr();
                expect(")");
                node->then=stmt();
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
        if(consume_Token(TK_FOR)){
@@ -372,33 +375,35 @@ Node *stmt(){
                /* Node *cond;//if,while,for cond */
                /* Node *next;//for next */
                /* Node *then;//if,while,for then */
-               fprintf(tout,"<for>\n",__func__);
+               fprintf(tout,"# <for>\n",__func__);
                expect("(");
                node=new_node(ND_FOR,NULL,NULL);
-               fprintf(tout,"<init>\n",__func__);
+               fprintf(tout,"# <init>\n",__func__);
                if(!consume(";")){
                        node->init=expr();
                        expect(";");
                }
-               fprintf(tout,"</init>\n",__func__);
-               fprintf(tout,"<cond>\n",__func__);
+               fprintf(tout,"# </init>\n",__func__);
+               fprintf(tout,"# <cond>\n",__func__);
                if(!consume(";")){
                        node->cond=expr();
                        expect(";");
                }
-               fprintf(tout,"</cond>\n",__func__);
-               fprintf(tout,"<next>\n",__func__);
+               fprintf(tout,"# </cond>\n",__func__);
+               fprintf(tout,"# <next>\n",__func__);
                if(!consume(")")){
                        node->next=expr();
                        expect(")");
                }
-               fprintf(tout,"</next>\n",__func__);
+               fprintf(tout,"# </next>\n",__func__);
                node->then=stmt();
-               fprintf(tout,"</for>\n",__func__);
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# </for>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
+       // "{" stmt* "}"
        if(consume("{")){
+               fprintf(tout,"# <{>\n",__func__);
                node=new_node(ND_BLOCK,NULL,NULL);
                Node **stmts=calloc(100,sizeof(Node*));
                int i;
@@ -407,37 +412,45 @@ Node *stmt(){
                }
                assert(i!=100);
                node->stmts=stmts;
-               fprintf(tout,"</%s>\n",__func__);
+               fprintf(tout,"# <}>\n",__func__);
+               fprintf(tout,"# </%s>\n",__func__);
                return node;
        }
        node=expr();
        expect(";");
-       fprintf(tout,"</%s>\n",__func__);
+       fprintf(tout,"# </%s>\n",__func__);
        return node;
 }
 Node *arg(){
-       fprintf(tout,"<%s>\n",__func__);
+       fprintf(tout,"# <%s>\n",__func__);
        Node *ans=expr();
-       fprintf(tout,"</%s>\n",__func__);
+       fprintf(tout,"# </%s>\n",__func__);
        return ans;
 }
 Node *func(){
-       fprintf(tout,"<%s>\n",__func__);
+       fprintf(tout,"# <%s>\n",__func__);
        Token* tok=consume_ident();
        if(tok){
                expect("(");//dec
                Node*ans = new_node(ND_FUNC,NULL,NULL);
-               ans->name=strndup(tok->str,tok->len);
+               //ans->name=strndup(tok->str,tok->len);
+               ans->name=malloc(sizeof(char)*tok->len+1);
+               strncpy(ans->name,tok->str,tok->len);
+               printf("# ans->name:%s",ans->name);
                ans->params=NULL;
                ans->params=calloc(6,sizeof(Node*));
                int i=0;
-               ans->params[i++]=arg();
-               for(;i<6 && !consume(")");i++){
-                       consume(",");
-                       ans->params[i]=arg();
+               if(!consume(")")){
+                       ans->params[i++]=arg();
+                       for(;i<6 && !consume(")");i++){
+                               consume(",");
+                               ans->params[i]=arg();
+                       }
                }
+               int off=locals->offset;
                ans->then=stmt();//block
-               fprintf(tout,"</%s>\n",__func__);
+               ans->offset=locals->offset-off;
+               fprintf(tout,"# </%s>\n",__func__);
                return ans;
        }
 }
@@ -445,8 +458,8 @@ Node *code[100]={0};
 void program(){
        int i=0;
        while(!at_eof()){
-               fprintf(tout,"c:%d:%s\n",i,token->str);
-               //fprintf(tout,"c:%d:%d\n",i,code[i]->kind);
+               fprintf(tout,"# c:%d:%s\n",i,token->str);
+               //fprintf(tout,"# c:%d:%d\n",i,code[i]->kind);
                code[i++]=func();
        }
        code[i]=NULL;

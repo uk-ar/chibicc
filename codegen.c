@@ -46,18 +46,30 @@ int count(){
 }
 static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 void gen(Node *node){
-       fprintf(tout,"<%s>\n",nodeKind[node->kind]);
+       fprintf(tout,"# <%s>\n",nodeKind[node->kind]);
        char *nodeK=nodeKind[node->kind];
+       if(node->kind==ND_FUNC){
+               printf("%s:\n",node->name);
+               printf("  push rbp\n");//save base pointer
+               printf("  mov rbp, rsp\n");//save stack pointer
+               for(int i=0;i<6 && node->params[i];i++){
+                       printf("  mov rax, %s\n",argreg[i]);//args to local
+                       printf("  push rax\n");//args to local
+               }
+               printf("  sub rsp, %d\n",node->offset);//num of vals*8byte
+               gen(node->then);
+               return;
+       }
        if(node->kind==ND_NUM){
                printf("  push %d\n",node->val);
-               fprintf(tout,"%d</%s>\n",node->val,nodeKind[node->kind]);
+               fprintf(tout,"# %d</%s>\n",node->val,nodeKind[node->kind]);
                return;
        }else if(node->kind==ND_LVAR){
                gen_lval(node);
                printf("  pop rax\n");//get address
                printf("  mov rax, [rax]\n");//get data from address
                printf("  push rax\n");//save local variable value
-               fprintf(tout,"</%s>\n",nodeK);
+               fprintf(tout,"# </%s>\n",nodeK);
                return;
        }else if(node->kind==ND_ASSIGN){
                gen_lval(node->lhs);
@@ -66,7 +78,7 @@ void gen(Node *node){
                printf("  pop rax\n");//lhs
                printf("  mov [rax],rdi\n");
                printf("  push rdi\n");//expression result
-               fprintf(tout,"</%s>\n",nodeKind[node->kind]);
+               fprintf(tout,"# </%s>\n",nodeKind[node->kind]);
                return;
        }else if(node->kind==ND_RETURN){
                gen(node->rhs);
@@ -74,70 +86,70 @@ void gen(Node *node){
                printf("  mov rsp,rbp\n");//restore stack pointer
                printf("  pop rbp\n");//restore base pointer
                printf("  ret\n");
-               fprintf(tout,"</%s>\n",nodeKind[node->kind]);
+               fprintf(tout,"# </%s>\n",nodeKind[node->kind]);
                return;
        }else if(node->kind==ND_IF){
-               fprintf(tout,"<cond>\n");
+               fprintf(tout,"# <cond>\n");
                gen(node->cond);
-               fprintf(tout,"</cond>\n");
+               fprintf(tout,"# </cond>\n");
                printf("  pop rax\n");//move result to rax
                printf("  cmp rax, 0\n");
                int num=count();
                printf("  je .Lelse%d\n",num);
-               fprintf(tout,"<then>\n");
+               fprintf(tout,"# <then>\n");
                gen(node->then);
-               fprintf(tout,"</then>\n");
+               fprintf(tout,"# </then>\n");
                printf("  jmp .Lend%d\n",num);
                printf(".Lelse%d:\n",num);
                if(node->els){
                        gen(node->els);
                }
                printf(".Lend%d:\n",num);
-               fprintf(tout,"</%s>\n",nodeK);
+               fprintf(tout,"# </%s>\n",nodeK);
                return;
        }else if(node->kind==ND_WHILE){
                int num=count();
                printf(".Lbegin%d:\n",num);
-               fprintf(tout,"<cond>\n");
+               fprintf(tout,"# <cond>\n");
                gen(node->cond);
-               fprintf(tout,"</cond>\n");
+               fprintf(tout,"# </cond>\n");
                printf("  pop rax\n");//move result to rax
                printf("  cmp rax, 0\n");
                printf("  je .Lend%d\n",num);
-               fprintf(tout,"<then>\n");
+               fprintf(tout,"# <then>\n");
                gen(node->then);
-               fprintf(tout,"</then>\n");
+               fprintf(tout,"# </then>\n");
                printf("  jmp .Lbegin%d\n",num);
                printf(".Lend%d:\n",num);
-               fprintf(tout,"</%s>\n",nodeK);
+               fprintf(tout,"# </%s>\n",nodeK);
                return;
        }else if(node->kind==ND_FOR){
                int num=count();
                if(node->init)
                        gen(node->init);
                printf(".Lbegin%d:\n",num);
-               fprintf(tout,"<cond>\n");
+               fprintf(tout,"# <cond>\n");
                if(node->cond)
                        gen(node->cond);
-               fprintf(tout,"</cond>\n");
+               fprintf(tout,"# </cond>\n");
                printf("  pop rax\n");//move result to rax
                printf("  cmp rax, 0\n");
                printf("  je .Lend%d\n",num);
-               fprintf(tout,"<then>\n");
+               fprintf(tout,"# <then>\n");
                gen(node->then);
                if(node->next)
                        gen(node->next);
-               fprintf(tout,"</then>\n");
+               fprintf(tout,"# </then>\n");
                printf("  jmp .Lbegin%d\n",num);
                printf(".Lend%d:\n",num);
-               fprintf(tout,"</%s>\n",nodeK);
+               fprintf(tout,"# </%s>\n",nodeK);
                return;
        }else if(node->kind==ND_BLOCK){
                for(int i=0;i<100 && node->stmts[i];i++){
                        gen(node->stmts[i]);
                        printf("  pop rax\n");//move result to rax
                }
-               fprintf(tout,"</%s>\n",nodeK);
+               fprintf(tout,"# </%s>\n",nodeK);
                return;
        }else if(node->kind==ND_FUNCALL){
                for(int i=0;i<6 && node->params && node->params[i];i++){
@@ -149,12 +161,12 @@ void gen(Node *node){
                }
                printf("  call %s\n",node->name);
                printf("  push rax\n");//save result to sp
-               fprintf(tout,"</%s>\n",nodeK);
+               fprintf(tout,"# </%s>\n",nodeK);
                return;
        }
        gen(node->lhs);
        gen(node->rhs);
-       fprintf(tout,"</%s>\n",nodeKind[node->kind]);
+       fprintf(tout,"# </%s>\n",nodeKind[node->kind]);
        printf("  pop rdi\n");//rhs
        printf("  pop rax\n");//lhs
 
