@@ -19,11 +19,20 @@ assert(){
        exit 1
     fi
 }
+assert 1 "main(){arg2(1+2,3+4);return 1;}"
+assert 2 "main(){arg3(1+2,3+4,2+3);return 2;}"
+assert 1 "main(){int a[2];a[0]=1;return *a;}"
+assert 2 "main(){int a[2];a[0]=2;return a[0];}"
+assert 3 "main(){int a[2];*a=3;return a[0];}"
+assert 4 "main(){int a[2];printA(a);printA(a+1);return distance(a,a+1);}"
+
+assert 3 "main(){int a[3];*a=1;*(a+1)=2;printI(*(a+1));printVI(a,3);int *p;p=a;return *p+*(p+1);}"
+assert 3 "main(){int a[2];*a=1;*(a+1)=2;printI(*(a+1));printVI(a,2);int *p;p=a;return *p+*(p+1);}"
 assert 1 "fib(int x){if(x<=1)return x;return fib(x-2)+fib(x-1);}main(){return fib(1);}"
 assert 0 "main(){int a[2];*a=1;return 0;}"
 assert 1 "main(){int a[2];*a=1;return *a;}"
 assert 1 "main(){int a[2];*a=1;*(a+1)=1;printI(*a);return *a;}"
-assert 3 "main(){int a[2];*a=1;*(a+1)=2;printI(*a);printVL(a,2);int *p;p=a;return *p+*(p+1);}"
+
 assert 1 "char x;int main(){return sizeof(x);}"
 assert 1 "int main(){char x;return sizeof(x);}"
 assert 8 "int main(){char x;char *y;return sizeof(y);}"

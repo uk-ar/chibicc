@@ -185,10 +185,14 @@ Type *gen(Node *node){
                fprintf(tout,"# </%s>\n",nodeK);
                return NULL;
        }else if(node->kind==ND_FUNCALL){
-               for(int i=0;i<6 && node->params && node->params[i];i++){
-                       gen(node->params[i]);
-                       //TODO: align rsp
-                       printf("  pop %s\n",argreg[i]);
+                int i;
+               for(i=0;i<6 && node->params && node->params[i];i++){
+                       gen(node->params[i]);                                              
+               }
+               i--;
+               for(;i>=0;i--){
+                        //TODO: align rsp
+                        printf("  pop %s\n",argreg[i]);
                }
                printf("  call %s\n",node->name);
                printf("  push rax\n");//save result to sp
