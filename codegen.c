@@ -8,6 +8,7 @@
 
 FILE *tout;
 char *nodeKind[]={
+       "ND_GVAR",
        "ND_DEREF",
        "ND_ADDR",
        "ND_FUNC",
@@ -35,7 +36,14 @@ char *nodeKind[]={
 
 Type *gen_lval(Node *node){
        fprintf(tout,"#lvar <%s>\n",nodeKind[node->kind]);
-       if(node->kind==ND_LVAR){
+       if(node->kind==ND_GVAR){
+               printf("  lea rax, %s[rip]\n",node->name);//base pointer
+               //printf("  lea rax, rip[%s]\n",strndup(node->token->str,node->token->len));//base pointer
+               //printf("  mov rax, %s\n",strndup(node->token->str,node->token->len));//base pointer
+               printf("  push rax\n");//save local variable address
+               /* fprintf(tout,"#lvar </%s>\n",nodeKind[node->kind]); */
+               return NULL;//node->type;
+       }else if(node->kind==ND_LVAR){
                printf("  mov rax, rbp\n");//base pointer
                printf("  sub rax, %d\n",node->offset);
                printf("  push rax\n");//save local variable address
@@ -56,8 +64,8 @@ int count(){
 }
 static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 Type *gen(Node *node){
-       fprintf(tout,"# <%s>\n",nodeKind[node->kind]);
        char *nodeK=nodeKind[node->kind];
+       fprintf(tout,"# <%s>\n",nodeK);
        if(node->kind==ND_FUNC){
                printf("%s:\n",node->name);
                printf("  push rbp\n");//save base pointer
@@ -79,6 +87,18 @@ Type *gen(Node *node){
                printf("  pop rax\n");//get address
                printf("  mov rax, [rax]\n");//get data from address
                printf("  push rax\n");//save local variable value
+               fprintf(tout,"# </%s>\n",nodeK);
+               return t;
+       }else if(node->kind==ND_GVAR){//local value
+               Type *t=NULL;//gen_lval(node);//get address
+               //printf("  mov rax, %s[rip]\n",strndup(node->token->str,node->token->len));//base pointer
+               printf("  mov rax, %s[rip]\n",node->name);//base pointer
+               printf("  push rax\n");//save local variable address
+               /* fprintf(tout,"#lvar </%s>\n",nodeKind[node->kind]);   */
+
+               /* printf("  pop rax\n");//get address */
+               /* printf("  mov rax, [rax]\n");//get data from address */
+               /* printf("  push rax\n");//save local variable value */
                fprintf(tout,"# </%s>\n",nodeK);
                return t;
        }else if(node->kind==ND_ASSIGN){

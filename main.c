@@ -10,7 +10,8 @@ extern FILE *tout;
 extern char* user_input;
 extern Token* token;
 extern Node *code[];
-extern LVar *locals;
+extern LVar *locals,*globals;
+
 int main(int argc,char **argv){
        tout=stdout;//debug
        //tout=stderr;
@@ -27,10 +28,22 @@ int main(int argc,char **argv){
 
     //header
     printf(".intel_syntax noprefix\n");
-    printf(".global main\n");
-    //printf("main:\n");
-    //prepare variables
 
+    for(LVar *var=globals;var;var=var->next){//gvar
+           //https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
+           printf(".data\n");
+           printf(".global %s\n",var->name);
+           printf("%s:\n",var->name);
+           if(var->type->ty==TY_INT){
+                   printf("  .zero 4\n");
+           }else if(var->type->ty==TY_PTR){
+                   printf("  .zero 8\n");
+           }else{
+                   printf("  .zero %d\n",var->type->array_size*4);
+           }
+    }
+
+    printf(".global main\n");
     for(int i=0;code[i];i++){
            //rfprintf(stderr,"c0:%d\n",i);
             //fprintf(stderr,"c0:%d:%d\n",i,code[i]->kind);

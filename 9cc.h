@@ -32,6 +32,7 @@ struct Token{
 };
 
 typedef enum {
+       ND_GVAR,
        ND_DEREF,
        ND_ADDR,
        ND_FUNC,
@@ -93,3 +94,19 @@ Type *gen(Node *root);
 extern FILE *tout;
 void program();
 void error_at(char *loc,char *fmt,...);
+
+typedef struct HashNode HashNode;
+
+struct HashNode{
+       HashNode *next;
+       char *key;
+       void *p;
+};
+
+typedef struct HashMap HashMap;
+
+struct HashMap{
+       HashNode **v;
+       int size;
+};
+

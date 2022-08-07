@@ -4,7 +4,10 @@ assert(){
     input="$2"
 
     ./9cc "$input" > tmp.s
-    cc -g -c test/test.c
+    if [ "$?" -ne 0 ]; then
+        echo "compile error"
+        exit 1
+    fi
     cc -g -o tmp tmp.s test/test.o
     ./tmp
     actual="$?"
@@ -16,7 +19,12 @@ assert(){
        exit 1
     fi
 }
-assert 3 "main(){int a[10];return 3;}"
+assert 3 "int main(){int a[10];return 3;}"
+assert 3 "int a;int main(){return 3;}"
+assert 0 "int a;int main(){return a;}"
+assert 3 "int a;int main(){a;return 3;}"
+assert 3 "int a;int main(){a=1;return 3;}"
+assert 1 "int a;int main(){a=1;return a;}"
 assert 40 "main(){int a[10];return sizeof(a);}"
 assert 1 "main(){int a[2];*a=1;return *a;}"
 assert 2 "main(){int a[2];*(a+1)=2;return *(a+1);}"
@@ -29,6 +37,10 @@ assert 2 "main(){int a[2];*a=1;*(a+1)=2;int *p;p=a;return *(p+1);}"
 assert 2 "main(){int a[2];*a=1;*(a+1)=2;int *p;p=a;return *(a+1);}"
 assert 2 "main(){int a[2];*a=1;*(a+1)=2;int *p;p=a;printP(p+1);printP(a+1); return 2;}"
 assert 3 "main(){int a[2];*a=1;*(a+1)=2;int *p;p=a;return *p+*(p+1);}"
+assert 1 "main(){int a[2];*a=1;*(a+1)=2;return a[0];}"
+assert 2 "main(){int a[2];*a=1;*(a+1)=2;return a[1];}"
+#assert 1 "main(){int a[2];*a=1;*(a+1)=2;return 0[a];}"
+#assert 2 "main(){int a[2];*a=1;*(a+1)=2;return 1[a];}"
 #assert 4 "main(){int a[10];return sizeof(a[0]);}"
 
 assert 4 "main(){int x;return sizeof(x);}"
