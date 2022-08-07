@@ -34,13 +34,17 @@ char *nodeKind[]={
 };
 
 Type *gen_lval(Node *node){
+       fprintf(tout,"#lvar <%s>\n",nodeKind[node->kind]);
        if(node->kind==ND_LVAR){
                printf("  mov rax, rbp\n");//base pointer
                printf("  sub rax, %d\n",node->offset);
                printf("  push rax\n");//save local variable address
+               fprintf(tout,"#lvar </%s>\n",nodeKind[node->kind]);
                return node->type;
        }else if(node->kind==ND_DEREF){
-               return gen(node->lhs);//address is in stack
+               Type*t=gen(node->lhs);//address is in stack
+               fprintf(tout,"#lvar </%s>\n",nodeKind[node->kind]);
+               return t;
        }else{
                error_at(node->token->str,"token is not lvalue\n",node->token->str);
                abort();
@@ -70,8 +74,12 @@ Type *gen(Node *node){
                printf("  push %d\n",node->val);
                fprintf(tout,"# %d</%s>\n",node->val,nodeKind[node->kind]);
                return node->type;
-       }else if(node->kind==ND_LVAR){
+       }else if(node->kind==ND_LVAR){//local value
                Type *t=gen_lval(node);
+               if(t && t->ty==TY_ARRAY){
+                       fprintf(tout,"# </%s>\n",nodeK);
+                       return t;
+               }
                printf("  pop rax\n");//get address
                printf("  mov rax, [rax]\n");//get data from address
                printf("  push rax\n");//save local variable value
@@ -184,7 +192,7 @@ Type *gen(Node *node){
        printf("  pop rdi\n");//rhs
        printf("  pop rax\n");//lhs
 
-       if(t && t->ty==TY_PTR){
+       if(t && (t->ty==TY_PTR)){
                if(t->ptr_to->ty==TY_INT){
                        printf("  imul rdi, 4\n");
                }else{

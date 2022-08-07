@@ -18,6 +18,15 @@ assert(){
 }
 assert 3 "main(){int a[10];return 3;}"
 assert 40 "main(){int a[10];return sizeof(a);}"
+assert 1 "main(){int a[2];*a=1;return *a;}"
+assert 2 "main(){int a[2];*(a+1)=2;return *(a+1);}"
+assert 1 "main(){int a[2];*a=1;return a[0];}"
+assert 2 "main(){int a[2];*(a+1)=2;return a[1];}"
+assert 1 "main(){int a[2];*a=1;*(a+1)=2;return *a;}"
+assert 2 "main(){int a[2];*a=1;*(a+1)=2;return *(a+1);}"
+assert 1 "main(){int a[2];*a=1;*(a+1)=2;int *p;p=a;return *p;}"
+#assert 2 "main(){int a[2];*a=1;*(a+1)=2;int *p;p=a;return *(p+1);}"
+#assert 3 "main(){int a[2];*a=1;*(a+1)=2;int *p;p=a;return *p+*(p+1);}"
 #assert 4 "main(){int a[10];return sizeof(a[0]);}"
 
 assert 4 "main(){int x;return sizeof(x);}"

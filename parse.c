@@ -238,11 +238,19 @@ Node *primary(){
                        }
                        fprintf(tout,"# </%s>\n",__func__);
                        return ans;
-               /* }else if(consume("[")){ */
-               /*      Node *ans = new_node(ND_ARRAY,NULL,NULL,tok); */
-               /*      expect("]");//important */
-               /*      fprintf(tout,"# </%s>\n",__func__); */
-               /*      return ans; */
+               }else if(consume("[")){
+                       Node *ans = new_node(ND_LVAR,NULL,NULL,tok);
+                       LVar *var = find_lvar(tok);
+                       if(var){
+                               ans->offset=var->offset;
+                               ans->type=var->type;
+                       }else{
+                               error_at(tok->str,"token '%s' is not defined",tok->str);
+                       }
+                       Node *ans1 = new_node(ND_DEREF,new_node(ND_ADD,ans,expr(),NULL),NULL,NULL);
+                       expect("]");//important
+                       fprintf(tout,"# </%s>\n",__func__);
+                       return ans1;
                }else{//var ref
                        Node *ans = new_node(ND_LVAR,NULL,NULL,tok);
                        LVar *var = find_lvar(tok);
@@ -265,6 +273,7 @@ Node *primary(){
 /* unary   = "-"? primary | "+"? primary
            | "*" unary | "&" unary  | "sizeof" unary */
 Node *unary(){
+       fprintf(tout,"# <%s>\n",__func__);
        Token *tok=NULL;
        if((tok=consume_Token(TK_SIZEOF))){
                Node *node = unary();
@@ -274,27 +283,33 @@ Node *unary(){
                }else if(t->ty==TY_ARRAY){
                        return new_node_num(t->array_size,NULL);
                }
+               fprintf(tout,"# sizeof</%s>\n",__func__);
                return new_node_num(8,NULL);
        }
        if((tok=consume("+"))){
+               fprintf(tout,"# +</%s>\n",__func__);
                return primary();
        }
        if((tok=consume("-"))){
                //important
+               fprintf(tout,"# -</%s>\n",__func__);
                return new_node(ND_SUB,new_node_num(0,NULL),primary(),tok);//0-primary()
        }
        if((tok=consume("*"))){
+               fprintf(tout,"# *</%s>\n",__func__);
                Node *lhs=unary();
                Node *node=new_node(ND_DEREF,lhs,NULL,tok);
                node->type=lhs->type->ptr_to;
                return node;
        }
        if((tok=consume("&"))){
+               fprintf(tout,"# &</%s>\n",__func__);
                Node *lhs=unary();
                return new_node(ND_ADDR,lhs,NULL,tok);
                Node *node=new_type(TY_PTR,lhs->type);
                return node;
        }
+       fprintf(tout,"# </%s>\n",__func__);
        return primary();
 }
 Node *mul(){
@@ -411,7 +426,7 @@ Node *stmt(){
                        var->next=locals;
                        var->name=tok->str;
                        var->len=tok->len;
-                       var->offset=locals->offset+8*n;//last offset+1;
+                       var->offset=locals->offset+8;//last offset+1;
                        var->type=new_type(TY_ARRAY,t);
                        var->type->array_size=4*n;
                        //ans->offset=var->offset;
