@@ -89,6 +89,41 @@ void gen(Node *node){
                }
                printf(".Lend%d:\n",num);
                return;
+       }else if(node->kind==ND_WHILE){
+               int num=count();
+               printf(".Lbegin%d:\n",num);
+               fprintf(tout,"<cond>\n");
+               gen(node->cond);
+               fprintf(tout,"</cond>\n");
+               printf("  pop rax\n");//move result to rax
+               printf("  cmp rax, 0\n");
+               printf("  je .Lend%d\n",num);
+               fprintf(tout,"<then>\n");
+               gen(node->then);
+               fprintf(tout,"</then>\n");
+               printf("  jmp .Lbegin%d\n",num);
+               printf(".Lend%d:\n",num);
+               return;
+       }else if(node->kind==ND_FOR){
+               int num=count();
+               if(node->init)
+                       gen(node->init);
+               printf(".Lbegin%d:\n",num);
+               fprintf(tout,"<cond>\n");
+               if(node->cond)
+                       gen(node->cond);
+               fprintf(tout,"</cond>\n");
+               printf("  pop rax\n");//move result to rax
+               printf("  cmp rax, 0\n");
+               printf("  je .Lend%d\n",num);
+               fprintf(tout,"<then>\n");
+               gen(node->then);
+               if(node->next)
+                       gen(node->next);
+               fprintf(tout,"</then>\n");
+               printf("  jmp .Lbegin%d\n",num);
+               printf(".Lend%d:\n",num);
+               return;
        }
        gen(node->lhs);
        gen(node->rhs);

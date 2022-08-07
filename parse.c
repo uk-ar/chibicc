@@ -337,9 +337,41 @@ Node *stmt(){
        }
        if(consume_Token(TK_WHILE)){
                expect("(");
-               node=new_node(ND_WHILE,node,expr());
+               node=new_node(ND_WHILE,NULL,NULL);
+               node->cond=expr();
                expect(")");
-               stmt();
+               node->then=stmt();
+               fprintf(tout,"</%s>\n",__func__);
+               return node;
+       }
+       if(consume_Token(TK_FOR)){
+               /* Node *init;//for init */
+               /* Node *cond;//if,while,for cond */
+               /* Node *next;//for next */
+               /* Node *then;//if,while,for then */
+               fprintf(tout,"<for>\n",__func__);
+               expect("(");
+               node=new_node(ND_FOR,NULL,NULL);
+               fprintf(tout,"<init>\n",__func__);
+               if(!consume(";")){
+                       node->init=expr();
+                       expect(";");
+               }
+               fprintf(tout,"</init>\n",__func__);
+               fprintf(tout,"<cond>\n",__func__);
+               if(!consume(";")){
+                       node->cond=expr();
+                       expect(";");
+               }
+               fprintf(tout,"</cond>\n",__func__);
+               fprintf(tout,"<next>\n",__func__);
+               if(!consume(")")){
+                       node->next=expr();
+                       expect(")");
+               }
+               fprintf(tout,"</next>\n",__func__);
+               node->then=stmt();
+               fprintf(tout,"</for>\n",__func__);
                fprintf(tout,"</%s>\n",__func__);
                return node;
        }

@@ -47,9 +47,11 @@ struct Node{//binary tree node
        NodeKind kind;
        Node *lhs;//left hand side;
        Node *rhs;//right hand side;
-       Node *cond;//if cond
-       Node *then;//if then
+       Node *cond;//if,while,for cond
+       Node *then;//if,while,for then
        Node *els;//if else
+       Node *init;//for init
+       Node *next;//for next
        int val; // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
 };
