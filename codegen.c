@@ -15,6 +15,7 @@ char *nodeKind[]={
        "ND_NUM",
        "ND_LVAR",//variable
        "ND_ASSIGN",//variable
+       "ND_RETURN",//return
        "ND_LT",
        "ND_GT",
        "ND_EQ",
@@ -53,6 +54,14 @@ void gen(Node *node){
                printf("  pop rax\n");//lhs
                printf("  mov [rax],rdi\n");
                printf("  push rdi\n");//expression result
+               fprintf(tout,"g</%s>\n",nodeKind[node->kind]);
+               return;
+       }else if(node->kind==ND_RETURN){
+               gen(node->rhs);
+               printf("  pop rax\n");//move result to rax
+               printf("  mov rsp,rbp\n");//restore stack pointer
+               printf("  pop rbp\n");//restore base pointer
+               printf("  ret\n");
                fprintf(tout,"g</%s>\n",nodeKind[node->kind]);
                return;
        }

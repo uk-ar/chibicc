@@ -21,10 +21,14 @@ void error_at(char *loc,char *fmt,...){
        exit(1);
 }
 
-bool consume(char *op){//if next == op, advance & return true;
-       //printf("t:%s:%d\n",token->str,token->len);
-       if(!token || token->kind!=TK_RESERVED)
+bool consume_Token(TokenKind kind){
+       if(!token || token->kind!=kind)
                return false;
+       token=token->next;
+       return true;
+}
+
+bool consume(char *op){//if next == op, advance & return true;
        if(strncmp(op,token->str,strlen(op))!=0)
                return false;
        //printf("t:%s:%d\n",token->str,token->len);
@@ -70,11 +74,19 @@ Token *new_token(TokenKind kind,Token *cur,char *str,int len){
 bool at_eof(){
        return !token || token->kind==TK_EOF;
 }
+bool isIdent(char c){
+       return isdigit(c) || isalpha(c);
+}
 Token *tokenize(char *p){
        Token head,*cur=&head;
        while(*p){
                if(isspace(*p)){
                        p++;
+                       continue;
+               }
+               if(!strncmp(p,"return",6) && !isIdent(p[6])){
+                       cur = new_token(TK_RETURN,cur,p,6);
+                       p+=6;
                        continue;
                }
                if(!strncmp(p,"<=",2) || !strncmp(p,">=",2) ||
@@ -274,7 +286,15 @@ Node *expr(){
        return node;
 }
 Node *stmt(){
-       Node *node=expr();
+       Node *node=NULL;
+       fprintf(tout,"<%s>\n",__func__);
+       if(consume_Token(TK_RETURN)){
+               node=new_node(ND_RETURN,node,expr());
+               expect(";");
+               fprintf(tout,"</%s>\n",__func__);
+               return node;
+       }
+       node=expr();
        expect(";");
        return node;
 }

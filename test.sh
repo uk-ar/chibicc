@@ -16,7 +16,7 @@ assert(){
     fi
 }
 
-
+assert 3 "return 3;"
 assert 3 "foo=3;"
 assert 3 "foo=3;foo;"
 assert 5 "foo=3;2+3;"
@@ -24,7 +24,7 @@ assert 3 "foo=3;2;foo;"
 assert 3 "foo=3;2+3;foo;"
 assert 4 "foo=3;2+3;foo+1;"
 assert 6 "foo=1;bar=2+3;foo+bar;"
-# assert 6 "foo=1;bar=2+3;return for+bar;"
+assert 6 "foo=1;bar=2+3;return foo+bar;"
 assert 3 "a=3;"
 assert 14 "a=3;b=5*6-8;a+b/2;"
 assert 0 "1>2;"

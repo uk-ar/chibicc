@@ -1,5 +1,6 @@
 typedef enum {
        TK_RESERVED,//symbol
+       TK_RETURN,//return
        TK_IDENT,//identifier
        TK_NUM,//int
        TK_EOF,
@@ -23,6 +24,7 @@ typedef enum {
        ND_NUM,//integer
        ND_LVAR,//variable
        ND_ASSIGN,//=
+       ND_RETURN,//return
        ND_LT,//??
        ND_GT,
        ND_EQ,
