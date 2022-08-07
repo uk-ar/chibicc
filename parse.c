@@ -23,7 +23,7 @@ void error_at(char *loc,char *fmt,...){
 }
 Type *new_type(TypeKind ty,Type*ptr_to){//
        Type*type=calloc(1,sizeof(Type));
-       type->ty=ty;
+       type->kind=ty;
        type->ptr_to=ptr_to;
        return type;
 }
@@ -304,12 +304,12 @@ Node *unary(){
        if((tok=consume_Token(TK_SIZEOF))){
                Node *node = unary();
                Type *t=node->type;
-                fprintf(tout,"# sizeof %d</%s>\n",t->ty,__func__);
-               if(t->ty==TY_INT){
+                fprintf(tout,"# sizeof %d</%s>\n",t->kind,__func__);
+               if(t->kind==TY_INT){
                   return new_node_num(4,NULL,TY_INT);
-               }else if(t->ty==TY_ARRAY){
+               }else if(t->kind==TY_ARRAY){
                   return new_node_num(t->array_size*4,NULL,TY_ARRAY);
-               }else if(t->ty==TY_CHAR){
+               }else if(t->kind==TY_CHAR){
                   return new_node_num(1,NULL,TY_CHAR);
                 }
                return new_node_num(8,NULL,TY_PTR);
@@ -563,7 +563,14 @@ Node *stmt(){
 }
 Node *arg(){
        fprintf(tout,"# <%s>\n",__func__);
-       consume_Token(TK_TYPE);
+        Type *t=NULL;
+        if(consume("int")){
+          t=new_type(TY_INT,NULL);
+        }else if(consume("char")){
+          t=new_type(TY_CHAR,NULL);
+        }
+       while(consume("*"))
+               t=new_type(TY_PTR,t);
        Token*tok = consume_ident();
        Node *ans = new_node(ND_LVAR,NULL,NULL,tok);
        LVar *var = find_lvar(tok);
@@ -578,6 +585,7 @@ Node *arg(){
                var->len=tok->len;
                var->offset=locals->offset+8;//last offset+1;
                ans->offset=var->offset;
+               var->type=t;
                locals=var;
        }
        fprintf(tout,"# </%s>\n",__func__);

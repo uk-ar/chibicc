@@ -34,7 +34,7 @@ char *nodeKind[]={
        "ND_GE",
 };
 
-Type *gen_lval(Node *node){
+Type *gen_lval(Node *node){//push address
        fprintf(tout,"#lvar <%s>\n",nodeKind[node->kind]);
        if(node->kind==ND_GVAR){
                printf("  lea rax, %s[rip]\n",node->name);//base pointer
@@ -84,6 +84,9 @@ Type *gen(Node *node){
                return node->type;
        }else if(node->kind==ND_LVAR){//local value
                Type *t=gen_lval(node);//get address
+               if(t->kind==TY_ARRAY){
+                return t;
+               }
                printf("  pop rax\n");//get address
                printf("  mov rax, [rax]\n");//get data from address
                printf("  push rax\n");//save local variable value
@@ -196,22 +199,21 @@ Type *gen(Node *node){
                fprintf(tout,"# </%s>\n",nodeK);
                return node->type;
        }else if(node->kind==ND_DEREF){
-               gen(node->lhs);//address is in stack
-               Type* t=gen(node->lhs);
+               Type* t=gen(node->lhs);//address is in stack
                printf("  pop rdi\n");
                printf("  mov rax,[rdi]\n");//get data from address
                printf("  push rax\n");//expression result */
                return t->ptr_to;
        }
-       gen(node->lhs);
-       Type *t=gen(node->rhs);
+       Type *t=gen(node->lhs);
+       gen(node->rhs);
        printf("  pop rdi\n");//rhs
        printf("  pop rax\n");//lhs
        if(t)
-               fprintf(tout,"# ty:%d\n",t->ty);
-       if(t && (t->ty==TY_PTR || t->ty==TY_ARRAY)){
-               fprintf(tout,"# ptr_to->ty:%d\n",t->ptr_to->ty);
-               if(t->ptr_to->ty==TY_INT){
+               fprintf(tout,"# ty:%d\n",t->kind);
+       if(t && (t->kind==TY_PTR || t->kind==TY_ARRAY)){
+               fprintf(tout,"# ptr_to->ty:%d\n",t->ptr_to->kind);
+               if(t->ptr_to->kind==TY_INT){
                        printf("  imul rdi, 4\n");
                }else{
                        printf("  imul rdi, 8\n");

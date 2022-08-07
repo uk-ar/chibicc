@@ -34,9 +34,9 @@ int main(int argc,char **argv){
            printf(".data\n");
            printf(".global %s\n",var->name);
            printf("%s:\n",var->name);
-           if(var->type->ty==TY_INT){
+           if(var->type->kind==TY_INT){
                    printf("  .zero 4\n");
-           }else if(var->type->ty==TY_PTR){
+           }else if(var->type->kind==TY_PTR){
                    printf("  .zero 8\n");
            }else{
                    printf("  .zero %d\n",var->type->array_size*4);
