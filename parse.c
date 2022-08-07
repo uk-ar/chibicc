@@ -198,6 +198,7 @@ Node *primary(){
                if(consume("(")){//call
                        Node*ans = new_node(ND_FUNCALL,NULL,NULL);
                        ans->name=strndup(tok->str,tok->len);
+                       ans->params=NULL;
                        if(consume(")")){
                                fprintf(tout,"</%s>\n",__func__);
                                return ans;
@@ -410,6 +411,7 @@ Node *stmt(){
        }
        node=expr();
        expect(";");
+       fprintf(tout,"</%s>\n",__func__);
        return node;
 }
 Node *code[100]={0};

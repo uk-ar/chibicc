@@ -12,7 +12,7 @@ extern Token* token;
 extern Node *code[];
 extern LVar *locals;
 int main(int argc,char **argv){
-       //tout=stdout;
+       //tout=stdout;//debug
        tout=stderr;
     if(argc!=2){
         fprintf(stderr,"wrong number of argument\n.");

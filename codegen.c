@@ -46,6 +46,7 @@ int count(){
 static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 void gen(Node *node){
        fprintf(tout,"<%s>\n",nodeKind[node->kind]);
+       char *nodeK=nodeKind[node->kind];
        if(node->kind==ND_NUM){
                printf("  push %d\n",node->val);
                fprintf(tout,"%d</%s>\n",node->val,nodeKind[node->kind]);
@@ -55,7 +56,7 @@ void gen(Node *node){
                printf("  pop rax\n");//get address
                printf("  mov rax, [rax]\n");//get data from address
                printf("  push rax\n");//save local variable value
-               fprintf(tout,"</%s>\n",nodeKind[node->kind]);
+               fprintf(tout,"</%s>\n",nodeK);
                return;
        }else if(node->kind==ND_ASSIGN){
                gen_lval(node->lhs);
@@ -91,6 +92,7 @@ void gen(Node *node){
                        gen(node->els);
                }
                printf(".Lend%d:\n",num);
+               fprintf(tout,"</%s>\n",nodeK);
                return;
        }else if(node->kind==ND_WHILE){
                int num=count();
@@ -106,6 +108,7 @@ void gen(Node *node){
                fprintf(tout,"</then>\n");
                printf("  jmp .Lbegin%d\n",num);
                printf(".Lend%d:\n",num);
+               fprintf(tout,"</%s>\n",nodeK);
                return;
        }else if(node->kind==ND_FOR){
                int num=count();
@@ -126,22 +129,26 @@ void gen(Node *node){
                fprintf(tout,"</then>\n");
                printf("  jmp .Lbegin%d\n",num);
                printf(".Lend%d:\n",num);
+               fprintf(tout,"</%s>\n",nodeK);
                return;
        }else if(node->kind==ND_BLOCK){
                for(int i=0;i<100 && node->stmts[i];i++){
                        gen(node->stmts[i]);
                        printf("  pop rax\n");//move result to rax
                }
+               fprintf(tout,"</%s>\n",nodeK);
                return;
        }else if(node->kind==ND_FUNCALL){
-               for(int i=0;i<6 && node->params[i];i++){
+               for(int i=0;i<6 && node->params && node->params[i];i++){
                        gen(node->params[i]);
                }
-               for(int i=0;i<6 && node->params[i];i++){
+               for(int i=0;i<6 && node->params&& node->params[i];i++){
+                       //TODO: align rsp
                        printf("  pop %s\n",argreg[i]);
                }
-               //TODO: align rsp
                printf("  call %s\n",node->name);
+               printf("  push rax\n");//save result to sp
+               fprintf(tout,"</%s>\n",nodeK);
                return;
        }
        gen(node->lhs);
