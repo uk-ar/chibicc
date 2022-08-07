@@ -16,6 +16,14 @@ assert(){
        exit 1
     fi
 }
+assert 2 "int main(){return foo();}"
+assert 3 "int main(){return bar(1,2);}"
+assert 1 "int main(){return arg2(0,1);}"
+assert 2 "int main(){return arg3(1,1,2);}"
+assert 4 "int main(){return arg4(2,1,2,4);}"
+assert 8 "int main(){return arg5(3,1,2,4,8);}"
+assert 2 "int main(){int *p;alloc4(&p,1,2,4,8);return 2;}"
+assert 1 "int main(){int *p;alloc4(&p,1,2,4,8);return *p;}"
 assert 3 "int main(){int x;int *y;y=&x;return 3;}"
 assert 3 "int main(){int x;int *y;y=&x;*y=3;return x;}"
 assert 4 "int main(){return 4;}"

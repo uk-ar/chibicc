@@ -159,8 +159,6 @@ void gen(Node *node){
        }else if(node->kind==ND_FUNCALL){
                for(int i=0;i<6 && node->params && node->params[i];i++){
                        gen(node->params[i]);
-               }
-               for(int i=0;i<6 && node->params&& node->params[i];i++){
                        //TODO: align rsp
                        printf("  pop %s\n",argreg[i]);
                }
