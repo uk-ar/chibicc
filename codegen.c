@@ -42,7 +42,7 @@ Type *gen_lval(Node *node){//push address
                //printf("  mov rax, %s\n",strndup(node->token->str,node->token->len));//base pointer
                printf("  push rax\n");//save local variable address
                /* fprintf(tout,"#lvar </%s>\n",nodeKind[node->kind]); */
-               return NULL;//node->type;
+               return node->type;
        }else if(node->kind==ND_LVAR){
                printf("  mov rax, rbp\n");//base pointer
                printf("  sub rax, %d\n",node->offset);
@@ -88,14 +88,22 @@ Type *gen(Node *node){
                 return t;
                }
                printf("  pop rax\n");//get address
-               printf("  mov rax, [rax]\n");//get data from address
+               if(t->kind==TY_CHAR){
+                 printf("  movsx eax, BYTE PTR [rax]\n");//get data from address
+               }else{
+                 printf("  mov rax, [rax]\n");//get data from address
+               }
                printf("  push rax\n");//save local variable value
                fprintf(tout,"# </%s>\n",nodeK);
                return t;
        }else if(node->kind==ND_GVAR){//local value
-               Type *t=NULL;//gen_lval(node);//get address
+               Type *t=node->type;//gen_lval(node);//get address
                //printf("  mov rax, %s[rip]\n",strndup(node->token->str,node->token->len));//base pointer
-               printf("  mov rax, %s[rip]\n",node->name);//base pointer
+               if(t->kind==TY_CHAR){
+                 printf("  movsx eax, BYTE PTR %s[rip]\n",node->name);//base pointer
+               }else{
+                 printf("  mov rax, %s[rip]\n",node->name);//base pointer
+               }
                printf("  push rax\n");//save local variable address
                /* fprintf(tout,"#lvar </%s>\n",nodeKind[node->kind]);   */
 
@@ -107,10 +115,14 @@ Type *gen(Node *node){
        }else if(node->kind==ND_ASSIGN){
                Type *t=gen_lval(node->lhs);
                gen(node->rhs);
-               printf("  pop rdi\n");//rhs
+               printf("  pop rbx\n");//rhs
                printf("  pop rax\n");//lhs
-               printf("  mov [rax],rdi\n");
-               printf("  push rdi\n");//expression result
+               if(t->kind==TY_CHAR){
+                 printf("  mov [rax],bl\n");
+               }else{
+                 printf("  mov [rax],rbx\n");
+               }
+               printf("  push rbx\n");//save expression result(ex. a=b=c)
                fprintf(tout,"# </%s>\n",nodeKind[node->kind]);
                return t;
        }else if(node->kind==ND_RETURN){
@@ -217,7 +229,9 @@ Type *gen(Node *node){
                fprintf(tout,"# ty:%d\n",t->kind);
        if(t && (t->kind==TY_PTR || t->kind==TY_ARRAY)){
                fprintf(tout,"# ptr_to->ty:%d\n",t->ptr_to->kind);
-               if(t->ptr_to->kind==TY_INT){
+               if(t->ptr_to->kind==TY_CHAR){
+                 printf("  imul rdi, 1\n");
+               }else if(t->ptr_to->kind==TY_INT){
                        printf("  imul rdi, 4\n");
                }else{
                        printf("  imul rdi, 8\n");

@@ -473,7 +473,10 @@ Node *stmt(){
                        strncpy(var->name,tok->str,tok->len);
                        //var->name=strndup(tok->str,tok->len);
                        var->len=tok->len;
-                       var->offset=locals->offset+8;//last offset+1;
+                       if(t->kind==TY_CHAR)
+                         var->offset=locals->offset+1;//last offset+1;
+                       else
+                         var->offset=locals->offset+8;//last offset+1;
                        var->type=t;
                        //ans->offset=var->offset;
                        locals=var;
@@ -583,7 +586,10 @@ Node *arg(){
                strncpy(var->name,tok->str,tok->len);
                //var->name=strndup(tok->str,tok->len);
                var->len=tok->len;
-               var->offset=locals->offset+8;//last offset+1;
+               if(t->kind==TY_CHAR)
+                 var->offset=locals->offset+1;//last offset+1;
+               else
+                 var->offset=locals->offset+8;//last offset+1;
                ans->offset=var->offset;
                var->type=t;
                locals=var;

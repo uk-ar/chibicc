@@ -19,6 +19,20 @@ assert(){
        exit 1
     fi
 }
+assert 3 "int main(){char x[3];x[0]=-1;x[1]=2;int y;y=4;return x[0]+y;}"
+assert 3 "int a;int main(){a;return 3;}"
+assert 3 "int a;int main(){a=1;return 3;}"
+assert 1 "int a;int main(){a=1;printI(a);return a;}"
+assert 1 "main(){char a[2];printA(a);printA(a+1);return distance(a,a+1);}"
+assert 1 "main(){char a[2];*a=1;*(a+1)=2;printVC(a,2);return *a;}"
+assert 2 "main(){char a[2];*a=1;*(a+1)=2;return *(a+1);}"
+assert 1 "main(){char a[2];*a=1;*(a+1)=2;return a[0];}"
+assert 2 "main(){char a[2];*a=1;*(a+1)=2;return a[1];}"
+assert 1 "main(){char a;char b;a=1;b=2;return a;}"
+assert 2 "main(){char a;char b;a=1;b=2;return b;}"
+# assert 8 "main(){int a;int b;a=1;b=2;printA(&a);printA(&b);return distance(&b,&a);}"
+assert 1 "main(){char a;char b;a=1;b=2;printA(&a);printA(&b);return distance(&b,&a);}"
+
 assert 1 "main(){arg2(1+2,3+4);return 1;}"
 assert 2 "main(){arg3(1+2,3+4,2+3);return 2;}"
 assert 1 "main(){int a[2];a[0]=1;return *a;}"
