@@ -8,6 +8,7 @@ struct Type {
 };
 
 typedef enum {
+         TK_STR,
        TK_SIZEOF,
        TK_TYPE,
        TK_IF,
@@ -32,6 +33,7 @@ struct Token{
 };
 
 typedef enum {
+  ND_STR,
        ND_GVAR,
        ND_DEREF,
        ND_ADDR,
@@ -82,7 +84,7 @@ typedef struct LVar LVar;
 
 struct LVar{
        LVar *next;
-       char *name;//start pos
+       char *name;//null terminated string
        Type *type;
        int len;
        int offset;//offset from RBP
@@ -109,4 +111,3 @@ struct HashMap{
        HashNode **v;
        int size;
 };
-

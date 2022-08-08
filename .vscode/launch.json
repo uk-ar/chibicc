@@ -30,7 +30,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/9cc",
-            "args": ["int a;int main(){a=1;return 3;}"],
+            "args": ["int main(){char *x;x=\\\"abc\\\";return x[0];}"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

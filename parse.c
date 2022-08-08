@@ -81,10 +81,32 @@ bool at_eof(){
 bool isIdent(char c){
        return isdigit(c) || isalpha(c);
 }
+LVar *strings=NULL;
+extern LVar *find_string(Token *tok);
+extern LVar *new_var(Token *tok,LVar *next,Type *t);
 Token *tokenize(char *p){
        Token head,*cur=&head;
        while(*p){
                fprintf(tout,"# t:%c\n",*p);
+               if(*p=='"'){
+                 p++;
+                 char *s=p;
+                 while(*p!='"'){
+                   p++;
+                 }
+                 cur = new_token(TK_STR,cur,s,p-s);//skip "
+                 LVar *var = find_string(cur);
+                 if(var){
+                   continue;
+                 }
+                 int i=0;
+                 if(strings)
+                   i=strings->offset+1;
+                 strings = new_var(cur,strings,NULL);
+                 strings->offset=i;
+                 p++;
+                 continue;
+               }
                if(isspace(*p)){
                        p++;
                        continue;
@@ -199,6 +221,20 @@ LVar *find_lvar(Token *tok){
 LVar *find_gvar(Token *tok){
        return find_var(tok,globals);
 }
+LVar *find_string(Token *tok){
+       return find_var(tok,strings);
+}
+LVar *new_var(Token *tok,LVar *next,Type *t){
+  LVar *var;
+  var=calloc(1,sizeof(LVar));
+  var->next=next;
+  var->name=malloc(sizeof(char)*tok->len+1);
+  strncpy(var->name,tok->str,tok->len);
+  //var->name=strndup(tok->str,tok->len);//cannot dup on x86_64 on arm bacause of alignment?
+  var->len=tok->len;
+  var->type=t;
+  return var;
+}
 
 /* program    = stmt* */
 /* stmt       = expr ";"
@@ -217,7 +253,7 @@ LVar *find_gvar(Token *tok){
 /* add        = mul ("+" mul | "-" mul)* */
 /* mul     = unary ("*" unary | "/" unary)* */
 /* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
-/* primary = num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" */
+/* primary = num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" | TK_STR*/
 Node *expr();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 /* exprs      = expr ("," expr)* */
@@ -229,7 +265,13 @@ Node *primary(){
                fprintf(tout,"# </%s>\n",__func__);
                return ans;
        }
-       Token* tok=consume_ident();
+       Token* tok=NULL;
+       if((tok=consume_Token(TK_STR))){
+         Node*ans=new_node(ND_STR,NULL,NULL,tok);
+         fprintf(tout,"# </%s>\n",__func__);
+         return ans;
+       }
+       tok=consume_ident();
        if(tok){
                if(consume("(")){//call
                        Node*ans = new_node(ND_FUNCALL,NULL,NULL,tok);

@@ -8,6 +8,7 @@
 
 FILE *tout;
 char *nodeKind[]={
+  "ND_STR",
        "ND_GVAR",
        "ND_DEREF",
        "ND_ADDR",
@@ -66,6 +67,10 @@ static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 Type *gen(Node *node){
        char *nodeK=nodeKind[node->kind];
        fprintf(tout,"# <%s>\n",nodeK);
+       if(node->kind==ND_STR){
+         LVar* var=find_string(node->token);
+         printf("push .LC%d\n",var->offset);
+       }
        if(node->kind==ND_FUNC){
                printf("%s:\n",node->name);
                printf("  push rbp\n");//save base pointer
@@ -199,7 +204,7 @@ Type *gen(Node *node){
        }else if(node->kind==ND_FUNCALL){
                 int i;
                for(i=0;i<6 && node->params && node->params[i];i++){
-                       gen(node->params[i]);                                              
+                       gen(node->params[i]);
                }
                i--;
                for(;i>=0;i--){

@@ -19,6 +19,7 @@ assert(){
        exit 1
     fi
 }
+assert 47 "int main(){char *x;x=\"abc\";return x[0];}"
 assert 3 "int main(){char x[3];x[0]=-1;x[1]=2;int y;y=4;return x[0]+y;}"
 assert 3 "int a;int main(){a;return 3;}"
 assert 3 "int a;int main(){a=1;return 3;}"
@@ -157,3 +158,4 @@ assert 1 "main(){return 2==2;}"
 # assert 0 "main(){return ;}"
 
 echo OK
+

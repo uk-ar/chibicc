@@ -10,7 +10,7 @@ extern FILE *tout;
 extern char* user_input;
 extern Token* token;
 extern Node *code[];
-extern LVar *locals,*globals;
+extern LVar *locals,*globals,*strings;
 
 int main(int argc,char **argv){
        tout=stdout;//debug
@@ -41,6 +41,10 @@ int main(int argc,char **argv){
            }else{
                    printf("  .zero %d\n",var->type->array_size*4);
            }
+    }
+    for(LVar *var=strings;var;var=var->next){
+      printf(".LC%d:\n",var->offset);
+      printf("  .string \"%s\"\n",var->name);
     }
 
     printf(".global main\n");
