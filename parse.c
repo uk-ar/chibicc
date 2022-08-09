@@ -9,18 +9,37 @@
 
 Token *token;//current token
 
-char *user_input;
-void error_at(char *loc,char *fmt,...){
-       va_list ap;
-       fprintf(stderr,"%s\n",user_input);
-       int pos=loc-user_input;
-       fprintf(stderr,"%*s",pos," ");//output white space
-       fprintf(stderr,"^ ");//output white space
+char *filename;
+extern char* user_input;
+
+void error_at(char*loc,char*fmt,...){
+        va_list ap;
+        char *start=loc;
+        while(user_input<start && start[-1]!='\n')//*(start-1)
+                start--;
+
+        char *end=loc;
+        while(*end!='\n')
+                end++;
+        
+        int line_num=1;
+        for(char *p=user_input;p<loc;p++){
+                if(*p=='\n')
+                        line_num++;
+        }
+
+        int indent=fprintf(stderr,"%s:%d: ",filename,line_num);
+        int j=end-start;
+        fprintf(stderr,"%.*s\n",(int)(end-start),start);
+
+        int pos=loc-start+indent;
+        fprintf(stderr,"%*s^ ",pos," ");
        va_start(ap,fmt);
        vfprintf(stderr,fmt,ap);
        fprintf(stderr,"\n");
        exit(1);
 }
+
 Type *new_type(TypeKind ty,Type*ptr_to){//
        Type*type=calloc(1,sizeof(Type));
        type->kind=ty;
@@ -228,7 +247,7 @@ LVar *new_var(Token *tok,LVar *next,Type *t){
   LVar *var;
   var=calloc(1,sizeof(LVar));
   var->next=next;
-  var->name=malloc(sizeof(char)*tok->len+1);
+  var->name=calloc(1,tok->len+1);
   strncpy(var->name,tok->str,tok->len);
   //var->name=strndup(tok->str,tok->len);//cannot dup on x86_64 on arm bacause of alignment?
   var->len=tok->len;
@@ -276,7 +295,7 @@ Node *primary(){
                if(consume("(")){//call
                        Node*ans = new_node(ND_FUNCALL,NULL,NULL,tok);
                        //ans->name=strndup(tok->str,tok->len);
-                       ans->name=malloc(sizeof(char)*tok->len+1);
+                       ans->name=calloc(1,tok->len+1);
                        strncpy(ans->name,tok->str,tok->len);
                        ans->params=NULL;
                        if(consume(")")){
@@ -317,12 +336,12 @@ Node *primary(){
                        Node *ans = NULL;
                        if(!var){
                                var = find_gvar(tok);
-                               ans = new_node(ND_GVAR,NULL,NULL,tok);
-                               ans->name=var->name;
+                               ans = new_node(ND_GVAR,NULL,NULL,tok);                               
                        }else{
                                ans = new_node(ND_LVAR,NULL,NULL,tok);
                        }
                        if(var){
+                                ans->name=var->name;
                                ans->offset=var->offset;
                                ans->type=var->type;
                        }else{
@@ -499,7 +518,7 @@ Node *stmt(){
                        var=calloc(1,sizeof(LVar));
                        var->next=locals;
                        //var->name=strndup(tok->str,tok->len);
-                       var->name=malloc(sizeof(char)*tok->len+1);
+                       var->name=calloc(1,tok->len+1);
                        strncpy(var->name,tok->str,tok->len);
                        var->len=tok->len;
                        var->offset=locals->offset+8*n;//last offset+1;
@@ -511,7 +530,7 @@ Node *stmt(){
                }else{
                        var=calloc(1,sizeof(LVar));
                        var->next=locals;
-                       var->name=malloc(sizeof(char)*tok->len+1);
+                       var->name=calloc(1,tok->len+1);
                        strncpy(var->name,tok->str,tok->len);
                        //var->name=strndup(tok->str,tok->len);
                        var->len=tok->len;
@@ -624,7 +643,7 @@ Node *arg(){
        }else{
                var=calloc(1,sizeof(LVar));
                var->next=locals;
-               var->name=malloc(sizeof(char)*tok->len+1);
+               var->name=calloc(1,tok->len+1);
                strncpy(var->name,tok->str,tok->len);
                //var->name=strndup(tok->str,tok->len);
                var->len=tok->len;
@@ -660,7 +679,7 @@ Node *decl(){
                if(consume("(")){
                        Node*ans = new_node(ND_FUNC,NULL,NULL,tok);
                        //ans->name=strndup(tok->str,tok->len);
-                       ans->name=malloc(sizeof(char)*tok->len+1);
+                       ans->name=calloc(1,tok->len+1);
                        strncpy(ans->name,tok->str,tok->len);
                        ans->params=NULL;
                        ans->params=calloc(6,sizeof(Node*));
@@ -681,7 +700,7 @@ Node *decl(){
                        int n=expect_num();
                        var=calloc(1,sizeof(LVar));
                        var->next=globals;
-                       var->name=malloc(sizeof(char)*tok->len+1);
+                       var->name=calloc(1,tok->len+1);
                        strncpy(var->name,tok->str,tok->len);
                        //var->name=strndup(tok->str,tok->len);
                        var->len=tok->len;
@@ -696,7 +715,7 @@ Node *decl(){
                }else{
                        var=calloc(1,sizeof(LVar));
                        var->next=globals;
-                       var->name=malloc(sizeof(char)*tok->len+1);
+                       var->name=calloc(1,tok->len+1);
                        strncpy(var->name,tok->str,tok->len);
                        //var->name=strndup(tok->str,tok->len);
                        var->len=tok->len;

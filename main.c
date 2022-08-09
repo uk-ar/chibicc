@@ -4,14 +4,36 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "9cc.h"
 
 extern FILE *tout;
-extern char* user_input;
+char* user_input;
+extern char* filename;
 extern Token* token;
 extern Node *code[];
 extern LVar *locals,*globals,*strings;
 
+char* read_file(char *path){
+        FILE*fp=fopen(path,"r");
+        if(!fp)
+                error("cannot open %s:",path,strerror(errno));
+
+        if(fseek(fp,0,SEEK_END)==-1)
+                error("%s:fseek:%s",path,strerror(errno));                
+        size_t size=ftell(fp);
+        if(fseek(fp,0,SEEK_SET)==-1)
+                error("%s:fseek:%s",path,strerror(errno));
+        char *buf=calloc(sizeof(char),size+2);
+        fread(buf,size,1,fp);
+
+        //make sure that buffer end in \n\0
+        if(size==0||buf[size-1]!='\n')
+                buf[size++]='\n';
+        buf[size]='\0';
+        fclose(fp);
+        return buf;
+}
 int main(int argc,char **argv){
        tout=stdout;//debug
        //tout=stderr;
@@ -19,11 +41,12 @@ int main(int argc,char **argv){
         fprintf(stderr,"wrong number of argument\n.");
         return 1;
     }
-    char *p=argv[1];
-    fprintf(tout,"# %s\n",p);
+
     locals=calloc(1,sizeof(LVar));
-    user_input=argv[1];
-    token=tokenize(p);
+    filename=argv[1];
+    fprintf(tout,"# %s\n",filename);
+    user_input=read_file(filename);
+    token=tokenize(user_input);
     program();
 
     //header

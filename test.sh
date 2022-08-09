@@ -3,7 +3,8 @@ assert(){
     expected="$1"
     input="$2"
 
-    ./9cc "$input" > tmp.s
+    echo "$input" > tmp.cx
+    ./9cc tmp.cx > tmp.s
     if [ "$?" -ne 0 ]; then
         echo "compile error"
         exit 1
@@ -19,6 +20,7 @@ assert(){
        exit 1
     fi
 }
+assert 3 "inat main(){printf(\"abc\");return 3;}"
 assert 3 "int main(){printf(\"abc\");return 3;}"
 assert 2 "int main(){printf(\"abc:%d\",1);return 2;}"
 assert 1 "int main(){char x[3];x[0]=97;x[1]=98;x[2]=0;printVC(x,3);puts(x);return 1;}"
