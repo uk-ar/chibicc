@@ -29,6 +29,15 @@ int main(int argc,char **argv){
     //header
     printf(".intel_syntax noprefix\n");
 
+    
+    for(LVar *var=strings;var;var=var->next){
+        //printf("  .text \n");
+      printf(".LC%d:\n",var->offset);
+      printf("  .string \"%s\"\n",var->name);
+      //printf("  .text \n");
+    }
+    //printf("  .text \n");
+
     for(LVar *var=globals;var;var=var->next){//gvar
            //https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
            printf(".data\n");
@@ -42,10 +51,7 @@ int main(int argc,char **argv){
                    printf("  .zero %d\n",var->type->array_size*4);
            }
     }
-    for(LVar *var=strings;var;var=var->next){
-      printf(".LC%d:\n",var->offset);
-      printf("  .string \"%s\"\n",var->name);
-    }
+
 
     printf(".global main\n");
     for(int i=0;code[i];i++){

@@ -82,6 +82,10 @@ void printVC(char *v,int l){
                 printf("%d,",v[i]);
         }
         printf("\n");
+        for(int i=0;i<l;i++){
+                printf("%c,",v[i]);
+        }
+        printf("\n");
 }
 void printA(int* p){
        printf("%x\n",p);

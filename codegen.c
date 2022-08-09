@@ -63,13 +63,16 @@ int count(){
        static int cnt=0;
        return cnt++;
 }
+extern LVar *find_string(Token *tok);
 static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 Type *gen(Node *node){
        char *nodeK=nodeKind[node->kind];
        fprintf(tout,"# <%s>\n",nodeK);
        if(node->kind==ND_STR){
          LVar* var=find_string(node->token);
-         printf("push .LC%d\n",var->offset);
+         printf("  mov rax , OFFSET FLAT:.LC%d\n",var->offset);
+         printf("  push rax\n");
+         return node->type;
        }
        if(node->kind==ND_FUNC){
                printf("%s:\n",node->name);

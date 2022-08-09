@@ -8,7 +8,7 @@ assert(){
         echo "compile error"
         exit 1
     fi
-    cc -g -o tmp tmp.s test/test.o
+    gcc -static -g -o tmp tmp.s test/test.o
     ./tmp
     actual="$?"
 
@@ -19,7 +19,13 @@ assert(){
        exit 1
     fi
 }
-assert 47 "int main(){char *x;x=\"abc\";return x[0];}"
+assert 1 "int main(){char x[3];x[0]=97;x[1]=98;x[2]=0;printVC(x,3);puts(x);return 1;}"
+assert 3 "int main(){puts(\"abc\");return 3;}"
+assert 3 "int main(){char *x;x=\"abc\";return 3;}"
+assert 3 "int main(){char *x;x=\"abc\";printVC(x,3);return 3;}"
+#assert 97 "int main(){char *x;x=\"abc\";return x[0];}"
+#assert 97 "int main(){char *x;x=\"abc\";return *x;}"
+#assert 3  "int main(){char *x;x=\"abc\";puts(x);return 3;}"
 assert 3 "int main(){char x[3];x[0]=-1;x[1]=2;int y;y=4;return x[0]+y;}"
 assert 3 "int a;int main(){a;return 3;}"
 assert 3 "int a;int main(){a=1;return 3;}"
