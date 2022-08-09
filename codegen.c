@@ -214,6 +214,7 @@ Type *gen(Node *node){
                         //TODO: align rsp
                         printf("  pop %s\n",argreg[i]);
                }
+               printf("  mov eax, 0\n");//set al to 0 for printf
                printf("  call %s\n",node->name);
                printf("  push rax\n");//save result to sp
                fprintf(tout,"# </%s>\n",nodeK);
