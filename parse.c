@@ -19,9 +19,9 @@ void error_at(char*loc,char*fmt,...){
                 start--;
 
         char *end=loc;
-        while(*end!='\n')
+        while(*end && *end!='\n')
                 end++;
-        
+
         int line_num=1;
         for(char *p=user_input;p<loc;p++){
                 if(*p=='\n')
@@ -110,9 +110,11 @@ Token *tokenize(char *p){
                if(*p=='"'){
                  p++;
                  char *s=p;
-                 while(*p!='"'){
+                 while(*p && *p!='"'){
                    p++;
                  }
+                 if(!(*p))
+                   error_at(p,"'\"' is not closing");
                  cur = new_token(TK_STR,cur,s,p-s);//skip "
                  LVar *var = find_string(cur);
                  if(var){
@@ -129,6 +131,19 @@ Token *tokenize(char *p){
                if(isspace(*p)){
                        p++;
                        continue;
+               }
+               if(!strncmp(p,"//",2)){
+                 while(*p && *p!='\n')
+                   p++;
+                 p++;
+                 continue;
+               }
+               if(!strncmp(p,"/*",2)){
+                 char *q=strstr(p+2,"*/");
+                 if(!(*p))
+                   error_at(p,"'/*' is not closing");
+                 p=q+2;
+                 continue;
                }
                if(!strncmp(p,"sizeof",6) && !isIdent(p[6])){
                        cur = new_token(TK_SIZEOF,cur,p,6);
@@ -336,7 +351,7 @@ Node *primary(){
                        Node *ans = NULL;
                        if(!var){
                                var = find_gvar(tok);
-                               ans = new_node(ND_GVAR,NULL,NULL,tok);                               
+                               ans = new_node(ND_GVAR,NULL,NULL,tok);
                        }else{
                                ans = new_node(ND_LVAR,NULL,NULL,tok);
                        }
@@ -733,7 +748,7 @@ Node *code[100]={0};
 void program(){
        int i=0;
        while(!at_eof()){
-               fprintf(tout,"# c:%d:%s\n",i,token->str);
+               //fprintf(tout,"# c:%d:%s\n",i,token->str);
                //fprintf(tout,"# c:%d:%d\n",i,code[i]->kind);
                code[i++]=decl();
        }

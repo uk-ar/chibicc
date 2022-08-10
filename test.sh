@@ -20,8 +20,11 @@ assert(){
        exit 1
     fi
 }
-assert 3 "inat main(){printf(\"abc\");return 3;}"
+assert 3 "int main(){//hello\nreturn 3;}"
+assert 2 "int main(){/*hello\n commnent*/return 2;}"
+
 assert 3 "int main(){printf(\"abc\");return 3;}"
+assert 1 "int main(){printf(\"abc\");return 1;}"
 assert 2 "int main(){printf(\"abc:%d\",1);return 2;}"
 assert 1 "int main(){char x[3];x[0]=97;x[1]=98;x[2]=0;printVC(x,3);puts(x);return 1;}"
 assert 3 "int main(){puts(\"abc\");return 3;}"
@@ -169,4 +172,3 @@ assert 1 "main(){return 2==2;}"
 # assert 0 "main(){return ;}"
 
 echo OK
-

@@ -44,7 +44,7 @@ int main(int argc,char **argv){
 
     locals=calloc(1,sizeof(LVar));
     filename=argv[1];
-    fprintf(tout,"# %s\n",filename);
+    //fprintf(tout,"# %s\n",filename);
     user_input=read_file(filename);
     token=tokenize(user_input);
     program();
