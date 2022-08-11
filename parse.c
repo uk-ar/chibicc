@@ -280,7 +280,7 @@ LVar *new_var(Token *tok,LVar *next,Type *t){
               | "int" ident "[" expr "]" ";"
               | "return" expr ";" */
 /* exprs      = expr ("," expr)* */
-/* expr       = assign */
+/* expr       = assign | "{" stmt "}" */
 /* assign     = equality ("=" assign)? */
 /* equality   = relational ("==" relational | "!=" relational)* */
 /* relational = add ("<" add | "<=" add | ">" add | ">=" add)* */
@@ -504,8 +504,16 @@ Node *assign(){
        fprintf(tout,"# </%s>\n",__func__);
        return node;
 }
+extern Node *stmt();
 Node *expr(){
        fprintf(tout,"# <%s>\n",__func__);
+       Token *tok=NULL;
+       if((tok=consume("{"))){
+               Node *node=new_node(ND_ASSIGN,node,stmt(),tok);
+               fprintf(tout,"# </%s>\n",__func__);
+               expect("}");
+               return node;
+       }
        Node*node=assign();
        fprintf(tout,"# </%s>\n",__func__);
        return node;

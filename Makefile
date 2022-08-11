@@ -1,7 +1,7 @@
 CFLAGS=-std=c99 -g -static -Wall
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
-TESTSRCS=$(wildcard test/*.c)
+TESTSRCS=$(filter-out test/common.c,$(wildcard test/*.c))
 TESTS=$(TESTSRCS:.c=.exe)
 
 9cc: $(OBJS)
@@ -15,10 +15,13 @@ test/%.exe: 9cc test/%.c
 	./9cc test/$*.e > test/$*.s
 #cat test/$*.s
 #テストバイナリ作成
-	$(CC) -static -o $@ test/$*.s
+	$(CC) -static -o $@ test/$*.s test/common.c
 
 test: $(TESTS)
 	for i in $^; do echo $$i; ./$$i || exit 1; echo; done
+
+test_o: 9cc test/common.o
+	sh ./test.sh
 
 clean:
 	rm -f 9cc *.o *~ tmp* test/*.s test/*.e test/*.exe

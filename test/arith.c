@@ -1,15 +1,5 @@
 #include "test.h"
 
-int assert(int expected,int actual,char *code){
-    if(expected==actual){
-        printf("%s => %d\n",code,actual);
-    }else{
-        printf("%s => %d expected but got %d\n",code,expected,actual);
-        exit(1);
-    }
-    return 0;
-}
-
 int main(int argc, char **argv)
 {   
     ASSERT(0,1>2); 
