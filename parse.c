@@ -377,6 +377,11 @@ Node *primary(){
 Node *unary(){
        fprintf(tout,"# <%s>\n",__func__);
        Token *tok=NULL;
+       if((tok=consume_Token(TK_STR))){
+         Node*ans=new_node(ND_STR,NULL,NULL,tok);
+         fprintf(tout,"# </%s>\n",__func__);
+         return ans;
+       }
        if((tok=consume_Token(TK_SIZEOF))){
                Node *node = unary();
                Type *t=node->type;
