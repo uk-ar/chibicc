@@ -241,6 +241,8 @@ Node *new_node_num(int val,Token *token, TypeKind type){
 }
 LVar *locals=NULL;
 LVar *globals=NULL;
+LVar* lstack[100];
+int lstack_i=0;
 
 LVar *find_var(Token *tok,LVar *var0){
        for(LVar *var=var0;var;var=var->next){
@@ -293,19 +295,19 @@ Node *expr();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 /* exprs      = expr ("," expr)* */
 Node *primary(){
-       fprintf(tout," <%s>\n",__func__);
+       fprintf(tout," \n<%s>\n",__func__);
        if(consume("(")){
                fprintf(tout,"(");
                Node*ans = expr();
                expect(")");//important
-               fprintf(tout,")</%s>\n",__func__);
+               fprintf(tout,")\n</%s>\n",__func__);
                return ans;
        }
        Token* tok=NULL;
        if((tok=consume_Token(TK_STR))){
         fprintf(tout,"\"");
          Node*ans=new_node(ND_STR,NULL,NULL,tok);
-         fprintf(tout,"\"</%s>\n",__func__);
+         fprintf(tout,"\"\n</%s>\n",__func__);
          return ans;
        }
        tok=consume_ident();
@@ -317,7 +319,7 @@ Node *primary(){
                        strncpy(ans->name,tok->str,tok->len);
                        ans->params=NULL;
                        if(consume(")")){
-                               fprintf(tout," </%s>\n",__func__);
+                               fprintf(tout," \n</%s>\n",__func__);
                                return ans;
                        }
                        ans->params=calloc(6,sizeof(Node*));
@@ -327,7 +329,7 @@ Node *primary(){
                                consume(",");
                                ans->params[i]=expr();
                        }
-                       fprintf(tout,"funcall</%s>\n",__func__);
+                       fprintf(tout,"funcall\n</%s>\n",__func__);
                        return ans;
                }else if(consume("[")){
                        LVar *var = find_lvar(tok);
@@ -347,7 +349,7 @@ Node *primary(){
                        }
                        Node *ans1 = new_node(ND_DEREF,new_node(ND_ADD,ans,expr(),NULL),NULL,NULL);
                        expect("]");//important
-                       fprintf(tout,"array</%s>\n",__func__);
+                       fprintf(tout,"array\n</%s>\n",__func__);
                        return ans1;
                }else{//var ref
                        LVar *var = find_lvar(tok);
@@ -365,14 +367,14 @@ Node *primary(){
                        }else{
                                error_at(tok->str,"token '%s' is not defined",tok->str);
                        }
-                       fprintf(tout,"var</%s>\n",__func__);
+                       fprintf(tout,"var\n</%s>\n",__func__);
                        //ans->offset=(tok->str[0]-'a'+1)*8;
                        return ans;
                }
        }
        Node *ans=new_node_num(expect_num(),NULL,TY_INT);
        ans->type=new_type(TY_INT,NULL);
-       fprintf(tout,"num</%s>\n",__func__);
+       fprintf(tout,"num\n</%s>\n",__func__);
        return ans;
 }
 /* unary   = "-"? primary | "+"? primary
@@ -383,14 +385,14 @@ Node *unary(){
        if((tok=consume_Token(TK_STR))){
                 fprintf(tout," <%s>\"\n",__func__);
                 Node*ans=new_node(ND_STR,NULL,NULL,tok);
-                fprintf(tout,"\"</%s>\n",__func__);
+                fprintf(tout,"\"\n</%s>\n",__func__);
                 return ans;
        }
        if((tok=consume_Token(TK_SIZEOF))){
                 fprintf(tout," <%s>\"\n",__func__);
                Node *node = unary();
                Type *t=node->type;
-                fprintf(tout," sizeof %d</%s>\n",t->kind,__func__);
+                fprintf(tout," sizeof %d\n</%s>\n",t->kind,__func__);
                if(t->kind==TY_INT){
                   return new_node_num(4,NULL,TY_INT);
                }else if(t->kind==TY_ARRAY){
@@ -403,7 +405,7 @@ Node *unary(){
        if((tok=consume("+"))){
                 fprintf(tout," <%s>+\"\n",__func__);
                 ans=primary();
-               fprintf(tout," +</%s>\n",__func__);
+               fprintf(tout," +\n</%s>\n",__func__);
                return ans;
        }
        if((tok=consume("-"))){
@@ -411,22 +413,22 @@ Node *unary(){
                fprintf(tout," <%s>-\"\n",__func__);
                 ans=new_node(ND_SUB,new_node_num(0,NULL,TY_INT),primary(),tok);//0-primary()
                return ans;
-               fprintf(tout," -</%s>\n",__func__);
+               fprintf(tout," -\n</%s>\n",__func__);
        }
        if((tok=consume("*"))){
-               fprintf(tout," deref</%s>\n",__func__);
+               fprintf(tout," deref\n<%s>\n",__func__);
                Node *lhs=unary();
                Node *node=new_node(ND_DEREF,lhs,NULL,tok);
                node->type=lhs->type->ptr_to;
-               fprintf(tout," deref</%s>\n",__func__);
+               fprintf(tout," deref\n</%s>\n",__func__);
                return node;
        }
        if((tok=consume("&"))){
-               fprintf(tout," ref<%s>\n",__func__);
+               fprintf(tout," ref\n<%s>\n",__func__);
                Node *lhs=unary();
                return new_node(ND_ADDR,lhs,NULL,tok);
                Node *node=new_type(TY_PTR,lhs->type);
-               fprintf(tout," ref</%s>\n",__func__);
+               fprintf(tout," ref\n</%s>\n",__func__);
                return node;
        }
        return primary();
@@ -436,15 +438,15 @@ Node *mul(){
        Node *node=unary();
        for(;;){
                if((tok=consume("*"))){
-                        fprintf(tout," mul<%s>\n",__func__);
+                        fprintf(tout," mul\n<%s>\n",__func__);
                        node=new_node(ND_MUL,node,unary(),tok);
-                       fprintf(tout," mul</%s>\n",__func__);
+                       fprintf(tout," mul\n</%s>\n",__func__);
                        continue;
                }
                if((tok=consume("/"))){
-                        fprintf(tout," div<%s>\n",__func__);
+                        fprintf(tout," div\n<%s>\n",__func__);
                        node=new_node(ND_DIV,node,unary(),token);
-                       fprintf(tout," div</%s>\n",__func__);
+                       fprintf(tout," div\n</%s>\n",__func__);
                        continue;
                }
                return node;
@@ -455,15 +457,15 @@ Node *add(){
        Node *node=mul();
        for(;;){
                if((tok=consume("-"))){
-                       fprintf(tout," sub<%s>\n",__func__);
+                       fprintf(tout," sub\n<%s>\n",__func__);
                        node=new_node(ND_SUB,node,mul(),tok);
-                       fprintf(tout," sub</%s>\n",__func__);
+                       fprintf(tout," sub\n</%s>\n",__func__);
                        continue;
                }
                if((tok=consume("+"))){
-                        fprintf(tout," plus<%s>\n",__func__);
+                        fprintf(tout," plus\n<%s>\n",__func__);
                        node=new_node(ND_ADD,node,mul(),tok);
-                       fprintf(tout," plus</%s>\n",__func__);
+                       fprintf(tout," plus\n</%s>\n",__func__);
                        continue;
                }
                return node;
@@ -474,27 +476,27 @@ Node *relational(){
        Node *node=add();
        for(;;){
                if((tok=consume("<="))){
-                        fprintf(tout," le<%s>\n",__func__);
+                        fprintf(tout," le\n<%s>\n",__func__);
                        node=new_node(ND_LE,node,add(),tok);
-                       fprintf(tout," le</%s>\n",__func__);
+                       fprintf(tout," le\n</%s>\n",__func__);
                        continue;
                }
                if((tok=consume(">="))){
-                        fprintf(tout," le<%s>\n",__func__);
+                        fprintf(tout," le\n<%s>\n",__func__);
                        node=new_node(ND_LE,add(),node,tok);//swap!
-                       fprintf(tout," le</%s>\n",__func__);
+                       fprintf(tout," le\n</%s>\n",__func__);
                        continue;
                }
                if((tok=consume("<"))){
-                        fprintf(tout," lt<%s>\n",__func__);
+                        fprintf(tout," lt\n<%s>\n",__func__);
                        node=new_node(ND_LT,node,add(),tok);
-                       fprintf(tout," lt</%s>\n",__func__);
+                       fprintf(tout," lt\n</%s>\n",__func__);
                        continue;
                }
                if((tok=consume(">"))){
-                        fprintf(tout," lt<%s>\n",__func__);
+                        fprintf(tout," lt\n<%s>\n",__func__);
                        node=new_node(ND_LT,add(),node,tok);//swap!
-                       fprintf(tout," lt</%s>\n",__func__);
+                       fprintf(tout," lt\n</%s>\n",__func__);
                        continue;
                }
                return node;
@@ -505,15 +507,15 @@ Node *equality(){
        Node *node=relational();
        for(;;){
                if((tok=consume("=="))){
-                        fprintf(tout," eq<%s>\n",__func__);
+                        fprintf(tout," eq\n<%s>\n",__func__);
                        node=new_node(ND_EQ,node,relational(),tok);
-                       fprintf(tout," eq</%s>\n",__func__);
+                       fprintf(tout," eq\n</%s>\n",__func__);
                        continue;
                }
                if((tok=consume("!="))){
-                        fprintf(tout," ne<%s>\n",__func__);
+                        fprintf(tout," ne\n<%s>\n",__func__);
                        node=new_node(ND_NE,node,relational(),tok);
-                       fprintf(tout," ne</%s>\n",__func__);
+                       fprintf(tout," ne\n</%s>\n",__func__);
                        continue;
                }
                return node;
@@ -524,9 +526,9 @@ Node *assign(){
        Token *tok=NULL;
        Node *node=equality();
        if((tok=consume("="))){
-                fprintf(tout," ass<%s>\n",__func__);
+                fprintf(tout," ass\n<%s>\n",__func__);
                node=new_node(ND_ASSIGN,node,assign(),tok);
-               fprintf(tout," ass</%s>\n",__func__);
+               fprintf(tout," ass\n</%s>\n",__func__);
                return node;
        }
        return node;
@@ -536,8 +538,10 @@ Node *expr(){
        Token *tok=NULL;
        Node *node=NULL;
         if((tok=consume("{"))){                
-               fprintf(tout," {<%s>\n",__func__);
+               fprintf(tout," {\n<%s>\n",__func__);
                node=new_node(ND_BLOCK,NULL,NULL,tok);
+               //lstack[lstack_i++]=locals;
+               //locals=calloc(1,sizeof(LVar));
                Node **stmts=calloc(100,sizeof(Node*));
                int i;
                for(i=0;i<100 && !consume("}");i++){
@@ -545,7 +549,8 @@ Node *expr(){
                }
                assert(i!=100);
                node->stmts=stmts;
-               fprintf(tout," }</%s>\n",__func__);
+               fprintf(tout," }\n</%s>\n",__func__);
+               //locals=lstack[--lstack_i];
                return node;
        }
        node=assign();
@@ -567,7 +572,7 @@ Node *stmt(){
         else if(consume("char"))
           t=new_type(TY_CHAR,NULL);
         if(t){
-                fprintf(tout," var decl<%s>\n",__func__);
+                fprintf(tout," var decl\n<%s>\n",__func__);
                while(consume("*"))
                        t=new_type(TY_PTR,t);
                Token*tok = consume_ident();//ident
@@ -590,20 +595,20 @@ Node *stmt(){
                        else
                          locals->offset=locals->next->offset+8;//last offset+1;
                }
-               fprintf(tout," var decl</%s>\n",__func__);
+               fprintf(tout," var decl\n</%s>\n",__func__);
                expect(";");
                return stmt();
                //skip token
        }
        if((tok=consume_Token(TK_RETURN))){
-                fprintf(tout,"ret <%s>\n",__func__);
+                fprintf(tout,"ret \n<%s>\n",__func__);
                node=new_node(ND_RETURN,node,expr(),tok);
                expect(";");
-               fprintf(tout,"ret </%s>\n",__func__);
+               fprintf(tout,"ret \n</%s>\n",__func__);
                return node;
        }
        if((tok=consume_Token(TK_IF))){
-                fprintf(tout," if<%s>\n",__func__);
+                fprintf(tout," if\n<%s>\n",__func__);
                expect("(");
                node=new_node(ND_IF,NULL,NULL,tok);
                node->cond=expr();
@@ -612,17 +617,17 @@ Node *stmt(){
                if(consume_Token(TK_ELSE)){
                        node->els=stmt();
                }
-               fprintf(tout," if</%s>\n",__func__);
+               fprintf(tout," if\n</%s>\n",__func__);
                return node;
        }
        if((tok=consume_Token(TK_WHILE))){
-                fprintf(tout," while<%s>\n",__func__);
+                fprintf(tout," while\n<%s>\n",__func__);
                expect("(");
                node=new_node(ND_WHILE,NULL,NULL,tok);
                node->cond=expr();
                expect(")");
                node->then=stmt();
-               fprintf(tout," while</%s>\n",__func__);
+               fprintf(tout," while\n</%s>\n",__func__);
                return node;
        }
        if((tok=consume_Token(TK_FOR))){
@@ -657,7 +662,9 @@ Node *stmt(){
        }
        // "{" stmt* "}"
        if((tok=consume("{"))){                
-               fprintf(tout," {<%s>\n",__func__);
+               fprintf(tout," {\n<%s>\n",__func__);
+               //lstack[lstack_i++]=locals;
+               //locals=calloc(1,sizeof(LVar));
                node=new_node(ND_BLOCK,NULL,NULL,tok);
                Node **stmts=calloc(100,sizeof(Node*));
                int i;
@@ -666,7 +673,8 @@ Node *stmt(){
                }
                assert(i!=100);
                node->stmts=stmts;
-               fprintf(tout," }</%s>\n",__func__);
+               fprintf(tout," }\n</%s>\n",__func__);
+               //locals=lstack[--lstack_i];
                return node;
        }
        node=expr();
@@ -674,7 +682,7 @@ Node *stmt(){
        return node;
 }
 Node *arg(){
-       fprintf(tout," <%s>\n",__func__);
+       fprintf(tout," \n<%s>\n",__func__);
         Type *t=NULL;
         if(consume("int")){
           t=new_type(TY_INT,NULL);
@@ -695,7 +703,7 @@ Node *arg(){
                 else
                        locals->offset=locals->next->offset+8;//last offset+1;
        }
-       fprintf(tout," </%s>\n",__func__);
+       fprintf(tout," \n</%s>\n",__func__);
        return ans;
 }
 
@@ -711,7 +719,7 @@ Node *decl(){
                t=new_type(TY_PTR,t);
        Token* tok=consume_ident();
        if(tok){
-                fprintf(tout," <%s>\n",__func__);
+                fprintf(tout," \n<%s>\n",__func__);
                LVar *var = find_gvar(tok);//
                if(var){
                        error_at(tok->str,"token '%s' is already defined",tok->str);
@@ -734,7 +742,7 @@ Node *decl(){
                        int off=locals->offset;
                        ans->then=stmt();//block
                        ans->offset=locals->offset-off;
-                       fprintf(tout," </%s>\n",__func__);
+                       fprintf(tout," \n</%s>\n",__func__);
                        return ans;
                }else if(consume("[")){
                         int n=expect_num();
@@ -747,7 +755,7 @@ Node *decl(){
                                 */
                        expect("]");
                        expect(";");
-                       fprintf(tout," </%s>\n",__func__);
+                       fprintf(tout," \n</%s>\n",__func__);
                        return decl();
                }else{
                         globals=new_var(tok,globals,t);
@@ -757,7 +765,7 @@ Node *decl(){
                                 globals->offset=globals->next->offset+8;//last offset+1;                       
                                 */
                        expect(";");
-                       fprintf(tout," </%s>\n",__func__);
+                       fprintf(tout," \n</%s>\n",__func__);
                        return decl();
                }
        }
@@ -766,13 +774,13 @@ Node *decl(){
 Node *code[100]={0};
 void program(){
        int i=0;
-       fprintf(tout," <%s>\n",__func__);
+       fprintf(tout," \n<%s>\n",__func__);
        fprintf(tout," %s\n",user_input);
        while(!at_eof()){
                //fprintf(tout," c:%d:%s\n",i,token->str);
                //fprintf(tout," c:%d:%d\n",i,code[i]->kind);
                code[i++]=decl();
        }
-       fprintf(tout," </%s>\n",__func__);
+       fprintf(tout," \n</%s>\n",__func__);
        code[i]=NULL;
 }
