@@ -8,6 +8,7 @@
 #include "9cc.h"
 
 extern FILE *tout;
+extern FILE *tout2;
 extern char* user_input;
 extern char* filename;
 extern Token* token;
@@ -20,7 +21,7 @@ char* read_file(char *path){
                 error("cannot open %s:",path,strerror(errno));
 
         if(fseek(fp,0,SEEK_END)==-1)
-                error("%s:fseek:%s",path,strerror(errno));                
+                error("%s:fseek:%s",path,strerror(errno));
         size_t size=ftell(fp);
         if(fseek(fp,0,SEEK_SET)==-1)
                 error("%s:fseek:%s",path,strerror(errno));
@@ -35,13 +36,13 @@ char* read_file(char *path){
         return buf;
 }
 int main(int argc,char **argv){
-       tout=stdout;//debug
+       tout2=stdout;//debug
        //tout=stderr;
     if(argc!=2){
         fprintf(stderr,"wrong number of argument\n.");
         return 1;
     }
-
+    tout=fopen("tmp.xml","w");
     locals=calloc(1,sizeof(LVar));
     filename=argv[1];
     //fprintf(tout,"# %s\n",filename);
@@ -52,7 +53,7 @@ int main(int argc,char **argv){
 
     //header
     printf(".intel_syntax noprefix\n");
-    
+
     for(LVar *var=strings;var;var=var->next){
         //printf("  .text \n");
       printf(".LC%d:\n",var->offset);
