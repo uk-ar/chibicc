@@ -50,7 +50,8 @@ int main(int argc,char **argv){
 
     token=tokenize(user_input);
     program();
-
+    fclose(tout);
+    
     //header
     printf(".intel_syntax noprefix\n");
 

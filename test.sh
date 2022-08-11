@@ -20,8 +20,8 @@ assert(){
        exit 1
     fi
 }
+assert 3 "int main(){return ({3;});}"
 assert 3 "int main(){return ({int a;a=3;});}"
-#assert 3 "int main(){return ({3;});}"
 assert 3 "int main(){{return 3;}}"
 assert 3 "int main(){//hello\nreturn 3;}"
 assert 2 "int main(){/*hello\n commnent*/return 2;}"
