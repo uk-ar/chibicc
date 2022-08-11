@@ -10,7 +10,7 @@
 Token *token;//current token
 
 char *filename;
-extern char* user_input;
+char* user_input;
 
 void error_at(char*loc,char*fmt,...){
         va_list ap;

@@ -8,7 +8,7 @@
 #include "9cc.h"
 
 extern FILE *tout;
-char* user_input;
+extern char* user_input;
 extern char* filename;
 extern Token* token;
 extern Node *code[];
@@ -46,12 +46,12 @@ int main(int argc,char **argv){
     filename=argv[1];
     //fprintf(tout,"# %s\n",filename);
     user_input=read_file(filename);
+
     token=tokenize(user_input);
     program();
 
     //header
     printf(".intel_syntax noprefix\n");
-
     
     for(LVar *var=strings;var;var=var->next){
         //printf("  .text \n");
@@ -59,7 +59,6 @@ int main(int argc,char **argv){
       printf("  .string \"%s\"\n",var->name);
       //printf("  .text \n");
     }
-    //printf("  .text \n");
 
     for(LVar *var=globals;var;var=var->next){//gvar
            //https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
@@ -78,16 +77,11 @@ int main(int argc,char **argv){
 
     printf(".global main\n");
     for(int i=0;code[i];i++){
-           //rfprintf(stderr,"c0:%d\n",i);
-            //fprintf(stderr,"c0:%d:%d\n",i,code[i]->kind);
             gen(code[i]);
 
             //pop each result in order not to over flow
             printf("  pop rax\n");
     }
 
-    /* printf("  mov rsp,rbp\n");//restore stack pointer */
-    /* printf("  pop rbp\n");//restore base pointer */
-    /* printf("  ret\n"); */
     return 0;
 }

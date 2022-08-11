@@ -1,0 +1,1 @@
+#define ASSERT(a,b) assert(a,b,#b)
