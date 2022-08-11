@@ -729,18 +729,20 @@ Node *decl(){
                        //ans->name=strndup(tok->str,tok->len);
                        ans->name=calloc(1,tok->len+1);
                        strncpy(ans->name,tok->str,tok->len);
-                       ans->params=NULL;
-                       ans->params=calloc(6,sizeof(Node*));
+                       Node**params=NULL;
+                       params=calloc(6,sizeof(Node*));
                        int i=0;
                        if(!consume(")")){
-                               ans->params[i++]=arg();
+                               params[i++]=arg();
                                for(;i<6 && !consume(")");i++){
                                        consume(",");
-                                       ans->params[i]=arg();
+                                       params[i]=arg();
                                }
                        }
                        int off=locals->offset;
+                       ans->params=params;                
                        ans->then=stmt();//block
+                       //ans->then->params=params;
                        ans->offset=locals->offset-off;
                        fprintf(tout," \n</%s>\n",__func__);
                        return ans;
