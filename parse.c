@@ -334,14 +334,14 @@ Node *primary(){
                        Node *ans = NULL;
                        if(!var){
                                var = find_gvar(tok);
-                               ans = new_node(ND_GVAR,NULL,NULL,tok);
-                               ans->name=var->name;
+                               ans = new_node(ND_GVAR,NULL,NULL,tok);                               
                        }else{
                                ans = new_node(ND_LVAR,NULL,NULL,tok);
                        }
                        if(var){
                                ans->offset=var->offset;
                                ans->type=var->type;
+                               ans->name=var->name;
                        }else{
                                error_at(tok->str,"token '%s' is not defined",tok->str);
                        }
@@ -575,33 +575,20 @@ Node *stmt(){
                if(var){
                        error_at(tok->str,"token '%s' is already defined",tok->str);
                }else if(consume("[")){
-                       int n=expect_num();
-                       var=calloc(1,sizeof(LVar));
-                       var->next=locals;
-                       //var->name=strndup(tok->str,tok->len);
-                       var->name=calloc(1,tok->len+1);
-                       strncpy(var->name,tok->str,tok->len);
-                       var->len=tok->len;
-                       var->offset=locals->offset+8*n;//last offset+1;
-                       var->type=new_type(TY_ARRAY,t);
-                       var->type->array_size=n;
-                       //ans->offset=var->offset;
-                       locals=var;
+                       int n=expect_num();                       
+                       locals=new_var(tok,locals,new_type(TY_ARRAY,t));
+                       locals->type->array_size=n;
+                       if(t->kind==TY_CHAR)
+                               locals->offset=locals->next->offset+1*n;//last offset+1;
+                        else
+                               locals->offset=locals->next->offset+8*n;//last offset+1;
                        expect("]");
                }else{
-                       var=calloc(1,sizeof(LVar));
-                       var->next=locals;
-                       var->name=calloc(1,tok->len+1);
-                       strncpy(var->name,tok->str,tok->len);
-                       //var->name=strndup(tok->str,tok->len);
-                       var->len=tok->len;
+                       locals=new_var(tok,locals,t);                       
                        if(t->kind==TY_CHAR)
-                         var->offset=locals->offset+1;//last offset+1;
+                         locals->offset=locals->next->offset+1;//last offset+1;
                        else
-                         var->offset=locals->offset+8;//last offset+1;
-                       var->type=t;
-                       //ans->offset=var->offset;
-                       locals=var;
+                         locals->offset=locals->next->offset+8;//last offset+1;
                }
                fprintf(tout," var decl</%s>\n",__func__);
                expect(";");
@@ -702,19 +689,11 @@ Node *arg(){
        if(var){
                ans->offset=var->offset;//TODO: shadow
        }else{
-               var=calloc(1,sizeof(LVar));
-               var->next=locals;
-               var->name=calloc(1,tok->len+1);
-               strncpy(var->name,tok->str,tok->len);
-               //var->name=strndup(tok->str,tok->len);
-               var->len=tok->len;
-               if(t->kind==TY_CHAR)
-                 var->offset=locals->offset+1;//last offset+1;
-               else
-                 var->offset=locals->offset+8;//last offset+1;
-               ans->offset=var->offset;
-               var->type=t;
-               locals=var;
+                locals=new_var(tok,locals,t);
+                if(t->kind==TY_CHAR)
+                       locals->offset=locals->next->offset+1;//last offset+1;
+                else
+                       locals->offset=locals->next->offset+8;//last offset+1;
        }
        fprintf(tout," </%s>\n",__func__);
        return ans;
@@ -758,31 +737,25 @@ Node *decl(){
                        fprintf(tout," </%s>\n",__func__);
                        return ans;
                }else if(consume("[")){
-                       int n=expect_num();
-                       var=calloc(1,sizeof(LVar));
-                       var->next=globals;
-                       var->name=calloc(1,tok->len+1);
-                       strncpy(var->name,tok->str,tok->len);
-                       //var->name=strndup(tok->str,tok->len);
-                       var->len=tok->len;
-                       var->type=new_type(TY_ARRAY,t);
-                       var->type->array_size=n;
-                       //ans->offset=var->offset;
-                       globals=var;
+                        int n=expect_num();
+                        globals=new_var(tok,globals,new_type(TY_ARRAY,t));
+                        globals->type->array_size=n;
+                        /*if(t->kind==TY_CHAR)
+                                globals->offset=globals->next->offset+1*n;//last offset+1;
+                        else
+                                globals->offset=globals->next->offset+8*n;//last offset+1;                       
+                                */
                        expect("]");
                        expect(";");
                        fprintf(tout," </%s>\n",__func__);
                        return decl();
                }else{
-                       var=calloc(1,sizeof(LVar));
-                       var->next=globals;
-                       var->name=calloc(1,tok->len+1);
-                       strncpy(var->name,tok->str,tok->len);
-                       //var->name=strndup(tok->str,tok->len);
-                       var->len=tok->len;
-                       var->type=t;
-                       //ans->offset=var->offset;
-                       globals=var;
+                        globals=new_var(tok,globals,t);
+                        /*if(t->kind==TY_CHAR)
+                                globals->offset=globals->next->offset+1;//last offset+1;
+                        else
+                                globals->offset=globals->next->offset+8;//last offset+1;                       
+                                */
                        expect(";");
                        fprintf(tout," </%s>\n",__func__);
                        return decl();
