@@ -198,9 +198,11 @@ Type *gen(Node *node){
                fprintf(tout2,"# </%s>\n",nodeK);
                return NULL;
        }else if(node->kind==ND_BLOCK){
-               for(int i=0;i<100 && node->stmts[i];i++){
+               for(int i=0;i<100 && node->stmts && node->stmts[i];i++){
+                        if(i!=0)
+                                printf("  pop rax\n");//move result to remove
                        gen(node->stmts[i]);
-                       //printf("  pop rax\n");//move result to rax
+                       //printf("  pop rax\n");//move result to remove
                }
                fprintf(tout2,"# </%s>\n",nodeK);
                return NULL;

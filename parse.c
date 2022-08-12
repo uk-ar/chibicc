@@ -620,10 +620,36 @@ Node *stmt(){
                expect("(");
                node=new_node(ND_IF,NULL,NULL,tok);
                node->cond=expr();
-               expect(")");
+               expect(")");             
                node->then=stmt();
+               //node->then=new_node(ND_BLOCK,NULL,NULL,tok);
+               //node->then->stmts=calloc(1,sizeof(Node*));
+               //node->then->stmts[0]=stmt();
+                /*node=new_node(ND_BLOCK,NULL,NULL,tok);
+               Node **stmts=calloc(100,sizeof(Node*));
+               int i;
+               for(i=0;i<100 && !consume("}");i++){
+                       stmts[i]=stmt();
+               }
+               assert(i!=100);
+               node->stmts=stmts;*/
+               /*if(node->then->kind!=ND_BLOCK){
+                        Node *ori=node->then;
+                        node->then=new_node(ND_BLOCK,NULL,NULL,ori->token);
+                        node->stmts=calloc(1,sizeof(Node));
+                        node->stmts[0]=ori;
+               }*/
                if(consume_Token(TK_ELSE)){
                        node->els=stmt();
+                        //node->els=new_node(ND_BLOCK,NULL,NULL,tok);
+                        //node->els->stmts=calloc(1,sizeof(Node*));
+                        //node->els->stmts[0]=stmt();
+                       /*if(node->els->kind!=ND_BLOCK){
+                                Node *ori=node->els;
+                                node->els=new_node(ND_BLOCK,NULL,NULL,ori->token);
+                                node->stmts=calloc(1,sizeof(Node));
+                                node->stmts[0]=ori;
+                       }*/
                }
                fprintf(tout," if\n</%s>\n",__func__);
                return node;
