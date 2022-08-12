@@ -292,18 +292,38 @@ LVar *new_var(Token *tok,LVar *next,Type *t){
 /* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
 /* primary = num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" | TK_STR*/
 Node *expr();
+Node *stmt();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 /* exprs      = expr ("," expr)* */
 Node *primary(){
        fprintf(tout," \n<%s>\n",__func__);
+       Token* tok=NULL;
        if(consume("(")){
+                //gnu extension
+                if((tok=consume("{"))){                
+                        fprintf(tout," {\n<%s>\n",__func__);
+                        Node *node=new_node(ND_BLOCK,NULL,NULL,tok);
+                        //lstack[lstack_i++]=locals;
+                        //locals=calloc(1,sizeof(LVar));
+                        Node **stmts=calloc(100,sizeof(Node*));
+                        int i;
+                        for(i=0;i<100 && !consume("}");i++){
+                                stmts[i]=stmt();
+                        }
+                        assert(i!=100);
+                        node->stmts=stmts;
+                        fprintf(tout," }\n</%s>\n",__func__);
+
+                        expect(")");//important
+                        //locals=lstack[--lstack_i];
+                        return node;
+               }
                fprintf(tout,"(");
                Node*ans = expr();
                expect(")");//important
                fprintf(tout,")\n</%s>\n",__func__);
                return ans;
        }
-       Token* tok=NULL;
        if((tok=consume_Token(TK_STR))){
         fprintf(tout,"\"");
          Node*ans=new_node(ND_STR,NULL,NULL,tok);
@@ -537,22 +557,6 @@ extern Node *stmt();
 Node *expr(){       
        Token *tok=NULL;
        Node *node=NULL;
-        if((tok=consume("{"))){                
-               fprintf(tout," {\n<%s>\n",__func__);
-               node=new_node(ND_BLOCK,NULL,NULL,tok);
-               //lstack[lstack_i++]=locals;
-               //locals=calloc(1,sizeof(LVar));
-               Node **stmts=calloc(100,sizeof(Node*));
-               int i;
-               for(i=0;i<100 && !consume("}");i++){
-                       stmts[i]=stmt();
-               }
-               assert(i!=100);
-               node->stmts=stmts;
-               fprintf(tout," }\n</%s>\n",__func__);
-               //locals=lstack[--lstack_i];
-               return node;
-       }
        node=assign();
        return node;
 }

@@ -23,8 +23,8 @@ assert(){
 assert 1 "main(){char a[2];*a=1;*(a+1)=2;printVC(a,2);return *a;}"
 
 #assert 1 "int main(){int a;{int a;a=1;return a;}}"
-assert 3 "int main(){return ({3;});}"
-assert 3 "int main(){return ({int a;a=3;});}"
+#assert 3 "int main(){return ({3;});}"
+#assert 3 "int main(){return ({int a;a=3;});}"
 assert 3 "int main(){{return 3;}}"
 assert 3 "int main(){//hello\nreturn 3;}"
 assert 2 "int main(){/*hello\n commnent*/return 2;}"
