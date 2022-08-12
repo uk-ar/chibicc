@@ -253,7 +253,19 @@ LVar *find_var(Token *tok,LVar *var0){
        return NULL;
 }
 LVar *find_lvar(Token *tok){
-       return find_var(tok,locals);
+        return find_var(tok,locals);
+}
+LVar *find_lvar_all(Token *tok){
+        LVar *ans=find_lvar(tok);
+        if(ans)
+                return ans;        
+        for(int i=lstack_i;i>=0;i--){
+                LVar *ans=find_var(tok,lstack[i]);
+                if(ans){
+                        return ans;
+                }
+        }
+       return NULL;
 }
 LVar *find_gvar(Token *tok){
        return find_var(tok,globals);
@@ -301,9 +313,9 @@ Node *primary(){
                 //gnu extension
                 if((tok=consume("{"))){                
                         fprintf(tout," <%s>{\n",__func__);
-                        Node *node=new_node(ND_BLOCK,NULL,NULL,tok);
-                        //lstack[lstack_i++]=locals;
-                        //locals=calloc(1,sizeof(LVar));
+                        Node *node=new_node(ND_BLOCK,NULL,NULL,tok);                        
+                        lstack[lstack_i++]=locals;
+                        locals=calloc(1,sizeof(LVar));                        
                         Node **stmts=calloc(100,sizeof(Node*));
                         int i;
                         for(i=0;i<100 && !consume("}");i++){
@@ -312,9 +324,8 @@ Node *primary(){
                         assert(i!=100);
                         node->stmts=stmts;
                         fprintf(tout," }</%s>\n",__func__);
-
-                        expect(")");//important
-                        //locals=lstack[--lstack_i];
+                        locals=lstack[--lstack_i];
+                        expect(")");//important                        
                         return node;
                }
                fprintf(tout,"<%s>(\n",__func__);
@@ -352,9 +363,9 @@ Node *primary(){
                        }
                        fprintf(tout,"funcall</%s>\n",__func__);
                        return ans;
-               }else if(consume("[")){
+               }else if(consume("[")){//ref
                 fprintf(tout,"<%s>array\n",__func__);
-                       LVar *var = find_lvar(tok);
+                       LVar *var = find_lvar_all(tok);
                        Node *ans = NULL;
                        if(!var){
                                var = find_gvar(tok);
@@ -375,7 +386,7 @@ Node *primary(){
                        return ans1;
                }else{//var ref
                         fprintf(tout,"<%s>var\n",__func__);
-                       LVar *var = find_lvar(tok);
+                       LVar *var = find_lvar_all(tok);
                        Node *ans = NULL;
                        if(!var){
                                var = find_gvar(tok);
@@ -565,6 +576,8 @@ Node *expr(){
        return node;
 }
 
+int loffset=0;
+
 Node *stmt(){
        /* stmt       = expr ";"
           | "if" "(" expr ")" stmt ("else" stmt)?
@@ -592,17 +605,18 @@ Node *stmt(){
                        locals=new_var(tok,locals,new_type(TY_ARRAY,t));
                        locals->type->array_size=n;
                        if(t->kind==TY_CHAR)
-                               locals->offset=locals->next->offset+1*n;//last offset+1;
+                               locals->offset=loffset+1*n;//last offset+1;
                         else
-                               locals->offset=locals->next->offset+8*n;//last offset+1;
+                               locals->offset=loffset+8*n;//last offset+1;
                        expect("]");
                }else{
                        locals=new_var(tok,locals,t);                       
                        if(t->kind==TY_CHAR)
-                         locals->offset=locals->next->offset+1;//last offset+1;
+                         locals->offset=loffset+1;//last offset+1;
                        else
-                         locals->offset=locals->next->offset+8;//last offset+1;
+                         locals->offset=loffset+8;//last offset+1;
                }
+               loffset=locals->offset;
                fprintf(tout," var decl\n</%s>\n",__func__);
                expect(";");
                return stmt();
@@ -622,34 +636,8 @@ Node *stmt(){
                node->cond=expr();
                expect(")");             
                node->then=stmt();
-               //node->then=new_node(ND_BLOCK,NULL,NULL,tok);
-               //node->then->stmts=calloc(1,sizeof(Node*));
-               //node->then->stmts[0]=stmt();
-                /*node=new_node(ND_BLOCK,NULL,NULL,tok);
-               Node **stmts=calloc(100,sizeof(Node*));
-               int i;
-               for(i=0;i<100 && !consume("}");i++){
-                       stmts[i]=stmt();
-               }
-               assert(i!=100);
-               node->stmts=stmts;*/
-               /*if(node->then->kind!=ND_BLOCK){
-                        Node *ori=node->then;
-                        node->then=new_node(ND_BLOCK,NULL,NULL,ori->token);
-                        node->stmts=calloc(1,sizeof(Node));
-                        node->stmts[0]=ori;
-               }*/
                if(consume_Token(TK_ELSE)){
                        node->els=stmt();
-                        //node->els=new_node(ND_BLOCK,NULL,NULL,tok);
-                        //node->els->stmts=calloc(1,sizeof(Node*));
-                        //node->els->stmts[0]=stmt();
-                       /*if(node->els->kind!=ND_BLOCK){
-                                Node *ori=node->els;
-                                node->els=new_node(ND_BLOCK,NULL,NULL,ori->token);
-                                node->stmts=calloc(1,sizeof(Node));
-                                node->stmts[0]=ori;
-                       }*/
                }
                fprintf(tout," if\n</%s>\n",__func__);
                return node;
@@ -696,9 +684,9 @@ Node *stmt(){
        }
        // "{" stmt* "}"
        if((tok=consume("{"))){                
-               fprintf(tout," {\n<%s>\n",__func__);
-               //lstack[lstack_i++]=locals;
-               //locals=calloc(1,sizeof(LVar));
+               fprintf(tout," {\n<%s>\n",__func__);               
+               lstack[lstack_i++]=locals;
+               locals=calloc(1,sizeof(LVar));
                node=new_node(ND_BLOCK,NULL,NULL,tok);
                Node **stmts=calloc(100,sizeof(Node*));
                int i;
@@ -708,7 +696,7 @@ Node *stmt(){
                assert(i!=100);
                node->stmts=stmts;
                fprintf(tout," }\n</%s>\n",__func__);
-               //locals=lstack[--lstack_i];
+               locals=lstack[--lstack_i];
                return node;
        }
        fprintf(tout," <%s>\n",__func__);
@@ -733,11 +721,12 @@ Node *arg(){
        if(!var){
                 locals=new_var(tok,locals,t);
                 if(t->kind==TY_CHAR)
-                       locals->offset=locals->next->offset+1;//last offset+1;
+                       locals->offset=loffset+1;//last offset+1;
                 else
-                       locals->offset=locals->next->offset+8;//last offset+1;
+                       locals->offset=loffset+8;//last offset+1;
                 var=locals;
        }
+       loffset=locals->offset;
        ans->offset=var->offset;//TODO: shadow
        fprintf(tout," \n</%s>\n",__func__);
        return ans;
@@ -772,7 +761,7 @@ Node *decl(){
                         locals=calloc(1,sizeof(LVar));
                                       
                        int i=0;
-                       int off=locals->offset;
+                       //int off=locals->offset;
                        if(!consume(")")){
                                params[i++]=arg();
                                for(;i<6 && !consume(")");i++){
@@ -783,7 +772,8 @@ Node *decl(){
                        ans->params=params;                
                        ans->then=stmt();//block
                        //ans->then->params=params;
-                       ans->offset=locals->offset;
+                       ans->offset=loffset;
+                       loffset=0;
 
                         locals=lstack[--lstack_i];
                        

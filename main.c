@@ -35,6 +35,7 @@ char* read_file(char *path){
         fclose(fp);
         return buf;
 }
+
 int main(int argc,char **argv){
        tout2=stdout;//debug
        //tout=stderr;
@@ -44,6 +45,7 @@ int main(int argc,char **argv){
     }
     tout=fopen("tmp.xml","w");
     locals=calloc(1,sizeof(LVar));
+    //lstack[lstack_i]=locals;
     filename=argv[1];
     //fprintf(tout,"# %s\n",filename);
     user_input=read_file(filename);
