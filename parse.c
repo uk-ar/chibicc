@@ -296,12 +296,11 @@ Node *stmt();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 /* exprs      = expr ("," expr)* */
 Node *primary(){
-       fprintf(tout," \n<%s>\n",__func__);
        Token* tok=NULL;
        if(consume("(")){
                 //gnu extension
                 if((tok=consume("{"))){                
-                        fprintf(tout," {\n<%s>\n",__func__);
+                        fprintf(tout," <%s>{\n",__func__);
                         Node *node=new_node(ND_BLOCK,NULL,NULL,tok);
                         //lstack[lstack_i++]=locals;
                         //locals=calloc(1,sizeof(LVar));
@@ -312,20 +311,21 @@ Node *primary(){
                         }
                         assert(i!=100);
                         node->stmts=stmts;
-                        fprintf(tout," }\n</%s>\n",__func__);
+                        fprintf(tout," }</%s>\n",__func__);
 
                         expect(")");//important
                         //locals=lstack[--lstack_i];
                         return node;
                }
+               fprintf(tout,"<%s>(\n",__func__);
                fprintf(tout,"(");
                Node*ans = expr();
                expect(")");//important
-               fprintf(tout,")\n</%s>\n",__func__);
+               fprintf(tout,")</%s>\n",__func__);
                return ans;
        }
        if((tok=consume_Token(TK_STR))){
-        fprintf(tout,"\"");
+        fprintf(tout,"<%s>\"\n",__func__);
          Node*ans=new_node(ND_STR,NULL,NULL,tok);
          fprintf(tout,"\"\n</%s>\n",__func__);
          return ans;
@@ -333,13 +333,14 @@ Node *primary(){
        tok=consume_ident();
        if(tok){
                if(consume("(")){//call
+                        fprintf(tout,"<%s>funcall\n",__func__);
                        Node*ans = new_node(ND_FUNCALL,NULL,NULL,tok);
                        //ans->name=strndup(tok->str,tok->len);
                        ans->name=calloc(1,tok->len+1);
                        strncpy(ans->name,tok->str,tok->len);
                        ans->params=NULL;
                        if(consume(")")){
-                               fprintf(tout," \n</%s>\n",__func__);
+                               fprintf(tout," funcall</%s>\n",__func__);
                                return ans;
                        }
                        ans->params=calloc(6,sizeof(Node*));
@@ -349,9 +350,10 @@ Node *primary(){
                                consume(",");
                                ans->params[i]=expr();
                        }
-                       fprintf(tout,"funcall\n</%s>\n",__func__);
+                       fprintf(tout,"funcall</%s>\n",__func__);
                        return ans;
                }else if(consume("[")){
+                fprintf(tout,"<%s>array\n",__func__);
                        LVar *var = find_lvar(tok);
                        Node *ans = NULL;
                        if(!var){
@@ -372,6 +374,7 @@ Node *primary(){
                        fprintf(tout,"array\n</%s>\n",__func__);
                        return ans1;
                }else{//var ref
+                        fprintf(tout,"<%s>var\n",__func__);
                        LVar *var = find_lvar(tok);
                        Node *ans = NULL;
                        if(!var){
@@ -392,6 +395,7 @@ Node *primary(){
                        return ans;
                }
        }
+       fprintf(tout,"<%s>num\n",__func__);
        Node *ans=new_node_num(expect_num(),NULL,TY_INT);
        ans->type=new_type(TY_INT,NULL);
        fprintf(tout,"num\n</%s>\n",__func__);
@@ -681,8 +685,10 @@ Node *stmt(){
                //locals=lstack[--lstack_i];
                return node;
        }
+       fprintf(tout," <%s>\n",__func__);
        node=expr();
        expect(";");
+       fprintf(tout," </%s>\n",__func__);
        return node;
 }
 Node *arg(){

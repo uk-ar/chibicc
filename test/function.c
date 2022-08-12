@@ -12,6 +12,14 @@ int f3(int a,int b){
 int f4(){
     return 4+2;
 }
+int f5(){
+    int a;
+    return 5;
+}
+int f6(){
+    int a;//duplicate variable name
+    return 6;
+}
 int fib(int x){
     if(x<=1){
         return x;
