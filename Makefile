@@ -15,7 +15,7 @@ test/%.exe: 9cc test/%.c
 	./9cc test/$*.e > test/$*.s
 #cat test/$*.s
 #テストバイナリ作成
-	$(CC) -static -o $@ test/$*.s test/common.c
+	$(CC) -static -g -o $@ test/$*.s test/common.c
 
 test: $(TESTS)
 	for i in $^; do echo $$i; ./$$i || exit 1; echo; done

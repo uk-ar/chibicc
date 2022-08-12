@@ -698,15 +698,15 @@ Node *arg(){
        Token*tok = consume_ident();
        Node *ans = new_node(ND_LVAR,NULL,NULL,tok);
        LVar *var = find_lvar(tok);
-       if(var){
-               ans->offset=var->offset;//TODO: shadow
-       }else{
+       if(!var){
                 locals=new_var(tok,locals,t);
                 if(t->kind==TY_CHAR)
                        locals->offset=locals->next->offset+1;//last offset+1;
                 else
                        locals->offset=locals->next->offset+8;//last offset+1;
+                var=locals;
        }
+       ans->offset=var->offset;//TODO: shadow
        fprintf(tout," \n</%s>\n",__func__);
        return ans;
 }
@@ -728,14 +728,19 @@ Node *decl(){
                if(var){
                        error_at(tok->str,"token '%s' is already defined",tok->str);
                }
-               if(consume("(")){
+               if(consume("(")){//function declaration
                        Node*ans = new_node(ND_FUNC,NULL,NULL,tok);
                        //ans->name=strndup(tok->str,tok->len);
                        ans->name=calloc(1,tok->len+1);
                        strncpy(ans->name,tok->str,tok->len);
                        Node**params=NULL;
                        params=calloc(6,sizeof(Node*));
+
+                        lstack[lstack_i++]=locals;
+                        locals=calloc(1,sizeof(LVar));
+                                      
                        int i=0;
+                       int off=locals->offset;
                        if(!consume(")")){
                                params[i++]=arg();
                                for(;i<6 && !consume(")");i++){
@@ -743,11 +748,13 @@ Node *decl(){
                                        params[i]=arg();
                                }
                        }
-                       int off=locals->offset;
                        ans->params=params;                
                        ans->then=stmt();//block
                        //ans->then->params=params;
-                       ans->offset=locals->offset-off;
+                       ans->offset=locals->offset;
+
+                        locals=lstack[--lstack_i];
+                       
                        fprintf(tout," \n</%s>\n",__func__);
                        return ans;
                }else if(consume("[")){

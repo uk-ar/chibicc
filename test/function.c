@@ -30,11 +30,11 @@ int main(int argc, char **argv)
     ASSERT(3,baz(3));
     ASSERT(6,f4());
     
-    //ASSERT(1,fib(1));
-    //ASSERT(1,fib(2));
-    //ASSERT(2,fib(3));
-    //ASSERT(3,fib(4));
-    //ASSERT(5,fib(5));
-    //ASSERT(8,fib(6));
+    ASSERT(1,fib(1));
+    ASSERT(1,fib(2));
+    ASSERT(2,fib(3));
+    ASSERT(3,fib(4));
+    ASSERT(5,fib(5));
+    ASSERT(8,fib(6));
     return 0;
 }
