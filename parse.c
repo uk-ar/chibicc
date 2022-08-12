@@ -111,7 +111,9 @@ Token *tokenize(char *p){
                if(*p=='"'){
                  p++;
                  char *s=p;
-                 while(*p && *p!='"'){
+                 while(*p){
+                   if(*p=='"' && *(p-1)!='\\')
+                        break;
                    p++;
                  }
                  if(!(*p))
@@ -119,6 +121,7 @@ Token *tokenize(char *p){
                  cur = new_token(TK_STR,cur,s,p-s);//skip "
                  LVar *var = find_string(cur);
                  if(var){
+                   p++;
                    continue;
                  }
                  int i=0;
