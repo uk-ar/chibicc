@@ -26,8 +26,16 @@ int fib(int x){
     }        
     return fib(x-2)+fib(x-1);
 }
+quxx(){
+    return 3;
+    }
+qux(){
+    return quxx();
+    }
+
 int main(int argc, char **argv)
 {   
+
     ASSERT(1,f1()); 
     ASSERT(2,f2(2)); 
     ASSERT(3,f3(1,2)); 
@@ -44,5 +52,24 @@ int main(int argc, char **argv)
     ASSERT(3,fib(4));
     ASSERT(5,fib(5));
     ASSERT(8,fib(6));
+    ASSERT(3,qux());
+
+    ASSERT(2,({int *p;alloc4(&p,1,2,4,8);int *q;q=p+2;2;}));
+    ASSERT(2,({int *p;alloc4(&p,1,2,4,8);int *q;q=p+2;printI(p);printI(q); 2;}));
+    ASSERT(4,({int *p;alloc4(&p,1,2,4,8);int *q;q=p+2; *q;}));
+    ASSERT(8,({int *p;alloc4(&p,1,2,4,8);int *q;q=p+3; *q;}));
+
+    ASSERT(1,arg2(0,1));
+    ASSERT(2,arg3(1,1,2));
+    ASSERT(4,arg4(2,1,2,4));
+    ASSERT(8,arg5(3,1,2,4,8));
+
+    ASSERT(2,({int *p;alloc4(&p,1,2,4,8); 2;}));
+    ASSERT(1,({int *p;alloc4(&p,1,2,4,8); *p;}));
+    ASSERT(3,({int x;int *y;y=&x; 3;}));
+    ASSERT(3,({int x;int *y;y=&x;*y=3; x;}));
+
+    ASSERT(1, ({arg2(1+2,3+4);1;}));
+    ASSERT(2, ({arg3(1+2,3+4,2+3);2;}));
     return 0;
 }
