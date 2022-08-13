@@ -5,7 +5,7 @@ int main(int argc, char **argv)
     ASSERT(0,1>2);
     ASSERT(3,1+2);
     ASSERT(0,0);
-    //ASSERT(0,1>2); TODO: fix
+    ASSERT(0,1>2);
     ASSERT(4,4);
     ASSERT(42,42);
     ASSERT(6,1+2+3);    

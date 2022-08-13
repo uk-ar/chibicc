@@ -125,12 +125,12 @@ Type *gen(Node *node){
                gen(node->rhs);
                printf("  pop rbx\n");//rhs
                printf("  pop rax\n");//lhs
-               if(t->kind==TY_CHAR){
+               if(t->kind==TY_CHAR || (t->kind==TY_ARRAY && t->ptr_to->kind==TY_CHAR)){
                  printf("  mov [rax],bl\n");
                }else{
                  printf("  mov [rax],rbx\n");
                }
-               printf("  push rbx\n");//save expression result(ex. a=b=c)
+               printf("  push [rax]\n");//save expression result(ex. a=b=c)
                fprintf(tout2,"# </%s>\n",nodeKind[node->kind]);
                return t;
        }else if(node->kind==ND_RETURN){
@@ -228,7 +228,11 @@ Type *gen(Node *node){
        }else if(node->kind==ND_DEREF){
                Type* t=gen(node->lhs);//address is in stack
                printf("  pop rdi\n");
-               printf("  mov rax,[rdi]\n");//get data from address
+               if(t->kind==TY_CHAR || (t->kind==TY_ARRAY && t->ptr_to->kind==TY_CHAR)){
+                 printf("  movsx rax, BYTE PTR [rdi]\n");//get data from address
+               }else{
+                 printf("  mov rax,[rdi]\n");//get data from address
+               }               
                printf("  push rax\n");//expression result */
                return t->ptr_to;
        }

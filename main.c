@@ -55,6 +55,7 @@ int main(int argc,char **argv){
     fclose(tout);
     
     //header
+    printf(".file \"%s\"\n",filename);
     printf(".intel_syntax noprefix\n");
 
     for(LVar *var=strings;var;var=var->next){

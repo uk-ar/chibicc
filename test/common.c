@@ -26,6 +26,9 @@ int baz(int x){
 void printI(int i){
        printf("%d\n",i);
 }
+void printC(char i){
+       printf("%c:%d\n",i,i);
+}
 void printP(int* p){
        printf("%d\n",*p);
 }

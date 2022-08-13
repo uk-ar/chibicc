@@ -13,12 +13,17 @@ test/%.exe: 9cc test/%.c
 #プリプロセス結果をcompile
 	$(CC) -o test/$*.e -E -P -C test/$*.c
 	./9cc test/$*.e > test/$*.s
-#cat test/$*.s
 #テストバイナリ作成
 	$(CC) -static -g -o $@ test/$*.s test/common.c
 
+
 test: $(TESTS)
-	for i in $^; do echo $$i; ./$$i || exit 1; echo; done
+	for i in $^; do \
+	cp $${i%.*}.e tmp.cx; \
+	cp $${i%.*}.s tmp.s; \
+	cp $${i%.*}.exe tmp; \
+	./$$i || exit 1; echo; \
+	done
 
 test_o: 9cc test/common.o
 	sh ./test.sh

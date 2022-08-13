@@ -21,15 +21,13 @@ assert(){
     fi
 }
 #todo string escape
-assert 3 "int main(){printf(\"abc\");return 3;}"
-assert 1 "int main(){printf(\"abc\");return 1;}"
-assert 2 "int main(){printf(\"abc:%d\",1);return 2;}"
-assert 1 "int main(){char x[3];x[0]=97;x[1]=98;x[2]=0;printVC(x,3);puts(x);return 1;}"
-assert 3 "int main(){puts(\"abc\");return 3;}"
-assert 2 "int main(){puts(\"abc\");puts(\"efg\");return 2;}"
-assert 3 "int main(){char *x;x=\"abc\";return 3;}"
-assert 1 "int main(){char *x;x=\"abc\";printVC(x,3);return 1;}"
-assert 97 "int main(){char *x;x=\"abc\";return x[0];}"
+assert 98 "int main(){char *x;x=\"abc\";return x[1];}"
+assert 97 "int main(){char *x;x=\"abc\";return ({x[0];});}"
+assert 97 "int main(){char *x;x=\"abc\";printC(x[0]);return 97;}"
+assert 97 "int main(){printC(({char *x;x=\"abc\";x[0];}));return 97;}"
+#assert 97 "int main(){char *x;assert(97,({x=\"abc\";x[0];}),\"foo\");return 97;}"
+#assert 0 "int main(){char *x;x=\"abc\";return x[0];}"
+
 assert 97 "int main(){char *x;x=\"abc\";return *x;}"
 assert 3  "int main(){char *x;x=\"abc\";puts(x);return 3;}"
 assert 3 "int main(){char x[3];x[0]=-1;x[1]=2;int y;y=4;return x[0]+y;}"
