@@ -228,7 +228,7 @@ Type *gen(Node *node){
        }else if(node->kind==ND_DEREF){
                Type* t=gen(node->lhs);//address is in stack
                printf("  pop rdi\n");
-               if(t->kind==TY_CHAR || (t->kind==TY_ARRAY && t->ptr_to->kind==TY_CHAR)){
+               if(t->kind==TY_CHAR || ((t->kind==TY_ARRAY || t->kind==TY_PTR) && t->ptr_to->kind==TY_CHAR)){
                  printf("  movsx rax, BYTE PTR [rdi]\n");//get data from address
                }else{
                  printf("  mov rax,[rdi]\n");//get data from address
