@@ -847,10 +847,14 @@ Node *decl(){
                        fprintf(tout," \n</%s>\n",__func__);
                        return ans;
                }else if(consume("[")){
-                        int n=expect_num();
-                        globals=new_var(tok,globals,new_type(TY_ARRAY,t));
-                        globals->type->array_size=n;
-                       expect("]");
+                        if(consume("]")){
+                                globals=new_var(tok,globals,new_type(TY_ARRAY,t));
+                        }else{
+                                int n=expect_num();
+                                globals=new_var(tok,globals,new_type(TY_ARRAY,t));
+                                globals->type->array_size=n;
+                                expect("]");                               
+                        }
                        /*expect(";");
                        fprintf(tout," \n</%s>\n",__func__);
                        return decl();*/
@@ -867,6 +871,7 @@ Node *decl(){
                                 int n=15;
                                 globals->init=calloc(n+1,sizeof(char));                                
                                 snprintf(globals->init,n,".LC%d",find_string(tok)->offset);
+                                globals->type->array_size=MAX(globals->type->array_size,tok->len);//todo fix for escape charactors
                         }else{
                                 consume_Token(TK_NUM);
                                 int n=token->str-p+1;

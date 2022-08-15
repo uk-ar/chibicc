@@ -4,6 +4,7 @@ int a=4,*b=&a;
 char f='a';
 char *g="foo";
 char h[4]="bar";
+char i[]="qux";
 int main(int argc, char **argv)
 {   
     ASSERT(3,({int a;a=3;a;}));
@@ -33,7 +34,7 @@ int main(int argc, char **argv)
     ASSERT(97,({f;}));
     ASSERT(102,({g[0];}));
     ASSERT(98,({h[0];}));
-
+    ASSERT('q',({i[0];}));
     a=2;
     //nested
     ASSERT(1,({int a;a=3;{a=1;}a;}));
