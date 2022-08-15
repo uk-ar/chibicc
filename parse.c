@@ -77,6 +77,7 @@ void expect(char *op){//if next == op, advance
        //printf("t:%s:%d\n",token->str,token->len);
        token=token->next;
 }
+
 int expect_num(){//
        if(!token || token->kind!=TK_NUM){
                error_at(token->str,"token is not number");
@@ -132,6 +133,40 @@ Token *tokenize(char *p){
                  p++;
                  continue;
                }
+               if(*p=='\''){
+                char *pre=p;
+                cur = new_token(TK_NUM,cur,p,0);
+                p++;
+                if(*p=='\\'){
+                        p++;
+                        if(*p=='a'){
+                                cur->val=0x7;
+                        }else if(*p=='b'){
+                                cur->val=0x8;
+                        }else if(*p=='f'){
+                                cur->val=0xc;
+                        }else if(*p=='n'){
+                                cur->val=0xa;
+                        }else if(*p=='r'){
+                                cur->val=0xd;
+                        }else if(*p=='t'){
+                                cur->val=0x9;
+                        }else if(*p=='v'){
+                                cur->val=0xb;
+                        }else if(*p=='\\' || *p=='\'' || *p=='\"' || *p=='\?'){
+                                cur->val=p;
+                        }else{
+                                error_at(p,"cannot use \\%c in char",p);
+                        }
+                }else{
+                        cur->val=*p;
+                }
+                p++;
+                if(*p!='\'')
+                        error_at(p,"'\'' is not closing");
+                p++;
+                cur->len=p-pre;
+               }               
                if(isspace(*p)){
                        p++;
                        continue;

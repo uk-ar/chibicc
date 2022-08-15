@@ -12,9 +12,12 @@ $(OBJS):9cc.h
 test/%.exe: 9cc test/%.c
 #プリプロセス結果をcompile
 	$(CC) -o test/$*.e -E -P -C test/$*.c
-	./9cc test/$*.e > test/$*.s
+	cp test/$*.e tmp.cx
+	./9cc test/$*.e > test/$*.s	
+	cp test/$*.s tmp.s
 #テストバイナリ作成
 	$(CC) -static -g -o $@ test/$*.s test/common.c
+	cp test/$*.exe tmp.s
 
 
 test: $(TESTS)

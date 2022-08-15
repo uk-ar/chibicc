@@ -4,7 +4,8 @@
 char *x;
 int main(int argc, char **argv)
 {
-    
+    ASSERT(10,'\n');
+    ASSERT(97,'a');
     ASSERT(3 ,({printf("abc");3;}));
 
     ASSERT(1 ,({printf("abc");1;}));
