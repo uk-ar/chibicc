@@ -1,6 +1,6 @@
 #include "test.h"
 
-int a,b;
+int a,*b;
 int main(int argc, char **argv)
 {   
     ASSERT(3,({int a;a=3;a;}));
@@ -15,11 +15,13 @@ int main(int argc, char **argv)
     ASSERT(3,({int a_1;a_1=3;a_1;}));
 
     //global
-    a=4;
+    a=4;b=&a;
     ASSERT(4,({a;}));
     ASSERT(3,({a;3;}));
     ASSERT(3,({a=1;3;}));
     ASSERT(1,({a=1;printI(a);a;}));
+    ASSERT(3,({*b=3;*b;}));
+    ASSERT(3,({a;}));
 
     a=2;
     //nested
