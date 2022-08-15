@@ -850,46 +850,36 @@ Node *decl(){
                         int n=expect_num();
                         globals=new_var(tok,globals,new_type(TY_ARRAY,t));
                         globals->type->array_size=n;
-                        /*if(t->kind==TY_CHAR)
-                                globals->offset=globals->next->offset+1*n;//last offset+1;
-                        else
-                                globals->offset=globals->next->offset+8*n;//last offset+1;                       
-                                */
                        expect("]");
-                       expect(";");
+                       /*expect(";");
                        fprintf(tout," \n</%s>\n",__func__);
-                       return decl();
+                       return decl();*/
                }else{
                         globals=new_var(tok,globals,t);
-                        /*if(t->kind==TY_CHAR)
-                                globals->offset=globals->next->offset+1;//last offset+1;
-                        else
-                                globals->offset=globals->next->offset+8;//last offset+1;                       
-                                */
-                        if(consume("=")){
-                          consume("&");
-                          char *p=token->str;
-                          consume_ident();
-                          consume("+");
-                          if(consume_Token(TK_STR)){
+               }
+                if(consume("=")){
+                        consume("&");
+                        char *p=token->str;
+                        consume_ident();
+                        consume("+");
+                        if((tok=consume_Token(TK_STR))){
                                 //int n=token->str-p;
                                 int n=15;
-                                globals->init=calloc(n+1,sizeof(char));
-                                snprintf(globals->init,n,".LC%d",globals->offset);
-                          }else{
+                                globals->init=calloc(n+1,sizeof(char));                                
+                                snprintf(globals->init,n,".LC%d",find_string(tok)->offset);
+                        }else{
                                 consume_Token(TK_NUM);
                                 int n=token->str-p+1;
                                 globals->init=calloc(n,sizeof(char));
                                 snprintf(globals->init,n,p);
-                          }
                         }
-                       if(consume(",")){
-                        continue;
-                       }
-                       expect(";");
-                       fprintf(tout," \n</%s>\n",__func__);
-                       return decl();
-               }
+                }
+                if(consume(",")){
+                continue;
+                }
+                expect(";");
+                fprintf(tout," \n</%s>\n",__func__);
+                return decl();
        }
 }
 
