@@ -625,12 +625,13 @@ Node *stmt(){
           | "return" expr ";" */
        Node *node=NULL;
        Token *tok=NULL;
-        Type *t=NULL;
+        Type *base_t=NULL;
         if(consume("int"))
-          t=new_type(TY_INT,NULL);
+          base_t=new_type(TY_INT,NULL);
         else if(consume("char"))
-          t=new_type(TY_CHAR,NULL);
-        if(t){
+          base_t=new_type(TY_CHAR,NULL);
+        while(base_t){
+                Type *t=base_t;
                 fprintf(tout," var decl\n<%s>\n",__func__);
                while(consume("*"))
                        t=new_type(TY_PTR,t);
@@ -656,6 +657,9 @@ Node *stmt(){
                }
                loffset=locals->offset;
                fprintf(tout," var decl\n</%s>\n",__func__);
+               if(consume(",")){
+                continue;
+               }
                expect(";");
                return stmt();
                //skip token
