@@ -36,6 +36,8 @@ char* read_file(char *path){
         return buf;
 }
 
+char*global_types[]={".byte",".long",".quad",".quad"};
+
 int main(int argc,char **argv){
        tout2=stdout;//debug
        //tout=stderr;
@@ -69,13 +71,18 @@ int main(int argc,char **argv){
            //https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
            printf(".data\n");
            printf(".global %s\n",var->name);
-           printf("%s:\n",var->name);
-           if(var->type->kind==TY_INT){
+           printf("%s:\n",var->name);           
+           char *p=var->init;
+           if(!p){
+                if(var->type->kind==TY_INT){
                    printf("  .zero 4\n");
-           }else if(var->type->kind==TY_PTR){
+                }else if(var->type->kind==TY_PTR){
                    printf("  .zero 8\n");
-           }else{
+                }else{
                    printf("  .zero %d\n",var->type->array_size*4);
+                }
+           }else{
+                printf("  %s %s\n",global_types[var->type->kind],p);
            }
     }
 

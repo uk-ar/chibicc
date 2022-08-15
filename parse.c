@@ -333,6 +333,9 @@ LVar *new_var(Token *tok,LVar *next,Type *t){
   return var;
 }
 
+char* my_strndup(char*s,int n){
+        return s;
+}
 /* program    = stmt* */
 /* stmt       = expr ";"
               | "{" stmt* "}"
@@ -863,6 +866,16 @@ Node *decl(){
                         else
                                 globals->offset=globals->next->offset+8;//last offset+1;                       
                                 */
+                        if(consume("=")){
+                          consume("&");
+                          char *p=token->str;
+                          consume_ident();
+                          consume("+");
+                          consume_Token(TK_NUM);
+                          int n=token->str-p+1;
+                          globals->init=calloc(n,sizeof(char));
+                          snprintf(globals->init,n,p);
+                        }
                        if(consume(",")){
                         continue;
                        }

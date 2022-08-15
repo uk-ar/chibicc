@@ -91,6 +91,7 @@ struct LVar{
        Type *type;
        int len;
        int offset;//offset from RBP
+       char *init;
 };
 
 Token *tokenize(char *p);
