@@ -82,6 +82,9 @@ int main(int argc,char **argv){
                    printf("  .zero %d\n",var->type->array_size*4);
                 }
            }else{
+                //if(p[0]=='\"')
+                //        printf("  .string %s\n",p);
+                //else
                 printf("  %s %s\n",global_types[var->type->kind],p);
            }
     }

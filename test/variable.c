@@ -1,6 +1,8 @@
 #include "test.h"
 
 int a=4,*b=&a;
+char f='a';
+char *g="foo";
 int main(int argc, char **argv)
 {   
     ASSERT(3,({int a;a=3;a;}));
@@ -19,6 +21,7 @@ int main(int argc, char **argv)
     ASSERT(3,({*e=3;*e;}));
     ASSERT(3,({d;}));
 
+    //g="foo";
     //global
     ASSERT(4,({a;}));
     ASSERT(3,({a;3;}));
@@ -26,6 +29,8 @@ int main(int argc, char **argv)
     ASSERT(1,({a=1;printI(a);a;}));
     ASSERT(3,({*b=3;*b;}));
     ASSERT(3,({a;}));
+    ASSERT(97,({f;}));
+    ASSERT(102,({g[0];}));
 
     a=2;
     //nested

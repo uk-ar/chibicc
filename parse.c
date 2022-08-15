@@ -871,10 +871,17 @@ Node *decl(){
                           char *p=token->str;
                           consume_ident();
                           consume("+");
-                          consume_Token(TK_NUM);
-                          int n=token->str-p+1;
-                          globals->init=calloc(n,sizeof(char));
-                          snprintf(globals->init,n,p);
+                          if(consume_Token(TK_STR)){
+                                //int n=token->str-p;
+                                int n=15;
+                                globals->init=calloc(n+1,sizeof(char));
+                                snprintf(globals->init,n,".LC%d",globals->offset);
+                          }else{
+                                consume_Token(TK_NUM);
+                                int n=token->str-p+1;
+                                globals->init=calloc(n,sizeof(char));
+                                snprintf(globals->init,n,p);
+                          }
                         }
                        if(consume(",")){
                         continue;
