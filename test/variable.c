@@ -14,8 +14,7 @@ int main(int argc, char **argv)
     ASSERT(6,({int foo;int bar;foo=1;bar=2+3;foo+bar;}));
     ASSERT(3,({int a_1;a_1=3;a_1;}));
 
-    int d,*e;
-    d=4;e=&d;
+    int d=4,*e=&d;
     ASSERT(4,({d;}));
     ASSERT(3,({*e=3;*e;}));
     ASSERT(3,({d;}));

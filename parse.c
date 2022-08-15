@@ -665,11 +665,21 @@ Node *stmt(){
                }
                loffset=locals->offset;
                fprintf(tout," var decl\n</%s>\n",__func__);
+               if(consume("=")){
+                if(!node)
+                        node=new_node(ND_BLOCK,NULL,NULL,NULL);
+                Node*lnode=new_node(ND_LVAR,NULL,NULL,tok);
+                lnode->type=t;
+                lnode->offset=locals->offset;
+                add_node(node,new_node(ND_ASSIGN,lnode,assign(),NULL));
+               }
                if(consume(",")){
                 continue;
                }
                expect(";");
-               return stmt();
+                if(node)
+                        return node;
+                return stmt();
                //skip token
        }
        if((tok=consume_Token(TK_RETURN))){
