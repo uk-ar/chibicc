@@ -1,6 +1,6 @@
 #include "test.h"
 
-int a;
+int a,b;
 int main(int argc, char **argv)
 {   
     ASSERT(3,({int a;a=3;a;}));

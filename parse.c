@@ -772,16 +772,22 @@ Node *arg(){
 
 Node *decl(){
        //consume_Token(TK_TYPE);
-        Type *t=NULL;
+        Type *base_t=NULL;
         if(consume("int")){
-          t=new_type(TY_INT,NULL);
+          base_t=new_type(TY_INT,NULL);
         }else if(consume("char")){
-          t=new_type(TY_CHAR,NULL);
+          base_t=new_type(TY_CHAR,NULL);
+        }else{
+                error_at(token->str,"declaration should start with \"type\"");
         }
-       while(consume("*"))
-               t=new_type(TY_PTR,t);
-       Token* tok=consume_ident();
-       if(tok){
+        
+       while(base_t){
+                Type *t=base_t;
+                while(consume("*"))
+                       t=new_type(TY_PTR,t);
+                Token* tok=consume_ident();
+                if(!tok)
+                        return NULL;
                 fprintf(tout," \n<%s>\n",__func__);
                LVar *var = find_gvar(tok);//
                if(var){
@@ -837,6 +843,9 @@ Node *decl(){
                         else
                                 globals->offset=globals->next->offset+8;//last offset+1;                       
                                 */
+                       if(consume(",")){
+                        continue;
+                       }
                        expect(";");
                        fprintf(tout," \n</%s>\n",__func__);
                        return decl();

@@ -26,10 +26,10 @@ int fib(int x){
     }        
     return fib(x-2)+fib(x-1);
 }
-quxx(){
+int quxx(){
     return 3;
     }
-qux(){
+int qux(){
     return quxx();
     }
 
