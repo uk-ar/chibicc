@@ -277,6 +277,16 @@ Node *new_node_num(int val,Token *token, TypeKind type){
        ans->type=new_type(type,NULL);
        return ans;
 }
+void add_node(Node* node,Node *new_node){
+        if(!node->head){
+                node->head=new_node;
+                node->tail=new_node;
+                return;
+        }
+        node->tail->next2=new_node;
+        node->tail=node->tail->next2;
+        return;
+}
 LVar *locals=NULL;
 LVar *globals=NULL;
 LVar* lstack[100];
@@ -354,13 +364,11 @@ Node *primary(){
                         Node *node=new_node(ND_BLOCK,NULL,NULL,tok);                        
                         lstack[lstack_i++]=locals;
                         locals=calloc(1,sizeof(LVar));                        
-                        Node **stmts=calloc(100,sizeof(Node*));
-                        int i;
-                        for(i=0;i<100 && !consume("}");i++){
-                                stmts[i]=stmt();
+
+                        while(!consume("}")){
+                                add_node(node,stmt());
                         }
-                        assert(i!=100);
-                        node->stmts=stmts;
+
                         fprintf(tout," }</%s>\n",__func__);
                         locals=lstack[--lstack_i];
                         expect(")");//important                        
@@ -730,13 +738,11 @@ Node *stmt(){
                lstack[lstack_i++]=locals;
                locals=calloc(1,sizeof(LVar));
                node=new_node(ND_BLOCK,NULL,NULL,tok);
-               Node **stmts=calloc(100,sizeof(Node*));
-               int i;
-               for(i=0;i<100 && !consume("}");i++){
-                       stmts[i]=stmt();
-               }
-               assert(i!=100);
-               node->stmts=stmts;
+
+               while(!consume("}")){
+                        add_node(node,stmt());
+                }
+
                fprintf(tout," }\n</%s>\n",__func__);
                locals=lstack[--lstack_i];
                return node;

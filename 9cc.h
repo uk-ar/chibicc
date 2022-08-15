@@ -72,6 +72,9 @@ struct Node{//binary tree node
        Node *init;//for init
        Node *next;//for next
        Node **stmts;//block
+       Node *tail;
+       Node *head;
+       Node *next2;
        Node **params;//funcall
        Type *type;
        int val; // enable iff kind == ND_NUM
