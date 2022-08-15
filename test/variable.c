@@ -12,7 +12,8 @@ int main(int argc, char **argv)
     ASSERT(3,({int foo;foo=3;2+3;foo;}));
     ASSERT(4,({int foo;foo=3;2+3;foo+1;}));
     ASSERT(6,({int foo;int bar;foo=1;bar=2+3;foo+bar;}));
-    
+    ASSERT(3,({int a_1;a_1=3;a_1;}));
+
     //global
     a=4;
     ASSERT(4,({a;}));

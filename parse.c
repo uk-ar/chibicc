@@ -245,7 +245,7 @@ Token *tokenize(char *p){
                }
                if(isalpha(*p)){
                        char *pre=p;
-                       while(isalpha(*p)||isdigit(*p)){
+                       while(isalpha(*p)||isdigit(*p)||*p=='_'){
                                p++;
                        }
                        cur = new_token(TK_IDENT,cur,pre,p-pre);
