@@ -3,6 +3,7 @@ SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
 TESTSRCS=$(filter-out test/common.c,$(wildcard test/*.c))
 TESTS=$(TESTSRCS:.c=.exe)
+CC=gcc
 
 9cc: $(OBJS)
 	$(CC) -o 9cc $(OBJS) $(LDFLAGS)

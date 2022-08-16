@@ -42,6 +42,7 @@ struct Token
        int val;        // token value if TK_NUM
        char *pos;      // token position
        int len;        // token length
+       char *str;      // token string
 };
 
 typedef enum
@@ -93,7 +94,6 @@ struct Node
        Type *type;
        int val;    // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
-       char *name; // enable iff kind == ND_FUNCALL
        Token *token;
 };
 

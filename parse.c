@@ -13,6 +13,22 @@ char *filename;
 char *user_input;
 FILE *tout;
 
+char *format(char *fmt, ...){
+        char *ptr;
+        size_t size;
+        
+        // not working on x86_64 on arm
+        // FILE* out = open_memstream(&ptr, &size);
+
+        va_list ap;
+        va_start(ap, fmt);
+        //vfprintf(out, fmt, ap);
+        vasprintf(&ptr, fmt, ap);
+        va_end(ap);
+        //fclose(out);
+        return ptr;
+}
+
 void error_at(char *loc, char *fmt, ...)
 {
         va_list ap;
@@ -104,6 +120,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len)
         tok->pos = str; // token->next=NULL;
         tok->len = len;
         cur->next = tok;
+        tok->str = format("%.*s", len, str);
         return tok;
 }
 bool at_eof()
@@ -402,21 +419,12 @@ LVar *new_var(Token *tok, LVar *next, Type *t)
         LVar *var;
         var = calloc(1, sizeof(LVar));
         var->next = next;
-        var->name = calloc(1, tok->len + 1);
-        strncpy(var->name, tok->pos, tok->len);
-        // var->name=strndup(tok->pos,tok->len);//cannot dup on x86_64 on arm bacause of alignment?
+        var->name = tok->str;
         var->len = tok->len;
         var->type = t;
         return var;
 }
-LVar *rev_var(Token *tok)
-{
-        LVar *prev;
-}
-char *my_strndup(char *s, int n)
-{
-        return s;
-}
+
 /* program    = stmt* */
 /* stmt       = expr ";"
               | "{" stmt* "}"
@@ -483,9 +491,6 @@ Node *primary()
                 { // call
                         fprintf(tout, "<%s>funcall\n", __func__);
                         Node *ans = new_node(ND_FUNCALL, NULL, NULL, tok);
-                        // ans->name=strndup(tok->pos,tok->len);
-                        ans->name = calloc(1, tok->len + 1);
-                        strncpy(ans->name, tok->pos, tok->len);
                         ans->params = NULL;
                         if (consume(")"))
                         {
@@ -521,7 +526,7 @@ Node *primary()
                         {
                                 ans->offset = var->offset;
                                 ans->type = var->type;
-                                ans->name = var->name;
+                                //ans->name = var->name;
                         }
                         else
                         {
@@ -548,7 +553,7 @@ Node *primary()
                         }
                         if (var)
                         {
-                                ans->name = var->name;
+                                //ans->name = var->name;
                                 ans->offset = var->offset;
                                 ans->type = var->type;
                         }
@@ -990,9 +995,6 @@ Node *decl()
                 if (consume("("))
                 { // function declaration
                         Node *ans = new_node(ND_FUNC, NULL, NULL, tok);
-                        // ans->name=strndup(tok->pos,tok->len);
-                        ans->name = calloc(1, tok->len + 1);
-                        strncpy(ans->name, tok->pos, tok->len);
                         Node **params = NULL;
                         params = calloc(6, sizeof(Node *));
 
@@ -1081,6 +1083,7 @@ Node *decl()
                 fprintf(tout, " \n</%s>\n", __func__);
                 return decl();
         }
+        return NULL;
 }
 
 Node *code[100] = {0};

@@ -40,7 +40,7 @@ Type *gen_lval(Node *node)
         fprintf(tout2, "#lvar <%s>\n", nodeKind[node->kind]);
         if (node->kind == ND_GVAR)
         {
-                printf("  lea rax, %s[rip]\n", node->name); // base pointer
+                printf("  lea rax, %s[rip]\n", node->token->str); // base pointer
                 // printf("  lea rax, rip[%s]\n",strndup(node->token->pos,node->token->len));//base pointer
                 // printf("  mov rax, %s\n",strndup(node->token->pos,node->token->len));//base pointer
                 printf("  push rax\n"); // save local variable address
@@ -87,7 +87,7 @@ Type *gen(Node *node)
         }
         if (node->kind == ND_FUNC)
         {
-                printf("%s:\n", node->name);
+                printf("%s:\n", node->token->str);
                 printf("  push rbp\n");     // save base pointer
                 printf("  mov rbp, rsp\n"); // save stack pointer
                 for (int i = 0; i < 6 && node->params[i]; i++)
@@ -242,7 +242,7 @@ Type *gen(Node *node)
                         printf("  pop %s\n", argreg[i]);
                 }
                 printf("  mov eax, 0\n"); // set al to 0 for printf
-                printf("  call %s\n", node->name);
+                printf("  call %s\n", node->token->str);
                 printf("  push rax\n"); // save result to sp
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return node->type;
