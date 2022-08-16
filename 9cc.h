@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <stdio.h>
+
 typedef enum { TY_CHAR, TY_INT, TY_PTR, TY_ARRAY } TypeKind;
 
 typedef struct Type Type;
@@ -104,16 +107,22 @@ void error_at(char *loc,char *fmt,...);
 typedef struct HashNode HashNode;
 
 struct HashNode{
-       HashNode *next;
+       HashNode *next_bucket;
+       HashNode *next;//for iteration;
        char *key;
-       void *p;
+       void *value;
 };
 
 typedef struct HashMap HashMap;
 
 struct HashMap{
-       HashNode **v;
+       HashNode **nodes;
+       HashNode *begin;//for iteration;
        int size;
 };
+
+HashMap *new_hash(int size);
+void add_hash(HashMap *h,char *key,void *value);
+void* get_hash(HashMap *h,char *key);
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

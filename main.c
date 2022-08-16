@@ -41,6 +41,7 @@ char*global_types[]={".byte",".long",".quad",".quad"};
 int main(int argc,char **argv){
        tout2=stdout;//debug
        //tout=stderr;
+        hashmap_test();
     if(argc!=2){
         fprintf(stderr,"wrong number of argument\n.");
         return 1;
