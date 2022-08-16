@@ -332,7 +332,9 @@ LVar *new_var(Token *tok,LVar *next,Type *t){
   var->type=t;
   return var;
 }
-
+LVar *rev_var(Token *tok){
+        LVar *prev;
+}
 char* my_strndup(char*s,int n){
         return s;
 }
@@ -867,11 +869,17 @@ Node *decl(){
                         consume_ident();
                         consume("+");
                         if((tok=consume_Token(TK_STR))){
-                                //int n=token->str-p;
-                                int n=15;
-                                globals->init=calloc(n+1,sizeof(char));                                
-                                snprintf(globals->init,n,".LC%d",find_string(tok)->offset);
-                                globals->type->array_size=MAX(globals->type->array_size,tok->len);//todo fix for escape charactors
+                                if(globals->type->kind==TY_ARRAY){
+                                        int n=tok->len;
+                                        globals->init=calloc(n+3,sizeof(char));                                
+                                        snprintf(globals->init,n+3,"\"%s\"",p);
+                                }else{
+                                        //int n=token->str-p;
+                                        int n=15;
+                                        globals->init=calloc(n+1,sizeof(char));                                
+                                        snprintf(globals->init,n,".LC%d",find_string(tok)->offset);
+                                        globals->type->array_size=MAX(globals->type->array_size,tok->len);//todo fix for escape charactors
+                                }
                         }else{
                                 consume_Token(TK_NUM);
                                 int n=token->str-p+1;
@@ -880,7 +888,7 @@ Node *decl(){
                         }
                 }
                 if(consume(",")){
-                continue;
+                        continue;
                 }
                 expect(";");
                 fprintf(tout," \n</%s>\n",__func__);

@@ -1,12 +1,12 @@
 #include "test.h"
 
 int a=4,*b=&a;
-char f='a';
-char *g="foo";
-char h[4]="bar";
-char i[]="qux";
+char f='a',i[]="qux",*g="foo",h[4]="bar",*j=h;
 int main(int argc, char **argv)
 {   
+    ASSERT('b',({j[0];}));
+    ASSERT('b',({h[0];}));//ok
+    ASSERT('b',({*h;}));//ok
     ASSERT(3,({int a;a=3;a;}));
     ASSERT(2,({int b;b=2;b;}));    
     ASSERT(14,({int a;int b;a=3;b=5*6-8;a+b/2;}));    
@@ -35,6 +35,8 @@ int main(int argc, char **argv)
     ASSERT(102,({g[0];}));
     ASSERT(98,({h[0];}));
     ASSERT('q',({i[0];}));
+    ASSERT('b',({j[0];}));
+    ASSERT('b',({*j;}));
     a=2;
     //nested
     ASSERT(1,({int a;a=3;{a=1;}a;}));

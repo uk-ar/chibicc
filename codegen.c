@@ -90,7 +90,7 @@ Type *gen(Node *node){
                printf("  push %d\n",node->val);
                fprintf(tout2,"# %d</%s>\n",node->val,nodeKind[node->kind]);
                return node->type;
-       }else if(node->kind==ND_LVAR){//local value
+       }else if(node->kind==ND_LVAR || node->kind==ND_GVAR){//local value
                Type *t=gen_lval(node);//get address
                if(t->kind==TY_ARRAY){
                 return t;
@@ -102,22 +102,6 @@ Type *gen(Node *node){
                  printf("  mov rax, [rax]\n");//get data from address
                }
                printf("  push rax\n");//save local variable value
-               fprintf(tout2,"# </%s>\n",nodeK);
-               return t;
-       }else if(node->kind==ND_GVAR){//local value
-               Type *t=node->type;//gen_lval(node);//get address
-               //printf("  mov rax, %s[rip]\n",strndup(node->token->str,node->token->len));//base pointer
-               if(t->kind==TY_CHAR){
-                 printf("  movsx eax, BYTE PTR %s[rip]\n",node->name);//base pointer
-               }else{
-                 printf("  mov rax, %s[rip]\n",node->name);//base pointer
-               }
-               printf("  push rax\n");//save local variable address
-               /* fprintf(tout2,"#lvar </%s>\n",nodeKind[node->kind]);   */
-
-               /* printf("  pop rax\n");//get address */
-               /* printf("  mov rax, [rax]\n");//get data from address */
-               /* printf("  push rax\n");//save local variable value */
                fprintf(tout2,"# </%s>\n",nodeK);
                return t;
        }else if(node->kind==ND_ASSIGN){
