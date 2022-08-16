@@ -13,19 +13,20 @@ char *filename;
 char *user_input;
 FILE *tout;
 
-char *format(char *fmt, ...){
+char *format(char *fmt, ...)
+{
         char *ptr;
         size_t size;
-        
+
         // not working on x86_64 on arm
         // FILE* out = open_memstream(&ptr, &size);
 
         va_list ap;
         va_start(ap, fmt);
-        //vfprintf(out, fmt, ap);
+        // vfprintf(out, fmt, ap);
         vasprintf(&ptr, fmt, ap);
         va_end(ap);
-        //fclose(out);
+        // fclose(out);
         return ptr;
 }
 
@@ -526,7 +527,7 @@ Node *primary()
                         {
                                 ans->offset = var->offset;
                                 ans->type = var->type;
-                                //ans->name = var->name;
+                                // ans->name = var->name;
                         }
                         else
                         {
@@ -553,7 +554,7 @@ Node *primary()
                         }
                         if (var)
                         {
-                                //ans->name = var->name;
+                                // ans->name = var->name;
                                 ans->offset = var->offset;
                                 ans->type = var->type;
                         }
