@@ -129,6 +129,6 @@ void printA(int *p)
 }
 char *distance(char *p1, char *p2)
 {
-        char *ans = p2 - p1;
+        char *ans = (char*)(p2 - p1);
         return ans;
 }

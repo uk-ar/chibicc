@@ -5,6 +5,7 @@ typedef enum
 {
        TY_CHAR,
        TY_INT,
+       TY_LONG,
        TY_PTR,
        TY_ARRAY,
        TY_STRUCT
@@ -17,6 +18,7 @@ struct Type
        struct Type *ptr_to;
        size_t array_size;
        char *str;
+       size_t size;
 };
 
 typedef enum
