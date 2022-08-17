@@ -14,6 +14,7 @@ char *nodeKind[] = {
     "ND_ADDR",
     "ND_FUNC",
     "ND_FUNCALL",
+    "ND_EBLOCK",
     "ND_BLOCK",
     "ND_IF",
     "ND_ELSE",
@@ -73,7 +74,8 @@ int count()
         return cnt++;
 }
 extern LVar *find_string(Token *tok);
-static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+// static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 Type *gen(Node *node)
 {
         char *nodeK = nodeKind[node->kind];
@@ -92,8 +94,25 @@ Type *gen(Node *node)
                 printf("  mov rbp, rsp\n"); // save stack pointer
                 for (int i = 0; i < 6 && node->params[i]; i++)
                 {
-                        printf("  mov rax, %s\n", argreg[i]); // args to local
-                        printf("  push rax\n");               // args to local
+                        //printf("  mov rax, %s\n", argreg[i]); // args to local
+                        //printf("  push rax\n");               // args to local
+                        printf("  mov rbx, %s\n", argreg[i]); // args to local
+                        Node *n = node->params[i];
+                        if (n->type->kind == TY_CHAR)
+                        {
+                                printf("  mov BYTE PTR [rbp-%d], bl\n", n->offset); // get data from address
+                        }
+                        else if (n->type->kind == TY_INT)
+                        {
+                                printf("  mov DWORD PTR [rbp-%d], ebx\n",n->offset); // get data from address
+                        }
+                        else
+                        {
+                                printf("  mov [rbp-%d], rbx\n", n->offset); // get data from address
+                                //printf("  mov rax, rbx\n"); // get data from address
+                        }
+                        //printf("  push rax\n"); // args to local
+
                 }
                 printf("  sub rsp, %d\n", node->offset); // num of vals*8byte
                 gen(node->then);
@@ -108,18 +127,22 @@ Type *gen(Node *node)
         else if (node->kind == ND_LVAR || node->kind == ND_GVAR)
         {                                 // local value
                 Type *t = gen_lval(node); // get address
-                if (t->kind == TY_ARRAY || t->kind==TY_STRUCT)
+                if (t->kind == TY_ARRAY || t->kind == TY_STRUCT)
                 {
                         return t;
                 }
-                printf("  pop rax\n"); // get address
+                printf("  pop rbx\n"); // get address
                 if (t->kind == TY_CHAR)
                 {
-                        printf("  movsx eax, BYTE PTR [rax]\n"); // get data from address
+                        printf("  movsx eax, BYTE PTR [rbx]\n"); // get data from address
+                }
+                else if (t->kind == TY_INT)
+                {
+                        printf("  mov eax, DWORD PTR [rbx]\n"); // get data from address
                 }
                 else
                 {
-                        printf("  mov rax, [rax]\n"); // get data from address
+                        printf("  mov rax, [rbx]\n"); // get data from address
                 }
                 printf("  push rax\n"); // save local variable value
                 fprintf(tout2, "# </%s>\n", nodeK);
@@ -134,6 +157,10 @@ Type *gen(Node *node)
                 if (t->kind == TY_CHAR || (t->kind == TY_ARRAY && t->ptr_to->kind == TY_CHAR))
                 {
                         printf("  mov [rax],bl\n");
+                } // bx for short
+                else if (t->kind == TY_INT || (t->kind == TY_ARRAY && t->ptr_to->kind == TY_INT))
+                {
+                        printf("  mov DWORD PTR [rax],ebx\n");
                 }
                 else
                 {
@@ -172,6 +199,7 @@ Type *gen(Node *node)
                         gen(node->els);
                 }
                 printf(".Lend%d:\n", num);
+                //printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return NULL;
         }
@@ -220,11 +248,28 @@ Type *gen(Node *node)
         {
 
                 for (Node *c = node->head; c; c = c->next2)
-                {
-                        if (c != node->head)
-                                printf("  pop rax\n"); // move result to remove
+                {                        
                         gen(c);
+                        if (c->kind != ND_IF && c->kind!=ND_BLOCK)
+                                printf("  pop rax\n"); // move result to remove
                 }
+                //printf("  push 0\n"); // same behavior as ({;})
+                fprintf(tout2, "# </%s>\n", nodeK);
+                return NULL;
+        }
+        else if (node->kind == ND_EBLOCK)
+        {
+
+                for (Node *c = node->head; c; c = c->next2)
+                {
+                        gen(c);
+                        if (c->next2 && c->kind != ND_BLOCK && c->kind != ND_IF)
+                                printf("  pop rax\n"); // move result to remove
+                        /*if(c->kind!=ND_BLOCK && c->kind!=ND_ELSE && c->kind!=ND_FOR &&
+                                c->kind!=ND_FUNC && c->kind!=ND_IF && c->kind!=ND_RETURN && c->kind!=ND_WHILE)
+                                printf("  pop rax\n"); // move result to remove*/
+                }
+                // printf("  push 0\n"); // same behavior as ({;})
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return NULL;
         }
@@ -260,6 +305,10 @@ Type *gen(Node *node)
                 if (t->kind == TY_CHAR || ((t->kind == TY_ARRAY || t->kind == TY_PTR) && t->ptr_to->kind == TY_CHAR))
                 {
                         printf("  movsx rax, BYTE PTR [rdi]\n"); // get data from address
+                }
+                else if (t->kind == TY_INT || ((t->kind == TY_ARRAY || t->kind == TY_PTR) && t->ptr_to->kind == TY_INT))
+                {
+                        printf("  mov eax, DWORD PTR [rdi]\n"); // get data from address
                 }
                 else
                 {

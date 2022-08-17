@@ -57,6 +57,7 @@ typedef enum
        ND_ADDR,
        ND_FUNC,
        ND_FUNCALL,
+       ND_EBLOCK,
        ND_BLOCK,
        ND_IF,
        ND_ELSE,

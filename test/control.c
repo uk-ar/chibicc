@@ -2,9 +2,8 @@
 
 int main(int argc, char **argv)
 {
-
-    ASSERT(3, ({ int x; if (0) x=2; else x=3; x; })); // works!
     int y;
+    ASSERT(3, ({ int x; if (0) x=2; else x=3; x; })); // works!
     ASSERT(2, ({if(1==1){y=2;} y; }));
     ASSERT(3, ({if(1==1){y=2;y=3;} y; }));
     ASSERT(2, ({if(1>2){y=1;}else{y=2;}y; }));

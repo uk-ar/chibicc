@@ -23,7 +23,6 @@ int main(int argc, char **argv)
     ASSERT(3, ({*e=3;*e; }));
     ASSERT(3, ({ d; }));
 
-    // g="foo";
     // global
     ASSERT(4, ({ a; }));
     ASSERT(3, ({a;3; }));

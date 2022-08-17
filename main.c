@@ -84,7 +84,7 @@ int main(int argc, char **argv)
                 char *p = var->init;
                 if (!p)
                 {
-                        if (var->type->kind == TY_INT)
+                        /*if (var->type->kind == TY_INT)
                         {
                                 printf("  .zero 4\n");
                         }
@@ -95,7 +95,8 @@ int main(int argc, char **argv)
                         else
                         {
                                 printf("  .zero %d\n", var->type->array_size * 4);
-                        }
+                        }*/
+                        printf("  .zero %d\n", var->type->size);
                 }
                 else
                 {

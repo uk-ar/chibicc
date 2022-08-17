@@ -459,7 +459,7 @@ Node *primary()
                 if ((tok = consume("{")))
                 {
                         fprintf(tout, " <%s>{\n", __func__);
-                        Node *node = new_node(ND_BLOCK, NULL, NULL, tok);
+                        Node *node = new_node(ND_EBLOCK, NULL, NULL, tok);
                         lstack[lstack_i++] = locals;
                         locals = calloc(1, sizeof(LVar));
 
@@ -545,12 +545,12 @@ Node *primary()
                                 LVar *f = find_var(tok, var);
                                 Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(f->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
                                 return ans1;
-                        }/*
-                         else if (consume("->"))
-                         {
-                                 consume_ident();
-                                 return ans;
-                         }*/
+                        } /*
+                          else if (consume("->"))
+                          {
+                                  consume_ident();
+                                  return ans;
+                          }*/
                         fprintf(tout, "var\n</%s>\n", __func__);
                         // ans->offset=(tok->pos[0]-'a'+1)*8;
                         return ans;
@@ -812,25 +812,25 @@ Node *stmt()
                         locals = new_var(tok, locals, new_type(TY_ARRAY, t, 0));
                         locals->type->array_size = n;
                         locals->type->size = n * locals->type->ptr_to->size;
-                        if (t->kind == TY_CHAR)
+                        /*if (t->kind == TY_CHAR)
                                 locals->offset = loffset + 1 * n; // last offset+1;
                         else if (t->kind == TY_STRUCT)
                                 locals->offset = loffset + locals->type->array_size * n;
                         else
-                                locals->offset = loffset + 8 * n;          // last offset+1;
-                        //locals->offset = loffset + locals->type->size * n; // TODO:fix it
+                                locals->offset = loffset + 8 * n;          // last offset+1;*/
+                        locals->offset = loffset + locals->type->size * n; // TODO:fix it
                         expect("]");
                 }
                 else
                 {
                         locals = new_var(tok, locals, t);
-                        if (t->kind == TY_CHAR)
+                        /*if (t->kind == TY_CHAR)
                                 locals->offset = loffset + 1; // last offset+1;
                         else if (t->kind == TY_STRUCT)
                                 locals->offset = loffset + locals->type->array_size;
                         else
-                                locals->offset = loffset + 8; // last offset+1;
-                        //locals->offset = loffset + locals->type->size; //TODO:fix it
+                                locals->offset = loffset + 8; // last offset+1;*/
+                        locals->offset = loffset + locals->type->size; //TODO:fix it
                 }
                 loffset = locals->offset;
                 fprintf(tout, " var decl\n</%s>\n", __func__);
@@ -963,13 +963,16 @@ Node *arg()
         while (consume("*"))
                 t = new_type(TY_PTR, t, 8);
         Token *tok = consume_ident();
-        Node *ans = new_node(ND_LVAR, NULL, NULL, tok);
+        Node *ans = new_node(ND_LVAR, NULL, NULL,tok);
+        ans->type = t;
         LVar *var = find_lvar(tok);
         if (!var)
         {
                 locals = new_var(tok, locals, t);
                 if (t->kind == TY_CHAR)
                         locals->offset = loffset + 1; // last offset+1;
+                else if (t->kind == TY_INT)
+                        locals->offset = loffset + 4; // last offset+1;
                 else
                         locals->offset = loffset + 8; // last offset+1;
                 var = locals;
@@ -1023,20 +1026,20 @@ LVar *var_decl(LVar *lvar)
                         lvar->type->array_size = n;
                         lvar->type->size = n * lvar->type->ptr_to->size;
                         expect("]");
-                        if (t->kind == TY_CHAR)
+                        /*if (t->kind == TY_CHAR)
                                 loffset = loffset + 1 * n; // last offset+1;
                         else
-                                loffset = loffset + 8 * n; // last offset+1;
-                        //loffset = loffset + lvar->type->size;
+                                loffset = loffset + 8 * n; // last offset+1;*/
+                        loffset = loffset + lvar->type->size;
                 }
                 else
                 {
                         lvar = new_var(tok, lvar, t);
-                        if (t->kind == TY_CHAR)
+                        /*if (t->kind == TY_CHAR)
                                 loffset = loffset + 1; // last offset+1;
                         else
-                                loffset = loffset + 8; // last offset+1;
-                        //loffset = loffset + lvar->type->size;
+                                loffset = loffset + 8; // last offset+1;*/
+                        loffset = loffset + lvar->type->size;
                 }
 
                 if (consume(","))
