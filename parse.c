@@ -580,25 +580,6 @@ Node *unary()
                 Node *node = unary();
                 Type *t = node->type;
                 fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
-                /*if (t->kind == TY_INT)
-                {
-                        return new_node_num(4, NULL, new_type(TY_INT, NULL, 4));
-                }
-                else if (t->kind == TY_ARRAY)
-                {
-                        Node *node = new_node_num(t->array_size * 4, NULL, new_type(TY_ARRAY, NULL, 0));
-                        node->type->size = t->array_size * t->ptr_to->size;
-                        return node;
-                }
-                else if (t->kind == TY_CHAR)
-                {
-                        return new_node_num(1, NULL, new_type(TY_CHAR, NULL, 1));
-                }
-                else if (t->kind == TY_STRUCT)
-                {
-                        return new_node_num(t->array_size, NULL, new_type(TY_STRUCT, NULL, 0));
-                }
-                return new_node_num(8, NULL, new_type(TY_PTR, NULL, 8));*/
                 return new_node_num(t->size, NULL, t);
         }
         if ((tok = consume("+")))
@@ -812,24 +793,12 @@ Node *stmt()
                         locals = new_var(tok, locals, new_type(TY_ARRAY, t, 0));
                         locals->type->array_size = n;
                         locals->type->size = n * locals->type->ptr_to->size;
-                        /*if (t->kind == TY_CHAR)
-                                locals->offset = loffset + 1 * n; // last offset+1;
-                        else if (t->kind == TY_STRUCT)
-                                locals->offset = loffset + locals->type->array_size * n;
-                        else
-                                locals->offset = loffset + 8 * n;          // last offset+1;*/
                         locals->offset = loffset + locals->type->size * n; // TODO:fix it
                         expect("]");
                 }
                 else
                 {
                         locals = new_var(tok, locals, t);
-                        /*if (t->kind == TY_CHAR)
-                                locals->offset = loffset + 1; // last offset+1;
-                        else if (t->kind == TY_STRUCT)
-                                locals->offset = loffset + locals->type->array_size;
-                        else
-                                locals->offset = loffset + 8; // last offset+1;*/
                         locals->offset = loffset + locals->type->size; //TODO:fix it
                 }
                 loffset = locals->offset;
@@ -969,12 +938,7 @@ Node *arg()
         if (!var)
         {
                 locals = new_var(tok, locals, t);
-                if (t->kind == TY_CHAR)
-                        locals->offset = loffset + 1; // last offset+1;
-                else if (t->kind == TY_INT)
-                        locals->offset = loffset + 4; // last offset+1;
-                else
-                        locals->offset = loffset + 8; // last offset+1;
+                locals->offset = loffset + t->size; // last offset+1;
                 var = locals;
         }
         loffset = locals->offset;
@@ -1026,19 +990,11 @@ LVar *var_decl(LVar *lvar)
                         lvar->type->array_size = n;
                         lvar->type->size = n * lvar->type->ptr_to->size;
                         expect("]");
-                        /*if (t->kind == TY_CHAR)
-                                loffset = loffset + 1 * n; // last offset+1;
-                        else
-                                loffset = loffset + 8 * n; // last offset+1;*/
                         loffset = loffset + lvar->type->size;
                 }
                 else
                 {
                         lvar = new_var(tok, lvar, t);
-                        /*if (t->kind == TY_CHAR)
-                                loffset = loffset + 1; // last offset+1;
-                        else
-                                loffset = loffset + 8; // last offset+1;*/
                         loffset = loffset + lvar->type->size;
                 }
 
