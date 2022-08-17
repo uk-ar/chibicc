@@ -98,7 +98,7 @@ void printVL(long *v, int l)
 {
         for (int i = 0; i < l; i++)
         {
-                printf("%d,", v[i]);
+                printf("%ld,", v[i]);
         }
         printf("\n");
 }
@@ -125,7 +125,7 @@ void printVC(char *v, int l)
 }
 void printA(int *p)
 {
-        printf("%x\n", p);
+        printf("%ls\n", p);
 }
 char *distance(char *p1, char *p2)
 {

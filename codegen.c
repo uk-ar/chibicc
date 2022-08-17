@@ -108,7 +108,7 @@ Type *gen(Node *node)
         else if (node->kind == ND_LVAR || node->kind == ND_GVAR)
         {                                 // local value
                 Type *t = gen_lval(node); // get address
-                if (t->kind == TY_ARRAY)
+                if (t->kind == TY_ARRAY || t->kind==TY_STRUCT)
                 {
                         return t;
                 }

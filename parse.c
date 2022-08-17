@@ -537,14 +537,14 @@ Node *primary()
                                 fprintf(tout, "array\n</%s>\n", __func__);
                                 return ans1;
                         }
-                        /*else if (consume("."))
+                        else if (consume("."))
                         {
                                 tok = consume_ident();
                                 var = get_hash(structs, ans->type->str);
                                 LVar *f=find_var(tok, var);
-                                //Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(f->offset, NULL, ND_NUM), NULL), NULL, NULL);
-                                return ans;
-                        }
+                                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(f->offset, NULL, ND_NUM), NULL), NULL, NULL);
+                                return ans1;
+                        }/*
                          else if (consume("->"))
                          {
                                  consume_ident();
@@ -995,6 +995,9 @@ LVar *var_decl(LVar *lvar)
                         return lvar;
                 fprintf(tout, " \n<%s>\n", __func__);
                 LVar *var = find_lvar(tok); //
+
+                lvar->offset = loffset;
+                
                 if (var)
                 {
                         error_at(tok->pos, "token '%s' is already defined", tok->pos);
@@ -1006,19 +1009,19 @@ LVar *var_decl(LVar *lvar)
                         lvar->type->array_size = n;
                         expect("]");
                         if (t->kind == TY_CHAR)
-                                lvar->offset = loffset + 1 * n; // last offset+1;
+                                loffset = loffset + 1 * n; // last offset+1;
                         else
-                                lvar->offset = loffset + 8 * n; // last offset+1;
+                                loffset = loffset + 8 * n; // last offset+1;
                 }
                 else
                 {
                         lvar = new_var(tok, lvar, t);
                         if (t->kind == TY_CHAR)
-                                lvar->offset = loffset + 1; // last offset+1;
+                                loffset = loffset + 1; // last offset+1;
                         else
-                                lvar->offset = loffset + 8; // last offset+1;
+                                loffset = loffset + 8; // last offset+1;
                 }
-                loffset = lvar->offset;
+                
                 if (consume(","))
                 {
                         continue;
@@ -1033,17 +1036,17 @@ Node *decl()
         if (consume("struct"))
         {
                 Token *tok = consume_ident();
-                globals = new_var(tok, globals, new_type(TY_STRUCT, NULL));
+                globals = new_var(tok, globals, new_type(TY_STRUCT, NULL));//struct ident store in globals
                 expect("{");
                 // lstack[lstack_i++] = locals;
-                LVar *st_vars = calloc(1, sizeof(LVar));
-                add_hash(structs, tok->str, st_vars);
+                LVar *st_vars = calloc(1, sizeof(LVar));                
                 while (!consume("}"))
                 {
 
                         st_vars = var_decl(st_vars);
                         consume(";");
                 }
+                add_hash(structs, tok->str, st_vars);
                 // locals = lstack[--lstack_i];
                 globals->type->array_size = loffset;
                 loffset = 0;
