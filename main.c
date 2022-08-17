@@ -14,6 +14,7 @@ extern char *filename;
 extern Token *token;
 extern Node *code[];
 extern LVar *locals, *globals, *strings;
+extern HashMap *structs;
 
 char *read_file(char *path)
 {
@@ -52,6 +53,8 @@ int main(int argc, char **argv)
         tout = fopen("tmp.xml", "w");
         locals = calloc(1, sizeof(LVar));
         // lstack[lstack_i]=locals;
+        structs = new_hash(100);
+
         filename = argv[1];
         // fprintf(tout,"# %s\n",filename);
         user_input = read_file(filename);

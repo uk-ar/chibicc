@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,8 +17,6 @@ FILE *tout;
 char *format(char *fmt, ...)
 {
         char *ptr;
-        size_t size;
-
         // not working on x86_64 on arm
         // FILE* out = open_memstream(&ptr, &size);
 
@@ -49,7 +48,6 @@ void error_at(char *loc, char *fmt, ...)
         }
 
         int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
-        int j = end - start;
         fprintf(stderr, "%.*s\n", (int)(end - start), start);
 
         int pos = loc - start + indent;
@@ -135,6 +133,7 @@ bool isIdent(char c)
 LVar *strings = NULL;
 extern LVar *find_string(Token *tok);
 extern LVar *new_var(Token *tok, LVar *next, Type *t);
+HashMap *structs;
 Token *tokenize(char *p)
 {
         Token head, *cur = &head;
@@ -206,7 +205,7 @@ Token *tokenize(char *p)
                                 }
                                 else if (*p == '\\' || *p == '\'' || *p == '\"' || *p == '\?')
                                 {
-                                        cur->val = p;
+                                        cur->val = *p;
                                 }
                                 else
                                 {
@@ -304,7 +303,9 @@ Token *tokenize(char *p)
                         p += 2;
                         continue;
                 }
-                if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '=' || *p == ';' || *p == '{' || *p == '}' || *p == ',' || *p == '&' || *p == '[' || *p == ']')
+                if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' ||
+                    *p == ')' || *p == '=' || *p == ';' || *p == '{' || *p == '}' || *p == ',' || *p == '&' ||
+                    *p == '[' || *p == ']' || *p == '.')
                 {
                         cur = new_token(TK_RESERVED, cur, p++, 1);
                         continue;
@@ -443,7 +444,7 @@ LVar *new_var(Token *tok, LVar *next, Type *t)
 /* add        = mul ("+" mul | "-" mul)* */
 /* mul     = unary ("*" unary | "/" unary)* */
 /* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
-/* primary = num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" | TK_STR*/
+/* primary = ident.ident | ident->ident | num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" | TK_STR*/
 Node *expr();
 Node *stmt();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
@@ -509,35 +510,6 @@ Node *primary()
                         fprintf(tout, "funcall</%s>\n", __func__);
                         return ans;
                 }
-                else if (consume("["))
-                { // ref
-                        fprintf(tout, "<%s>array\n", __func__);
-                        LVar *var = find_lvar_all(tok);
-                        Node *ans = NULL;
-                        if (!var)
-                        {
-                                var = find_gvar(tok);
-                                ans = new_node(ND_GVAR, NULL, NULL, tok);
-                        }
-                        else
-                        {
-                                ans = new_node(ND_LVAR, NULL, NULL, tok);
-                        }
-                        if (var)
-                        {
-                                ans->offset = var->offset;
-                                ans->type = var->type;
-                                // ans->name = var->name;
-                        }
-                        else
-                        {
-                                error_at(tok->pos, "token '%s' is not defined", tok->pos);
-                        }
-                        Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
-                        expect("]"); // important
-                        fprintf(tout, "array\n</%s>\n", __func__);
-                        return ans1;
-                }
                 else
                 { // var ref
                         fprintf(tout, "<%s>var\n", __func__);
@@ -547,21 +519,37 @@ Node *primary()
                         {
                                 var = find_gvar(tok);
                                 ans = new_node(ND_GVAR, NULL, NULL, tok);
+                                if (!var)
+                                        error_at(tok->pos, "token '%s' is not defined", tok->pos);
                         }
                         else
                         {
                                 ans = new_node(ND_LVAR, NULL, NULL, tok);
                         }
-                        if (var)
+
+                        ans->offset = var->offset;
+                        ans->type = var->type;
+
+                        if (consume("["))
                         {
-                                // ans->name = var->name;
-                                ans->offset = var->offset;
-                                ans->type = var->type;
+                                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
+                                expect("]"); // important
+                                fprintf(tout, "array\n</%s>\n", __func__);
+                                return ans1;
                         }
-                        else
+                        /*else if (consume("."))
                         {
-                                error_at(tok->pos, "token '%s' is not defined", tok->pos);
+                                tok = consume_ident();
+                                var = get_hash(structs, ans->type->str);
+                                LVar *f=find_var(tok, var);
+                                //Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(f->offset, NULL, ND_NUM), NULL), NULL, NULL);
+                                return ans;
                         }
+                         else if (consume("->"))
+                         {
+                                 consume_ident();
+                                 return ans;
+                         }*/
                         fprintf(tout, "var\n</%s>\n", __func__);
                         // ans->offset=(tok->pos[0]-'a'+1)*8;
                         return ans;
@@ -603,6 +591,10 @@ Node *unary()
                 else if (t->kind == TY_CHAR)
                 {
                         return new_node_num(1, NULL, TY_CHAR);
+                }
+                else if (t->kind == TY_STRUCT)
+                {
+                        return new_node_num(t->array_size, NULL, TY_STRUCT);
                 }
                 return new_node_num(8, NULL, TY_PTR);
         }
@@ -763,13 +755,13 @@ Node *assign()
 }
 extern Node *stmt();
 Node *expr()
-{
-        Token *tok = NULL;
+{        
         Node *node = NULL;
         node = assign();
         return node;
 }
 
+// in order to reset offset
 int loffset = 0;
 
 Node *stmt()
@@ -787,6 +779,18 @@ Node *stmt()
                 base_t = new_type(TY_INT, NULL);
         else if (consume("char"))
                 base_t = new_type(TY_CHAR, NULL);
+        else if (consume("struct")) // declare variable
+        {
+                base_t = new_type(TY_STRUCT, NULL);
+                Token *tok = consume_ident(); // ident
+                base_t->str = tok->str;
+                LVar *var = find_gvar(tok); //
+                if (!var)
+                {
+                        error_at(tok->pos, "struct '%s' is not defined", tok->str);
+                }
+                base_t->array_size = var->type->array_size;
+        }
         while (base_t)
         {
                 Type *t = base_t;
@@ -806,6 +810,8 @@ Node *stmt()
                         locals->type->array_size = n;
                         if (t->kind == TY_CHAR)
                                 locals->offset = loffset + 1 * n; // last offset+1;
+                        else if (t->kind == TY_STRUCT)
+                                locals->offset = loffset + locals->type->array_size * n;
                         else
                                 locals->offset = loffset + 8 * n; // last offset+1;
                         expect("]");
@@ -815,6 +821,8 @@ Node *stmt()
                         locals = new_var(tok, locals, t);
                         if (t->kind == TY_CHAR)
                                 locals->offset = loffset + 1; // last offset+1;
+                        else if (t->kind == TY_STRUCT)
+                                locals->offset = loffset + locals->type->array_size;
                         else
                                 locals->offset = loffset + 8; // last offset+1;
                 }
@@ -879,32 +887,32 @@ Node *stmt()
                 /* Node *cond;//if,while,for cond */
                 /* Node *next;//for next */
                 /* Node *then;//if,while,for then */
-                fprintf(tout, " <for>\n", __func__);
+                fprintf(tout, " <for>\n");
                 expect("(");
                 node = new_node(ND_FOR, NULL, NULL, tok);
-                fprintf(tout, " <init>\n", __func__);
+                fprintf(tout, " <init>\n");
                 if (!consume(";"))
                 {
                         node->init = expr();
                         expect(";");
                 }
-                fprintf(tout, " </init>\n", __func__);
-                fprintf(tout, " <cond>\n", __func__);
+                fprintf(tout, " </init>\n");
+                fprintf(tout, " <cond>\n");
                 if (!consume(";"))
                 {
                         node->cond = expr();
                         expect(";");
                 }
-                fprintf(tout, " </cond>\n", __func__);
-                fprintf(tout, " <next>\n", __func__);
+                fprintf(tout, " </cond>\n");
+                fprintf(tout, " <next>\n");
                 if (!consume(")"))
                 {
                         node->next = expr();
                         expect(")");
                 }
-                fprintf(tout, " </next>\n", __func__);
+                fprintf(tout, " </next>\n");
                 node->then = stmt();
-                fprintf(tout, " </for>\n", __func__);
+                fprintf(tout, " </for>\n");
                 return node;
         }
         // "{" stmt* "}"
@@ -962,8 +970,86 @@ Node *arg()
         return ans;
 }
 
+LVar *var_decl(LVar *lvar)
+{
+        Type *base_t = NULL;
+        if (consume("int"))
+        {
+                base_t = new_type(TY_INT, NULL);
+        }
+        else if (consume("char"))
+        {
+                base_t = new_type(TY_CHAR, NULL);
+        }
+        else
+        {
+                error_at(token->pos, "declaration should start with \"type\"");
+        }
+        while (base_t)
+        {
+                Type *t = base_t;
+                while (consume("*"))
+                        t = new_type(TY_PTR, t);
+                Token *tok = consume_ident();
+                if (!tok)
+                        return lvar;
+                fprintf(tout, " \n<%s>\n", __func__);
+                LVar *var = find_lvar(tok); //
+                if (var)
+                {
+                        error_at(tok->pos, "token '%s' is already defined", tok->pos);
+                }
+                else if (consume("["))
+                {
+                        int n = expect_num();
+                        lvar = new_var(tok, lvar, new_type(TY_ARRAY, t));
+                        lvar->type->array_size = n;
+                        expect("]");
+                        if (t->kind == TY_CHAR)
+                                lvar->offset = loffset + 1 * n; // last offset+1;
+                        else
+                                lvar->offset = loffset + 8 * n; // last offset+1;
+                }
+                else
+                {
+                        lvar = new_var(tok, lvar, t);
+                        if (t->kind == TY_CHAR)
+                                lvar->offset = loffset + 1; // last offset+1;
+                        else
+                                lvar->offset = loffset + 8; // last offset+1;
+                }
+                loffset = lvar->offset;
+                if (consume(","))
+                {
+                        continue;
+                }
+                fprintf(tout, " \n</%s>\n", __func__);
+        }
+        return lvar;
+}
+
 Node *decl()
 {
+        if (consume("struct"))
+        {
+                Token *tok = consume_ident();
+                globals = new_var(tok, globals, new_type(TY_STRUCT, NULL));
+                expect("{");
+                // lstack[lstack_i++] = locals;
+                LVar *st_vars = calloc(1, sizeof(LVar));
+                add_hash(structs, tok->str, st_vars);
+                while (!consume("}"))
+                {
+
+                        st_vars = var_decl(st_vars);
+                        consume(";");
+                }
+                // locals = lstack[--lstack_i];
+                globals->type->array_size = loffset;
+                loffset = 0;
+                expect(";");
+                return decl();
+        }
         // consume_Token(TK_TYPE);
         Type *base_t = NULL;
         if (consume("int"))
@@ -1072,8 +1158,9 @@ Node *decl()
                         {
                                 consume_Token(TK_NUM);
                                 int n = token->pos - p + 1;
-                                globals->init = calloc(n, sizeof(char));
-                                snprintf(globals->init, n, p);
+                                globals->init = format("%.*s", n, p);
+                                //globals->init = calloc(n, sizeof(char));
+                                //snprintf(globals->init, n, p);
                         }
                 }
                 if (consume(","))
