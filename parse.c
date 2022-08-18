@@ -311,7 +311,7 @@ Token *tokenize(char *p)
                         continue;
                 }
                 if (!strncmp(p, "<=", 2) || !strncmp(p, ">=", 2) ||
-                    !strncmp(p, "==", 2) || !strncmp(p, "!=", 2))
+                    !strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "->", 2))
                 {
                         cur = new_token(TK_RESERVED, cur, p, 2);
                         p += 2;
@@ -529,7 +529,7 @@ Node *primary()
                         fprintf(tout, "<%s>var\n", __func__);
                         LVar *var = find_lvar_all(tok);
                         Node *ans = NULL;
-                        if (!var)
+                        if (!var) // todo fix it for struct;
                         {
                                 var = find_gvar(tok);
                                 ans = new_node(ND_GVAR, NULL, NULL, tok);
@@ -547,6 +547,7 @@ Node *primary()
                         if (consume("["))
                         {
                                 Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
+                                ans1->type = var->type->ptr_to;
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
                                 return ans1;
@@ -555,15 +556,28 @@ Node *primary()
                         {
                                 tok = consume_ident();
                                 var = get_hash(structs, ans->type->str);
-                                LVar *f = find_var(tok, var);
-                                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(f->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
+                                LVar *field = find_var(tok, var);
+                                // Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
+                                // ans1->type = field->type;
+                                // return ans1;
+                                ans->type = field->type;
+                                ans->offset -= field->offset;
+                                return ans;
+                        }
+                        else if (consume("->"))
+                        {
+                                tok = consume_ident();                           // field
+                                var = get_hash(structs, var->type->ptr_to->str); // vars for s1
+                                LVar *field = find_var(tok, var);
+                                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)),ans,  NULL), NULL, NULL);
+                                //Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
+                                // Node *ans1 = new_node(ND_DEREF, ans, NULL, NULL);
+                                // ans1->type = field->type;
+                                // ans->offset += field->offset;
+                                //  ans->type->ptr_to = field->type;
                                 return ans1;
-                        } /*
-                          else if (consume("->"))
-                          {
-                                  consume_ident();
-                                  return ans;
-                          }*/
+                                // return ans1;
+                        }
                         fprintf(tout, "var\n</%s>\n", __func__);
                         // ans->offset=(tok->pos[0]-'a'+1)*8;
                         return ans;
@@ -795,14 +809,21 @@ Node *stmt()
                                 int n = expect_num();
                                 locals = new_var(tok, locals, new_type(TY_ARRAY, t, n * t->size));
                                 locals->type->array_size = n;
-                                locals->offset = loffset + locals->type->size * n; // TODO:fix it
+                                int size = locals->type->size;
+                                locals->offset = (loffset + size - 1) / size * size; // ajust
+                                locals->offset += locals->type->size * n;
+                                // locals->offset = loffset + locals->type->size * n; // TODO:fix it
                                 expect("]");
                         }
                         else
                         {
                                 locals = new_var(tok, locals, t);
-                                locals->offset = loffset + locals->type->size; // TODO:fix it
+                                int size = locals->type->size;
+                                locals->offset = (loffset + size - 1) / size * size; // ajust
+                                locals->offset += locals->type->size;
+                                // locals->offset = loffset + locals->type->size; // TODO:fix it
                         }
+
                         loffset = locals->offset;
                         fprintf(tout, " var decl\n</%s>\n", __func__);
                         if (consume("="))
@@ -919,7 +940,7 @@ Node *stmt()
 Node *arg()
 {
         fprintf(tout, " \n<%s>\n", __func__);
-        
+
         Token *tok = consume_Token(TK_TYPE);
         char *str = tok->str;
         Type *base_t = NULL;
@@ -943,7 +964,11 @@ Node *arg()
         if (!var)
         {
                 locals = new_var(tok, locals, t);
-                locals->offset = loffset + t->size; // last offset+1;
+                // locals->offset = loffset + t->size; // last offset+1;
+                int size = t->size;
+                locals->offset = (loffset + size - 1) / size * size; // ajust
+                locals->offset += size;
+
                 var = locals;
         }
         loffset = locals->offset;
@@ -977,8 +1002,6 @@ LVar *var_decl(LVar *lvar)
                 fprintf(tout, " \n<%s>\n", __func__);
                 LVar *var = find_lvar(tok); //
 
-                lvar->offset = loffset;
-
                 if (var)
                 {
                         error_at(tok->pos, "token '%s' is already defined", tok->pos);
@@ -989,14 +1012,14 @@ LVar *var_decl(LVar *lvar)
                         lvar = new_var(tok, lvar, new_type(TY_ARRAY, t, n * t->size));
                         lvar->type->array_size = n;
                         expect("]");
-                        loffset = loffset + lvar->type->size;
                 }
                 else
                 {
                         lvar = new_var(tok, lvar, t);
-                        loffset = loffset + lvar->type->size;
                 }
-
+                int size = lvar->type->size;
+                lvar->offset = (loffset + size - 1) / size * size;
+                loffset = lvar->offset + size;
                 if (consume(","))
                 {
                         continue;
@@ -1027,7 +1050,7 @@ Node *decl()
                 // globals->type->array_size = loffset;
                 // globals->type->size = loffset;
                 Type *type = new_type(TY_STRUCT, NULL, loffset);
-                //type->array_size = loffset;
+                // type->array_size = loffset;
                 type->str = tok->str;
                 add_hash(types, format("struct %s", tok->str), type);
                 loffset = 0;
@@ -1041,7 +1064,7 @@ Node *decl()
         {
                 Token *toke = consume_ident();
                 str = format("%s %s", tok->str, toke->str);
-                // TODO: handle struct declaration here 
+                // TODO: handle struct declaration here
         }
         base_t = get_hash(types, str);
         if (!base_t)

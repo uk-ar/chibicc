@@ -125,7 +125,7 @@ void printVC(char *v, int l)
 }
 void printA(int *p)
 {
-        printf("%ls\n", p);
+        printf("%p\n", p);
 }
 char *distance(char *p1, char *p2)
 {
