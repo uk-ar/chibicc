@@ -1039,6 +1039,10 @@ Node *decl()
                 expect("{");
                 // lstack[lstack_i++] = locals;
                 LVar *st_vars = calloc(1, sizeof(LVar));
+                Type *type = new_type(TY_STRUCT, NULL, 0);
+                // type->array_size = loffset;
+                type->str = tok->str;
+                add_hash(types, format("struct %s", tok->str), type);
                 while (!consume("}"))
                 {
 
@@ -1049,10 +1053,7 @@ Node *decl()
                 // locals = lstack[--lstack_i];
                 // globals->type->array_size = loffset;
                 // globals->type->size = loffset;
-                Type *type = new_type(TY_STRUCT, NULL, loffset);
-                // type->array_size = loffset;
-                type->str = tok->str;
-                add_hash(types, format("struct %s", tok->str), type);
+                type->size = loffset;
                 loffset = 0;
                 expect(";");
                 return decl();
