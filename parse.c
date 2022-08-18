@@ -274,10 +274,10 @@ Token *tokenize(char *p)
                         p += 4;
                         continue;
                 }
-                if (!strncmp(p, "struct", 4) && !isIdent(p[4]))
+                if (!strncmp(p, "struct", 6) && !isIdent(p[6]))
                 {
-                        cur = new_token(TK_TYPE, cur, p, 4);
-                        p += 4;
+                        cur = new_token(TK_TYPE, cur, p, 6);
+                        p += 6;
                         continue;
                 }
                 if (!strncmp(p, "return", 6) && !isIdent(p[6]))
@@ -793,9 +793,8 @@ Node *stmt()
                         else if (consume("["))
                         {
                                 int n = expect_num();
-                                locals = new_var(tok, locals, new_type(TY_ARRAY, t, 0));
+                                locals = new_var(tok, locals, new_type(TY_ARRAY, t, n * t->size));
                                 locals->type->array_size = n;
-                                locals->type->size = n * locals->type->ptr_to->size;
                                 locals->offset = loffset + locals->type->size * n; // TODO:fix it
                                 expect("]");
                         }
@@ -987,9 +986,8 @@ LVar *var_decl(LVar *lvar)
                 else if (consume("["))
                 {
                         int n = expect_num();
-                        lvar = new_var(tok, lvar, new_type(TY_ARRAY, t, 0));
+                        lvar = new_var(tok, lvar, new_type(TY_ARRAY, t, n * t->size));
                         lvar->type->array_size = n;
-                        lvar->type->size = n * lvar->type->ptr_to->size;
                         expect("]");
                         loffset = loffset + lvar->type->size;
                 }
@@ -1028,9 +1026,9 @@ Node *decl()
                 // locals = lstack[--lstack_i];
                 // globals->type->array_size = loffset;
                 // globals->type->size = loffset;
-                Type *type = new_type(TY_STRUCT, NULL, 0);
-                type->array_size = loffset;
-                type->size = loffset;
+                Type *type = new_type(TY_STRUCT, NULL, loffset);
+                //type->array_size = loffset;
+                type->str = tok->str;
                 add_hash(types, format("struct %s", tok->str), type);
                 loffset = 0;
                 expect(";");
@@ -1103,9 +1101,8 @@ Node *decl()
                         else
                         {
                                 int n = expect_num();
-                                globals = new_var(tok, globals, new_type(TY_ARRAY, t, 0));
+                                globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size));
                                 globals->type->array_size = n;
-                                globals->type->size = n * globals->type->ptr_to->size;
                                 expect("]");
                         }
                         /*expect(";");
