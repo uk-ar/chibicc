@@ -14,7 +14,7 @@ extern char *filename;
 extern Token *token;
 extern Node *code[];
 extern LVar *locals, *globals, *strings;
-extern HashMap *structs;
+extern HashMap *structs,*types;
 
 char *read_file(char *path)
 {
@@ -39,6 +39,7 @@ char *read_file(char *path)
 }
 
 char *global_types[] = {".byte", ".long", ".quad", ".quad"};
+extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size);
 
 int main(int argc, char **argv)
 {
@@ -54,6 +55,11 @@ int main(int argc, char **argv)
         locals = calloc(1, sizeof(LVar));
         // lstack[lstack_i]=locals;
         structs = new_hash(100);
+
+        types = new_hash(100);
+        add_hash(types, "int", new_type(TY_INT, NULL, 4));
+        add_hash(types, "char", new_type(TY_CHAR, NULL, 1));
+        add_hash(types, "long", new_type(TY_LONG, NULL, 8));
 
         filename = argv[1];
         // fprintf(tout,"# %s\n",filename);
@@ -84,18 +90,6 @@ int main(int argc, char **argv)
                 char *p = var->init;
                 if (!p)
                 {
-                        /*if (var->type->kind == TY_INT)
-                        {
-                                printf("  .zero 4\n");
-                        }
-                        else if (var->type->kind == TY_PTR)
-                        {
-                                printf("  .zero 8\n");
-                        }
-                        else
-                        {
-                                printf("  .zero %d\n", var->type->array_size * 4);
-                        }*/
                         printf("  .zero %d\n", var->type->size);
                 }
                 else
