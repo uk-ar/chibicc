@@ -14,7 +14,7 @@ extern char *filename;
 extern Token *token;
 extern Node *code[];
 extern LVar *locals, *globals, *strings;
-extern HashMap *structs, *types, *keyword2token;
+extern HashMap *structs, *types, *keyword2token, *type_alias;//struct name->vars,type name->type,
 
 char *read_file(char *path)
 {
@@ -61,6 +61,8 @@ int main(int argc, char **argv)
         add_hash(types, "int", new_type(TY_INT, NULL, 4));
         add_hash(types, "char", new_type(TY_CHAR, NULL, 1));
         add_hash(types, "long", new_type(TY_LONG, NULL, 8));
+
+        type_alias = new_hash(100);
 
         keyword2token = new_hash(100);
         add_hash(keyword2token, "auto",TK_STORAGE);

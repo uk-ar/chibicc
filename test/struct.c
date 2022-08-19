@@ -11,16 +11,16 @@ struct s1
 
 struct s2
 {
-    /*int f3;
+    int f3;
     int f4;
-    struct s1 f5;*/
+    struct s1 f5;
     struct s2 *f6; // recursive
 };
 struct
 {
     int anonymous;
 };
-/*
+
 typedef struct list list;
 
 struct list
@@ -29,7 +29,7 @@ struct list
     list *next;
 };
 
-/*typedef struct tnode TNODE;
+typedef struct tnode TNODE;
 struct tnode
 {
     int count;
@@ -40,7 +40,7 @@ TNODE s, *sp;
 typedef struct{
 int bar;
 }foo;
-*/
+foo c, *d;
 
 int
 main(int argc, char **argv)
