@@ -33,7 +33,7 @@ void add_hash(HashMap *h, char *key, void *value)
                 hash += *p;
         }
         // return add_hashI(h,c,value);
-        hash = hash % (h->size);
+        hash = hash % (h->size);//8
         for (HashNode *c = h->nodes[hash]; c; c = c->next_bucket)
         {
                 if (strcmp(c->key, key) == 0)

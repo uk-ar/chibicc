@@ -601,6 +601,7 @@ Type *declaration_specifier() // bool declaration)
                         {
                                 add_hash(type_alias, declarator->str, src_name);
                         }
+                        add_hash(types, declarator->str, new_type(TY_INT, NULL, 4));
                         add_hash(keyword2token, declarator->str, TK_TYPE);
                 }
                 return type;
