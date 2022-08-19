@@ -14,7 +14,7 @@ extern char *filename;
 extern Token *token;
 extern Node *code[];
 extern LVar *locals, *globals, *strings;
-extern HashMap *structs,*types;
+extern HashMap *structs, *types, *keyword2token;
 
 char *read_file(char *path)
 {
@@ -40,6 +40,7 @@ char *read_file(char *path)
 
 char *global_types[] = {".byte", ".long", ".quad", ".quad"};
 extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size);
+extern void add_hash(HashMap *h, char *key,void *value);
 
 int main(int argc, char **argv)
 {
@@ -60,6 +61,18 @@ int main(int argc, char **argv)
         add_hash(types, "int", new_type(TY_INT, NULL, 4));
         add_hash(types, "char", new_type(TY_CHAR, NULL, 1));
         add_hash(types, "long", new_type(TY_LONG, NULL, 8));
+
+        keyword2token = new_hash(100);
+        add_hash(keyword2token, "auto",TK_STORAGE);
+        add_hash(keyword2token, "register", TK_STORAGE);
+        add_hash(keyword2token, "static", TK_STORAGE);
+        add_hash(keyword2token, "extern", TK_STORAGE);
+        add_hash(keyword2token, "typedef", TK_STORAGE);
+
+        add_hash(keyword2token, "const", TK_TYPE_QUAL);
+        add_hash(keyword2token, "restrict", TK_TYPE_QUAL);
+        add_hash(keyword2token, "volatile", TK_TYPE_QUAL);
+        add_hash(keyword2token, "_Atomic", TK_TYPE_QUAL);
 
         filename = argv[1];
         // fprintf(tout,"# %s\n",filename);

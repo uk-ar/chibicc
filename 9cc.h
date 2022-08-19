@@ -1,5 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
+//#include <stdlib.h>
+//#include <stdio.h>
 
 typedef enum
 {
@@ -16,13 +16,16 @@ struct Type
 {
        TypeKind kind;
        struct Type *ptr_to;
-       size_t array_size;
+       long array_size;
        char *str;
-       size_t size;
+       long size;
 };
 
 typedef enum
 {
+       TK_DUMMY,
+       TK_TYPE_QUAL,
+       TK_STORAGE,
        TK_STR,
        TK_SIZEOF,
        TK_TYPE,
@@ -117,7 +120,7 @@ struct LVar
 Token *tokenize(char *p);
 Node *expr();
 Type *gen(Node *root);
-extern FILE *tout;
+// extern FILE *tout;
 void program();
 void error_at(char *loc, char *fmt, ...);
 

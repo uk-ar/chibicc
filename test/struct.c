@@ -11,21 +11,40 @@ struct s1
 
 struct s2
 {
-    int f3;
+    /*int f3;
     int f4;
-    struct s1 f5;
+    struct s1 f5;*/
     struct s2 *f6; // recursive
 };
+struct
+{
+    int anonymous;
+};
+/*
+typedef struct list list;
 
-struct l
+struct list
 {
     int var;
-    struct l *next;
+    list *next;
 };
 
-int main(int argc, char **argv)
+/*typedef struct tnode TNODE;
+struct tnode
 {
-    struct l *p = calloc(1, sizeof(struct l));
+    int count;
+    TNODE *left, *right;
+};
+
+TNODE s, *sp;
+typedef struct{
+int bar;
+}foo;
+*/
+
+int
+main(int argc, char **argv)
+{
     sizeof(int);
     char start;
     struct s1 o1; // 4+8+1+4+1=18 offset
