@@ -1010,18 +1010,11 @@ Node *arg()
 
 LVar *var_decl(LVar *lvar)
 {
-        Token *tok = consume_Token(TK_TYPE);
-        char *str = tok->str;
-        Type *base_t = NULL;
-        if (strncmp(tok->str, "struct", 6) == 0)
-        {
-                Token *toke = consume_ident();
-                str = format("%s %s", tok->str, toke->str);
-        }
-        base_t = get_hash(types, str);
+        Type *base_t = type_specifier();
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
-
+        /*if (consume(";"))
+                return decl();*/
         while (base_t)
         {
                 Type *t = base_t;
