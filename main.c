@@ -14,7 +14,8 @@ extern char *filename;
 extern Token *token;
 extern Node *code[];
 extern LVar *locals, *globals, *strings;
-extern HashMap *structs, *types, *keyword2token, *type_alias;//struct name->vars,type name->type,
+extern HashMap *structs, *types, *keyword2token, *type_alias;
+//struct name->vars,type name->type,,defname->type name
 
 char *read_file(char *path)
 {
@@ -65,6 +66,8 @@ int main(int argc, char **argv)
         type_alias = new_hash(100);
 
         keyword2token = new_hash(100);
+        add_hash(keyword2token, "enum", TK_TYPE);
+
         add_hash(keyword2token, "auto",TK_STORAGE);
         add_hash(keyword2token, "register", TK_STORAGE);
         add_hash(keyword2token, "static", TK_STORAGE);

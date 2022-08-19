@@ -472,6 +472,28 @@ LVar *struct_declaration(Type *type)
         return st_vars;
 }
 
+LVar *enumerator_list()
+{
+        LVar *st_vars = calloc(1, sizeof(LVar));
+        st_vars->offset = -1;
+        while (!consume("}"))
+        {
+                Token *tok = consume_ident();
+                st_vars = new_var(tok, st_vars, new_type(TY_INT, NULL, 4));
+                st_vars->offset = st_vars->next->offset + 1;
+                //consume_Token(TK_NUM);
+                //int n = token->pos - p + 1;
+                globals = new_var(tok, globals, new_type(TY_INT, NULL, 4));
+                globals->init = format("%d", st_vars->offset);
+                //add_hash(keyword2token, st_vars->name, TK_NUM);
+                // st_vars = var_decl(st_vars);
+                consume(",");
+        }
+        // add_hash(structs, str1, st_vars);
+        //loffset = 0;
+        return st_vars;
+}
+
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
@@ -480,13 +502,13 @@ Type *declaration_specifier() // bool declaration)
         Token *identifier = NULL;
         char *def_name = NULL;
         char *src_name = NULL;
-        Type *type = NULL;
-        LVar *st_vars = NULL;
         if (!type_spec)
                 return NULL;
         char *type_str = type_spec->str;
         if (strncmp(type_str, "struct", 6) == 0)
         {
+                Type *type = NULL;
+                LVar *st_vars = NULL;
                 if (consume("{"))
                 { // anonymous
                         type = new_type(TY_STRUCT, NULL, 0);
@@ -535,16 +557,65 @@ Type *declaration_specifier() // bool declaration)
                 }
                 return type;
         }
+        if (strcmp(type_str, "enum") == 0)
+        {
+                Type *type = NULL;
+                LVar *st_vars = NULL;
+                if (consume("{"))
+                { // anonymous
+                        // type = new_type(TY_STRUCT, NULL, 0);
+                        // st_vars = struct_declaration(type);
+                        st_vars = enumerator_list();
+                }
+                else if ((identifier = consume_ident())) // struct name
+                {
+                        src_name = format("%s %s", type_str, identifier->str);
+                        if (consume("{"))
+                        {
+                                /*type = new_type(TY_STRUCT, NULL, 0);
+                                type->str = identifier->str;
+                                add_hash(types, src_name, type); // for recursive field type
+                                st_vars = struct_declaration(type);
+                                add_hash(structs, src_name, st_vars);*/
+                                //type = new_type(TY_STRUCT, NULL, 0);
+                                st_vars = enumerator_list();
+                                add_hash(types, src_name, new_type(TY_INT, NULL, 4));
+                                add_hash(structs, src_name, st_vars);
+                        }
+                        else
+                        { // reference
+                                type = get_hash(types, src_name);
+                                st_vars = get_hash(structs, src_name);
+                        }
+                }
+                else
+                {
+                        error_at(token->pos, "need identifier for struct\n");
+                }
+                if (storage && (strncmp(storage->str, "typedef", 6) == 0))
+                {
+                        Token *declarator = consume_ident(); // defname
+                        if (!declarator)
+                                error_at(token->pos, "typedef need declarator for struct\n");
+                        if (src_name)
+                        {
+                                add_hash(type_alias, declarator->str, src_name);
+                        }
+                        add_hash(keyword2token, declarator->str, TK_TYPE);
+                }
+                return type;
+        }
         else
         {
                 if (storage && (strncmp(storage->str, "typedef", 6) == 0))
                 {
                         Token *declarator = consume_ident();
-                        if (!declarator || !type || !st_vars)
+                        if (!declarator) // || !type || !st_vars)
                                 error_at(token->pos, "need declarator for struct\n");
                         // src_name = format("%s %s", type_str, identifier->str);
-                        add_hash(types, declarator->str, type);
+                        // add_hash(types, declarator->str, type);
                         add_hash(keyword2token, declarator->str, TK_TYPE);
+                        add_hash(type_alias, declarator->str, src_name);
                 }
                 while (get_hash(type_alias, type_str))
                 {
