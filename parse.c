@@ -812,70 +812,60 @@ Node *stmt()
            | "int" ident ";"
            | "return" expr ";" */
         Node *node = NULL;
-        Token *tok = consume_Token(TK_TYPE);
-        if (tok)
+        Token *tok = NULL;
+        Type *base_t = type_specifier();
+        while (base_t)
         {
-                char *str = tok->str;
-                Type *base_t = NULL;
-                if (strncmp(tok->str, "struct", 6) == 0)
+                Type *t = base_t;
+                fprintf(tout, " var decl\n<%s>\n", __func__);
+                while (consume("*"))
+                        t = new_type(TY_PTR, t, 8);
+                Token *tok = consume_ident(); // ident
+                LVar *var = find_lvar(tok);   //
+                if (var)
                 {
-                        Token *toke = consume_ident();
-                        str = format("%s %s", tok->str, toke->str);
+                        error_at(tok->pos, "token '%s' is already defined", tok->pos);
                 }
-                base_t = get_hash(types, str);
-                while (base_t)
+                else if (consume("["))
                 {
-                        Type *t = base_t;
-                        fprintf(tout, " var decl\n<%s>\n", __func__);
-                        while (consume("*"))
-                                t = new_type(TY_PTR, t, 8);
-                        Token *tok = consume_ident(); // ident
-                        LVar *var = find_lvar(tok);   //
-                        if (var)
-                        {
-                                error_at(tok->pos, "token '%s' is already defined", tok->pos);
-                        }
-                        else if (consume("["))
-                        {
-                                int n = expect_num();
-                                locals = new_var(tok, locals, new_type(TY_ARRAY, t, n * t->size));
-                                locals->type->array_size = n;
-                                int size = locals->type->size;
-                                locals->offset = (loffset + size - 1) / size * size; // ajust
-                                locals->offset += locals->type->size * n;
-                                // locals->offset = loffset + locals->type->size * n; // TODO:fix it
-                                expect("]");
-                        }
-                        else
-                        {
-                                locals = new_var(tok, locals, t);
-                                int size = locals->type->size;
-                                locals->offset = (loffset + size - 1) / size * size; // ajust
-                                locals->offset += locals->type->size;
-                                // locals->offset = loffset + locals->type->size; // TODO:fix it
-                        }
+                        int n = expect_num();
+                        locals = new_var(tok, locals, new_type(TY_ARRAY, t, n * t->size));
+                        locals->type->array_size = n;
+                        int size = locals->type->size;
+                        locals->offset = (loffset + size - 1) / size * size; // ajust
+                        locals->offset += locals->type->size * n;
+                        // locals->offset = loffset + locals->type->size * n; // TODO:fix it
+                        expect("]");
+                }
+                else
+                {
+                        locals = new_var(tok, locals, t);
+                        int size = locals->type->size;
+                        locals->offset = (loffset + size - 1) / size * size; // ajust
+                        locals->offset += locals->type->size;
+                        // locals->offset = loffset + locals->type->size; // TODO:fix it
+                }
 
-                        loffset = locals->offset;
-                        fprintf(tout, " var decl\n</%s>\n", __func__);
-                        if (consume("="))
-                        {
-                                if (!node)
-                                        node = new_node(ND_BLOCK, NULL, NULL, NULL);
-                                Node *lnode = new_node(ND_LVAR, NULL, NULL, tok);
-                                lnode->type = t;
-                                lnode->offset = locals->offset;
-                                add_node(node, new_node(ND_ASSIGN, lnode, assign(), NULL));
-                        }
-                        if (consume(","))
-                        {
-                                continue;
-                        }
-                        expect(";");
-                        if (node)
-                                return node;
-                        return stmt();
-                        // skip token
+                loffset = locals->offset;
+                fprintf(tout, " var decl\n</%s>\n", __func__);
+                if (consume("="))
+                {
+                        if (!node)
+                                node = new_node(ND_BLOCK, NULL, NULL, NULL);
+                        Node *lnode = new_node(ND_LVAR, NULL, NULL, tok);
+                        lnode->type = t;
+                        lnode->offset = locals->offset;
+                        add_node(node, new_node(ND_ASSIGN, lnode, assign(), NULL));
                 }
+                if (consume(","))
+                {
+                        continue;
+                }
+                expect(";");
+                if (node)
+                        return node;
+                return stmt();
+                // skip token
         }
         if ((tok = consume_Token(TK_RETURN)))
         {
@@ -972,15 +962,7 @@ Node *arg()
 {
         fprintf(tout, " \n<%s>\n", __func__);
 
-        Token *tok = consume_Token(TK_TYPE);
-        char *str = tok->str;
-        Type *base_t = NULL;
-        if (strncmp(tok->str, "struct", 6) == 0)
-        {
-                Token *toke = consume_ident();
-                str = format("%s %s", tok->str, toke->str);
-        }
-        base_t = get_hash(types, str);
+        Type *base_t = type_specifier();
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
 
@@ -988,7 +970,7 @@ Node *arg()
         while (consume("*"))
                 t = new_type(TY_PTR, t, 8);
 
-        tok = consume_ident();
+        Token *tok = consume_ident();
         Node *ans = new_node(ND_LVAR, NULL, NULL, tok);
         ans->type = t;
         LVar *var = find_lvar(tok);
@@ -1013,8 +995,6 @@ LVar *var_decl(LVar *lvar)
         Type *base_t = type_specifier();
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
-        /*if (consume(";"))
-                return decl();*/
         while (base_t)
         {
                 Type *t = base_t;
