@@ -440,6 +440,39 @@ LVar *new_var(Token *tok, LVar *next, Type *t)
         var->type = t;
         return var;
 }
+LVar *var_decl(LVar *lvar);
+// in order to reset offset
+int loffset = 0;
+Type *type_specifier()
+{
+        Token *tok0 = consume_Token(TK_TYPE);
+        if (!tok0)
+                return NULL;
+        char *str0 = tok0->str;
+        if (strncmp(str0, "struct", 6) != 0)
+                // TODO:union typedef
+                return get_hash(types, str0);
+        Token *tok1 = consume_ident();
+        if (!tok1)
+                error_at(tok0->pos, "need identifier for struct\n");
+        char *str1 = tok1->str;
+        if (!consume("{"))
+                // struct reference
+                return get_hash(types, format("%s %s", str0, str1));
+        LVar *st_vars = calloc(1, sizeof(LVar));
+        Type *type = new_type(TY_STRUCT, NULL, 0);
+        type->str = str1;
+        add_hash(types, format("%s %s", str0, str1), type);
+        while (!consume("}"))
+        {
+                st_vars = var_decl(st_vars);
+                consume(";");
+        }
+        add_hash(structs, str1, st_vars);
+        type->size = loffset;
+        loffset = 0;
+        return type;
+}
 // https://cs.wmich.edu/~gupta/teaching/cs4850/sumII06/The%20syntax%20of%20C%20in%20Backus-Naur%20form.htm
 /* program    = stmt* */
 /* stmt       = expr ";"
@@ -564,28 +597,42 @@ Node *primary()
                                 ans->offset -= field->offset;
                                 return ans;
                         }
-                        else if (consume("->"))
-                        {
-                                tok = consume_ident();                           // field
-                                var = get_hash(structs, var->type->ptr_to->str); // vars for s1
-                                LVar *field = find_var(tok, var);
-                                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)), ans, NULL), NULL, NULL);
-                                // Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
-                                //  Node *ans1 = new_node(ND_DEREF, ans, NULL, NULL);
-                                //  ans1->type = field->type;
-                                //  ans->offset += field->offset;
-                                //   ans->type->ptr_to = field->type;
-                                return ans1;
-                                // return ans1;
-                        }
                         fprintf(tout, "var\n</%s>\n", __func__);
                         // ans->offset=(tok->pos[0]-'a'+1)*8;
                         return ans;
                 }
         }
         fprintf(tout, "<%s>num\n", __func__);
+        // TODO:add enum
         Node *ans = new_node_num(expect_num(), NULL, new_type(TY_INT, NULL, 4));
         fprintf(tout, "num\n</%s>\n", __func__);
+        return ans;
+}
+/*<postfix-expression> ::= <primary-expression>
+                       | <postfix-expression> [ <expression> ]
+                       | <postfix-expression> ( {<assignment-expression>}* )
+                       | <postfix-expression> . <identifier>
+                       | <postfix-expression> -> <identifier>
+                       | <postfix-expression> ++
+                       | <postfix-expression> --*/
+Node *postfix()
+{
+        Token *tok = NULL;
+        Node *ans = primary();
+        if ((tok = consume("->")))
+        {
+                tok = consume_ident();                                 // field
+                LVar *var = get_hash(structs, ans->type->ptr_to->str); // vars for s1
+                LVar *field = find_var(tok, var);
+                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)), ans, NULL), NULL, NULL);
+                // Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
+                //  Node *ans1 = new_node(ND_DEREF, ans, NULL, NULL);
+                //  ans1->type = field->type;
+                //  ans->offset += field->offset;
+                //   ans->type->ptr_to = field->type;
+                return ans1;
+                // return ans1;
+        }
         return ans;
 }
 /* unary   = "-"? primary | "+"? primary
@@ -604,15 +651,20 @@ Node *unary()
         if ((tok = consume_Token(TK_SIZEOF)))
         {
                 fprintf(tout, " <%s>\"\n", __func__);
-                Node *node = unary();
-                Type *t = node->type;
+                Type *t = type_specifier();
+                if (t)
+                {
+                        fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
+                        return new_node_num(t->size, NULL, t);
+                }
+                t = unary()->type;
                 fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
                 return new_node_num(t->size, NULL, t);
         }
         if ((tok = consume("+")))
         {
                 fprintf(tout, " <%s>+\"\n", __func__);
-                ans = primary();
+                ans = postfix();
                 fprintf(tout, " +\n</%s>\n", __func__);
                 return ans;
         }
@@ -639,7 +691,7 @@ Node *unary()
                 Node *lhs = unary();
                 return new_node(ND_ADDR, lhs, NULL, tok);
         }
-        return primary();
+        return postfix();
 }
 Node *mul()
 {
@@ -767,40 +819,6 @@ Node *expr()
         Node *node = NULL;
         node = assign();
         return node;
-}
-
-LVar *var_decl(LVar *lvar);
-// in order to reset offset
-int loffset = 0;
-Type *type_specifier()
-{
-        Token *tok0 = consume_Token(TK_TYPE);
-        if (!tok0)
-                return NULL;
-        char *str0 = tok0->str;
-        if (strncmp(str0, "struct", 6) != 0)
-                // TODO:union typedef
-                return get_hash(types, str0);
-        Token *tok1 = consume_ident();
-        if (!tok1)
-                error_at(tok0, "need identifier for struct\n");
-        char *str1 = tok1->str;
-        if (!consume("{"))
-                // struct reference
-                return get_hash(types, format("%s %s", str0, str1));
-        LVar *st_vars = calloc(1, sizeof(LVar));
-        Type *type = new_type(TY_STRUCT, NULL, 0);
-        type->str = str1;
-        add_hash(types, format("%s %s", str0, str1), type);
-        while (!consume("}"))
-        {
-                st_vars = var_decl(st_vars);
-                consume(";");
-        }
-        add_hash(structs, str1, st_vars);
-        type->size = loffset;
-        loffset = 0;
-        return type;
 }
 
 Node *stmt()
