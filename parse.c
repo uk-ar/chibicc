@@ -577,26 +577,6 @@ Node *primary()
                         ans->offset = var->offset;
                         ans->type = var->type;
 
-                        if (consume("["))
-                        {
-                                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
-                                ans1->type = var->type->ptr_to;
-                                expect("]"); // important
-                                fprintf(tout, "array\n</%s>\n", __func__);
-                                return ans1;
-                        }
-                        else if (consume("."))
-                        {
-                                tok = consume_ident();
-                                var = get_hash(structs, ans->type->str);
-                                LVar *field = find_var(tok, var);
-                                // Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
-                                // ans1->type = field->type;
-                                // return ans1;
-                                ans->type = field->type;
-                                ans->offset -= field->offset;
-                                return ans;
-                        }
                         fprintf(tout, "var\n</%s>\n", __func__);
                         // ans->offset=(tok->pos[0]-'a'+1)*8;
                         return ans;
@@ -619,7 +599,27 @@ Node *postfix()
 {
         Token *tok = NULL;
         Node *ans = primary();
-        if ((tok = consume("->")))
+        if ((tok = (consume("["))))
+        {
+                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
+                ans1->type = ans->type->ptr_to;
+                expect("]"); // important
+                fprintf(tout, "array\n</%s>\n", __func__);
+                return ans1;
+        }
+        else if ((tok = (consume("."))))
+        {
+                tok = consume_ident();
+                LVar *var = get_hash(structs, ans->type->str);
+                LVar *field = find_var(tok, var);
+                // Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
+                // ans1->type = field->type;
+                // return ans1;
+                ans->type = field->type;
+                ans->offset -= field->offset;
+                return ans;
+        }
+        else if ((tok = consume("->")))
         {
                 tok = consume_ident();                                 // field
                 LVar *var = get_hash(structs, ans->type->ptr_to->str); // vars for s1
