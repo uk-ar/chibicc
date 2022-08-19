@@ -25,8 +25,8 @@ struct l
 
 int main(int argc, char **argv)
 {
-    // struct l *p;
-    // sizeof(int);
+    struct l *p;
+    //sizeof(int);
     // p = calloc(1, sizeof(struct l));
     char start;
     struct s1 o1; // 4+8+1+4+1=18 offset

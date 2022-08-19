@@ -440,7 +440,7 @@ LVar *new_var(Token *tok, LVar *next, Type *t)
         var->type = t;
         return var;
 }
-
+// https://cs.wmich.edu/~gupta/teaching/cs4850/sumII06/The%20syntax%20of%20C%20in%20Backus-Naur%20form.htm
 /* program    = stmt* */
 /* stmt       = expr ";"
               | "{" stmt* "}"
@@ -569,12 +569,12 @@ Node *primary()
                                 tok = consume_ident();                           // field
                                 var = get_hash(structs, var->type->ptr_to->str); // vars for s1
                                 LVar *field = find_var(tok, var);
-                                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)),ans,  NULL), NULL, NULL);
-                                //Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
-                                // Node *ans1 = new_node(ND_DEREF, ans, NULL, NULL);
-                                // ans1->type = field->type;
-                                // ans->offset += field->offset;
-                                //  ans->type->ptr_to = field->type;
+                                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)), ans, NULL), NULL, NULL);
+                                // Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
+                                //  Node *ans1 = new_node(ND_DEREF, ans, NULL, NULL);
+                                //  ans1->type = field->type;
+                                //  ans->offset += field->offset;
+                                //   ans->type->ptr_to = field->type;
                                 return ans1;
                                 // return ans1;
                         }
@@ -769,8 +769,39 @@ Node *expr()
         return node;
 }
 
+LVar *var_decl(LVar *lvar);
 // in order to reset offset
 int loffset = 0;
+Type *type_specifier()
+{
+        Token *tok0 = consume_Token(TK_TYPE);
+        if (!tok0)
+                return NULL;
+        char *str0 = tok0->str;
+        if (strncmp(str0, "struct", 6) != 0)
+                // TODO:union typedef
+                return get_hash(types, str0);
+        Token *tok1 = consume_ident();
+        if (!tok1)
+                error_at(tok0, "need identifier for struct\n");
+        char *str1 = tok1->str;
+        if (!consume("{"))
+                // struct reference
+                return get_hash(types, format("%s %s", str0, str1));
+        LVar *st_vars = calloc(1, sizeof(LVar));
+        Type *type = new_type(TY_STRUCT, NULL, 0);
+        type->str = str1;
+        add_hash(types, format("%s %s", str0, str1), type);
+        while (!consume("}"))
+        {
+                st_vars = var_decl(st_vars);
+                consume(";");
+        }
+        add_hash(structs, str1, st_vars);
+        type->size = loffset;
+        loffset = 0;
+        return type;
+}
 
 Node *stmt()
 {
@@ -1031,45 +1062,11 @@ LVar *var_decl(LVar *lvar)
 
 Node *decl()
 {
-        if (consume("struct"))
-        {
-                Token *tok = consume_ident();
-                // globals = new_var(tok, globals,
-                //                   new_type(TY_STRUCT, NULL, 0)); // struct ident store in globals
-                expect("{");
-                // lstack[lstack_i++] = locals;
-                LVar *st_vars = calloc(1, sizeof(LVar));
-                Type *type = new_type(TY_STRUCT, NULL, 0);
-                // type->array_size = loffset;
-                type->str = tok->str;
-                add_hash(types, format("struct %s", tok->str), type);
-                while (!consume("}"))
-                {
-
-                        st_vars = var_decl(st_vars);
-                        consume(";");
-                }
-                add_hash(structs, tok->str, st_vars);
-                // locals = lstack[--lstack_i];
-                // globals->type->array_size = loffset;
-                // globals->type->size = loffset;
-                type->size = loffset;
-                loffset = 0;
-                expect(";");
-                return decl();
-        }
-        Token *tok = consume_Token(TK_TYPE);
-        char *str = tok->str;
-        Type *base_t = NULL;
-        if (strncmp(tok->str, "struct", 6) == 0)
-        {
-                Token *toke = consume_ident();
-                str = format("%s %s", tok->str, toke->str);
-                // TODO: handle struct declaration here
-        }
-        base_t = get_hash(types, str);
+        Type *base_t = type_specifier();
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
+        if (consume(";"))
+                return decl();
 
         while (base_t)
         {
