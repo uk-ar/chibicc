@@ -491,6 +491,7 @@ Type *type_specifier()
 /* add        = mul ("+" mul | "-" mul)* */
 /* mul     = unary ("*" unary | "/" unary)* */
 /* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
+/* postfix */
 /* primary = ident.ident | ident->ident | num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" | TK_STR*/
 Node *expr();
 Node *stmt();
@@ -526,15 +527,14 @@ Node *primary()
                 fprintf(tout, ")</%s>\n", __func__);
                 return ans;
         }
-        if ((tok = consume_Token(TK_STR)))
+        else if ((tok = consume_Token(TK_STR)))
         {
                 fprintf(tout, "<%s>\"\n", __func__);
                 Node *ans = new_node(ND_STR, NULL, NULL, tok);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
         }
-        tok = consume_ident();
-        if (tok)
+        else if ((tok = consume_ident()))
         {
                 if (consume("("))
                 { // call
@@ -581,6 +581,11 @@ Node *primary()
                         // ans->offset=(tok->pos[0]-'a'+1)*8;
                         return ans;
                 }
+        }
+        Type *t = type_specifier();
+        if(t){
+                Node *ans = new_node_num(0, NULL, t);
+                return ans;
         }
         fprintf(tout, "<%s>num\n", __func__);
         // TODO:add enum
@@ -633,6 +638,8 @@ Node *postfix()
                 return ans1;
                 // return ans1;
         }
+        // TODO:++
+        // TODO:--
         return ans;
 }
 /* unary   = "-"? primary | "+"? primary
@@ -641,7 +648,7 @@ Node *unary()
 {
         Token *tok = NULL;
         Node *ans = NULL;
-        if ((tok = consume_Token(TK_STR)))
+        if ((tok = consume_Token(TK_STR))) // TODO:fix it
         {
                 fprintf(tout, " <%s>\"\n", __func__);
                 Node *ans = new_node(ND_STR, NULL, NULL, tok);
@@ -661,10 +668,12 @@ Node *unary()
                 fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
                 return new_node_num(t->size, NULL, t);
         }
+        // TODO:++ unary
+        // TODO:-- unary
         if ((tok = consume("+")))
         {
                 fprintf(tout, " <%s>+\"\n", __func__);
-                ans = postfix();
+                ans = unary();
                 fprintf(tout, " +\n</%s>\n", __func__);
                 return ans;
         }
@@ -672,7 +681,7 @@ Node *unary()
         {
                 // important
                 fprintf(tout, " <%s>-\"\n", __func__);
-                ans = new_node(ND_SUB, new_node_num(0, NULL, new_type(TY_INT, NULL, 4)), primary(), tok); // 0-primary()
+                ans = new_node(ND_SUB, new_node_num(0, NULL, new_type(TY_INT, NULL, 4)), unary(), tok); // 0-primary()
                 return ans;
                 fprintf(tout, " -\n</%s>\n", __func__);
         }
