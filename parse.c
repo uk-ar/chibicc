@@ -267,25 +267,25 @@ Token *tokenize(char *p)
                 }
                 if (!strncmp(p, "int", 3) && !isIdent(p[3]))
                 {
-                        cur = new_token(TK_TYPE, cur, p, 3);
+                        cur = new_token(TK_TYPE_SPEC, cur, p, 3);
                         p += 3;
                         continue;
                 }
                 if (!strncmp(p, "char", 4) && !isIdent(p[4]))
                 {
-                        cur = new_token(TK_TYPE, cur, p, 4);
+                        cur = new_token(TK_TYPE_SPEC, cur, p, 4);
                         p += 4;
                         continue;
                 }
                 if (!strncmp(p, "long", 4) && !isIdent(p[4]))
                 {
-                        cur = new_token(TK_TYPE, cur, p, 4);
+                        cur = new_token(TK_TYPE_SPEC, cur, p, 4);
                         p += 4;
                         continue;
                 }
                 if (!strncmp(p, "struct", 6) && !isIdent(p[6]))
                 {
-                        cur = new_token(TK_TYPE, cur, p, 6);
+                        cur = new_token(TK_TYPE_SPEC, cur, p, 6);
                         p += 6;
                         continue;
                 }
@@ -505,7 +505,7 @@ Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
         Token *type_qual = consume_Token(TK_TYPE_QUAL);
-        Token *type_spec = consume_Token(TK_TYPE);
+        Token *type_spec = consume_Token(TK_TYPE_SPEC);
         Token *identifier = NULL;
         char *def_name = NULL;
         char *src_name = NULL;
@@ -560,7 +560,7 @@ Type *declaration_specifier() // bool declaration)
                         {
                                 error_at(token->pos, "typedef need identifier for struct\n");
                         }
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                 }
                 return type;
         }
@@ -609,7 +609,7 @@ Type *declaration_specifier() // bool declaration)
                                 add_hash(type_alias, declarator->str, src_name);
                         }
                         add_hash(types, declarator->str, new_type(TY_INT, NULL, 4));
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                 }
                 return type;
         }
@@ -622,7 +622,7 @@ Type *declaration_specifier() // bool declaration)
                                 error_at(token->pos, "need declarator for struct\n");
                         // src_name = format("%s %s", type_str, identifier->str);
                         // add_hash(types, declarator->str, type);
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                         add_hash(type_alias, declarator->str, src_name);
                 }
                 while (get_hash(type_alias, type_str))
@@ -819,6 +819,46 @@ Node *postfix()
         // TODO:--
         return ans;
 }
+
+Type *parameter_type_list()//it should return LVar*?
+{
+        Type *t = declaration_specifier();
+        
+        if(consume(","))
+                return parameter_type_list();
+        return t;
+}
+Type *abstract_declarator(Type *t);
+Type *direct_abstract_declarator(Type *t)
+{
+        if (consume("("))
+        {
+                t = abstract_declarator(t);
+                if (!t)
+                        t = parameter_type_list();
+                expect(")");
+                return t;
+        }
+        // TODO:constant-expression(conditional-expression : ?)
+        // TODO:parameter-type-list
+        return t;
+}
+Type *abstract_declarator(Type *t)
+{
+        while (consume("*"))
+                t = new_type(TY_PTR, t, 8);
+        t = direct_abstract_declarator(t);
+        return t;
+}
+
+Type *type_name()
+{
+        // specifier-qualifier
+        consume_Token(TK_TYPE_QUAL);
+        Type *t = consume_Token(TK_TYPE_SPEC);
+        return abstract_declarator(t);
+}
+
 /* unary   = "-"? primary | "+"? primary
            | "*" unary | "&" unary  | "sizeof" unary */
 Node *unary()
@@ -882,17 +922,17 @@ Node *unary()
 
 Node *cast()
 {
-        /*if (token->next &&
-            equal_Token(token->next, TK_TYPE) &&
+        if (token->next &&
+            equal_Token(token->next, TK_TYPE_SPEC) &&
             (strncmp("(", token->str, 2) == 0))
         {
-                consume("(");
-                Token *type_name = consume_Token(TK_TYPE);
-                consume(")");
+                expect("(");
+                Token *type_name = consume_Token(TK_TYPE_SPEC);
+                expect(")");
                 Node *node = cast();
                 node->type = get_hash(types, type_name->str);
                 return node;
-        }*/
+        }
         return unary();
 }
 Node *mul()
@@ -1268,7 +1308,8 @@ LVar *var_decl(LVar *lvar)
         }
         return lvar;
 }
-void initilizer(bool top){
+void initilizer(bool top)
+{
         consume("&");
         char *p = token->pos;
         consume_ident();
@@ -1303,9 +1344,9 @@ void initilizer(bool top){
         }
 }
 Node *declaration(bool top);
-Node *init_declarator(Type *base_t,bool top)
+Node *init_declarator(Type *base_t, bool top)
 {
-        //LVar *vars = globals;
+        // LVar *vars = globals;
         Type *t = base_t;
         while (consume("*"))
                 t = new_type(TY_PTR, t, 8);
@@ -1388,7 +1429,7 @@ Node *init_declarator(Type *base_t,bool top)
         }
         if (consume(","))
         {
-                return init_declarator(base_t,top);
+                return init_declarator(base_t, top);
         }
         expect(";");
         fprintf(tout, " \n</%s>\n", __func__);
@@ -1403,7 +1444,7 @@ Node *declaration(bool top)
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
 
-        return init_declarator(base_t,top);
+        return init_declarator(base_t, top);
 }
 
 Node *code[100] = {0};

@@ -7,9 +7,9 @@
 
 int main(int argc,char**argv)
 {
-    printf("foo %c", (char)10);
+    //printf("foo %c", (char)10);
     //printf("foo %p", (void *)10);
-    // char a = (char)4;
+    //char a = (char)4;
     /*HashMap *h = new_hash(10);
     add_hash(h, "3", 6);
     ASSERT(6, get_hash(h, "3"));

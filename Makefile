@@ -13,6 +13,7 @@ $(OBJS):9cc.h
 test/%.exe: 9cc test/%.c
 #プリプロセス結果をcompile
 	$(CC) -o test/$*.e -E -P -C test/$*.c
+#コンパイル時エラー解析のため名前を統一
 	cp test/$*.e tmp.cx
 	./9cc test/$*.e > test/$*.s	
 #テストバイナリ作成
@@ -20,6 +21,7 @@ test/%.exe: 9cc test/%.c
 	$(CC) -static -g -o $@ test/$*.s test/common.c hashmap.c
 
 test: $(TESTS)
+#実行時エラー解析のため名前を統一
 	for i in $^; do \
 	cp $${i%.*}.e tmp.cx; \
 	cp $${i%.*}.s tmp.s; \

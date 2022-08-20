@@ -15,7 +15,7 @@ extern Token *token;
 extern Node *code[];
 extern LVar *locals, *globals, *strings;
 extern HashMap *structs, *types, *keyword2token, *type_alias;
-//struct name->vars,type name->type,,defname->type name
+// struct name->vars,type name->type,,defname->type name
 
 char *read_file(char *path)
 {
@@ -41,13 +41,13 @@ char *read_file(char *path)
 
 char *global_types[] = {".byte", ".long", ".quad", ".quad"};
 extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size);
-extern void add_hash(HashMap *h, char *key,void *value);
+extern void add_hash(HashMap *h, char *key, void *value);
 
 int main(int argc, char **argv)
 {
         tout2 = stdout; // debug
         // tout=stderr;
-        //hashmap_test();
+        // hashmap_test();
         if (argc != 2)
         {
                 fprintf(stderr, "wrong number of argument\n.");
@@ -67,10 +67,10 @@ int main(int argc, char **argv)
         type_alias = new_hash(100);
 
         keyword2token = new_hash(100);
-        add_hash(keyword2token, "enum", TK_TYPE);
-        add_hash(keyword2token, "void", TK_TYPE);
+        add_hash(keyword2token, "enum", TK_TYPE_SPEC);
+        add_hash(keyword2token, "void", TK_TYPE_SPEC);
 
-        add_hash(keyword2token, "auto",TK_STORAGE);
+        add_hash(keyword2token, "auto", TK_STORAGE);
         add_hash(keyword2token, "register", TK_STORAGE);
         add_hash(keyword2token, "static", TK_STORAGE);
         add_hash(keyword2token, "extern", TK_STORAGE);

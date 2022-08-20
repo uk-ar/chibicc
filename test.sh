@@ -3,8 +3,8 @@ assert(){
     expected="$1"
     input="$2"
 
-    echo "$input" > tmp.cx
-    ./9cc tmp.cx > tmp.s
+    echo "$input" > tmp.cc
+    ./9cc tmp.cc > tmp.s
     if [ "$?" -ne 0 ]; then
         echo "compile error"
         exit 1

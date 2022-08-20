@@ -28,7 +28,7 @@ typedef enum
        TK_STORAGE,
        TK_STR,
        TK_SIZEOF,
-       TK_TYPE,
+       TK_TYPE_SPEC,
        TK_IF,
        TK_ELSE,
        TK_WHILE,

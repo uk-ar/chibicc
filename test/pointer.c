@@ -4,6 +4,8 @@
 char x;
 int main(int argc, char **argv)
 {
+    ASSERT(4, ({int x;sizeof(int); }));
+    //ASSERT(4, ({int x;sizeof(int *); }));
     ASSERT(4, ({int x;sizeof(x); }));
     ASSERT(8, ({int x;int *y;sizeof(y); }));
     ASSERT(4, ({int x;sizeof(x+3); }));

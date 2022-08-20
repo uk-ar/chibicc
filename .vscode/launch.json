@@ -30,7 +30,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/9cc",
-            "args": ["tmp.cx"],            
+            "args": ["tmp.cc"],            
             //"args": ["test/string.e"],            
             //"args": ["test/control.e"],            
             //"args": ["int main(){puts(\\\"abc\\\");return 3;}"],
