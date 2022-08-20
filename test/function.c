@@ -1,5 +1,8 @@
 #include "test.h"
 
+void error_at(char *loc, char *fmt, ...);
+void program();
+int f1(); // declaration
 
 int f1()
 {
@@ -22,11 +25,13 @@ int f5()
     int a;
     return 5;
 }
+
 int f6()
 {
     int a; // duplicate variable name
     return 6;
 }
+
 int fib(int x)
 {
     if (x <= 1)

@@ -62,11 +62,13 @@ int main(int argc, char **argv)
         add_hash(types, "int", new_type(TY_INT, NULL, 4));
         add_hash(types, "char", new_type(TY_CHAR, NULL, 1));
         add_hash(types, "long", new_type(TY_LONG, NULL, 8));
+        add_hash(types, "void", new_type(TY_INT, NULL, 4));
 
         type_alias = new_hash(100);
 
         keyword2token = new_hash(100);
         add_hash(keyword2token, "enum", TK_TYPE);
+        add_hash(keyword2token, "void", TK_TYPE);
 
         add_hash(keyword2token, "auto",TK_STORAGE);
         add_hash(keyword2token, "register", TK_STORAGE);

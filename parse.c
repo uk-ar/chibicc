@@ -1269,10 +1269,18 @@ Node *decl()
                                 for (; i < 6 && !consume(")"); i++)
                                 {
                                         consume(",");
+                                        if(consume("...")){
+                                                if(consume(")"))
+                                                        break;
+                                                else
+                                                        error_at(token->pos, "va arg error\n");
+                                        }
                                         params[i] = arg();
                                 }
                         }
                         ans->params = params;
+                        if (consume(";"))
+                                return decl();
                         ans->then = stmt(); // block
                         // ans->then->params=params;
                         ans->offset = loffset;
