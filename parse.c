@@ -68,11 +68,18 @@ Type *new_type(TypeKind ty, Type *ptr_to, size_t size)
         return type;
 }
 
+bool equal_Token(Token *tok, TokenKind kind)
+{
+        if (!tok)
+                return false;
+        if ((tok->kind != kind) && ((get_hash(keyword2token, tok->str) != (void *)kind)))
+                return false;
+        return true;
+}
+
 Token *consume_Token(TokenKind kind)
 {
-        if (!token)
-                return NULL;
-        if ((token->kind != kind) && (get_hash(keyword2token, token->str) != kind))
+        if (!equal_Token(token, kind))
                 return NULL;
         Token *ans = token;
         token = token->next;
@@ -481,16 +488,16 @@ LVar *enumerator_list()
                 Token *tok = consume_ident();
                 st_vars = new_var(tok, st_vars, new_type(TY_INT, NULL, 4));
                 st_vars->offset = st_vars->next->offset + 1;
-                //consume_Token(TK_NUM);
-                //int n = token->pos - p + 1;
+                // consume_Token(TK_NUM);
+                // int n = token->pos - p + 1;
                 globals = new_var(tok, globals, new_type(TY_INT, NULL, 4));
                 globals->init = format("%d", st_vars->offset);
-                //add_hash(keyword2token, st_vars->name, TK_NUM);
-                // st_vars = var_decl(st_vars);
+                // add_hash(keyword2token, st_vars->name, TK_NUM);
+                //  st_vars = var_decl(st_vars);
                 consume(",");
         }
         // add_hash(structs, str1, st_vars);
-        //loffset = 0;
+        // loffset = 0;
         return st_vars;
 }
 
@@ -553,7 +560,7 @@ Type *declaration_specifier() // bool declaration)
                         {
                                 error_at(token->pos, "typedef need identifier for struct\n");
                         }
-                        add_hash(keyword2token, declarator->str, TK_TYPE);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE);
                 }
                 return type;
         }
@@ -577,7 +584,7 @@ Type *declaration_specifier() // bool declaration)
                                 add_hash(types, src_name, type); // for recursive field type
                                 st_vars = struct_declaration(type);
                                 add_hash(structs, src_name, st_vars);*/
-                                //type = new_type(TY_STRUCT, NULL, 0);
+                                // type = new_type(TY_STRUCT, NULL, 0);
                                 st_vars = enumerator_list();
                                 add_hash(types, src_name, new_type(TY_INT, NULL, 4));
                                 add_hash(structs, src_name, st_vars);
@@ -602,7 +609,7 @@ Type *declaration_specifier() // bool declaration)
                                 add_hash(type_alias, declarator->str, src_name);
                         }
                         add_hash(types, declarator->str, new_type(TY_INT, NULL, 4));
-                        add_hash(keyword2token, declarator->str, TK_TYPE);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE);
                 }
                 return type;
         }
@@ -615,7 +622,7 @@ Type *declaration_specifier() // bool declaration)
                                 error_at(token->pos, "need declarator for struct\n");
                         // src_name = format("%s %s", type_str, identifier->str);
                         // add_hash(types, declarator->str, type);
-                        add_hash(keyword2token, declarator->str, TK_TYPE);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE);
                         add_hash(type_alias, declarator->str, src_name);
                 }
                 while (get_hash(type_alias, type_str))
@@ -872,23 +879,39 @@ Node *unary()
         }
         return postfix();
 }
+
+Node *cast()
+{
+        /*if (token->next &&
+            equal_Token(token->next, TK_TYPE) &&
+            (strncmp("(", token->str, 2) == 0))
+        {
+                consume("(");
+                Token *type_name = consume_Token(TK_TYPE);
+                consume(")");
+                Node *node = cast();
+                node->type = get_hash(types, type_name->str);
+                return node;
+        }*/
+        return unary();
+}
 Node *mul()
 {
         Token *tok = NULL;
-        Node *node = unary();
+        Node *node = cast();
         for (;;)
         {
                 if ((tok = consume("*")))
                 {
                         fprintf(tout, " mul\n<%s>\n", __func__);
-                        node = new_node(ND_MUL, node, unary(), tok);
+                        node = new_node(ND_MUL, node, mul(), tok);
                         fprintf(tout, " mul\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume("/")))
                 {
                         fprintf(tout, " div\n<%s>\n", __func__);
-                        node = new_node(ND_DIV, node, unary(), token);
+                        node = new_node(ND_DIV, node, mul(), token);
                         fprintf(tout, " div\n</%s>\n", __func__);
                         continue;
                 }
@@ -904,14 +927,14 @@ Node *add()
                 if ((tok = consume("-")))
                 {
                         fprintf(tout, " sub\n<%s>\n", __func__);
-                        node = new_node(ND_SUB, node, mul(), tok);
+                        node = new_node(ND_SUB, node, add(), tok);
                         fprintf(tout, " sub\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume("+")))
                 {
                         fprintf(tout, " plus\n<%s>\n", __func__);
-                        node = new_node(ND_ADD, node, mul(), tok);
+                        node = new_node(ND_ADD, node, add(), tok);
                         fprintf(tout, " plus\n</%s>\n", __func__);
                         continue;
                 }
@@ -1000,6 +1023,31 @@ Node *expr()
         return node;
 }
 
+/*void initializer(Node *node, Type *t, Token *tok)
+{
+        Node *lnode = new_node(ND_LVAR, NULL, NULL, tok);
+        lnode->type = t;
+        lnode->offset = locals->offset;
+        add_node(node, new_node(ND_ASSIGN, lnode, assign(), NULL));
+}*/
+
+Node *compound_statement()
+{
+        fprintf(tout, " {\n<%s>\n", __func__);
+        lstack[lstack_i++] = locals;
+        locals = calloc(1, sizeof(LVar));
+        Node *node = new_node(ND_BLOCK, NULL, NULL, NULL);
+
+        while (!consume("}"))
+        {
+                add_node(node, stmt());
+        }
+
+        fprintf(tout, " }\n</%s>\n", __func__);
+        locals = lstack[--lstack_i];
+        return node;
+}
+
 Node *stmt()
 {
         /* stmt       = expr ";"
@@ -1046,9 +1094,17 @@ Node *stmt()
                 loffset = locals->offset;
                 fprintf(tout, " var decl\n</%s>\n", __func__);
                 if (consume("="))
-                {
+                /*{
                         if (!node)
                                 node = new_node(ND_BLOCK, NULL, NULL, NULL);
+                        initializer(node, t, tok);
+                }*/
+                {
+                        if (!node)
+                        {
+                                node = new_node(ND_BLOCK, NULL, NULL, NULL);
+                                // node->type = t;
+                        }
                         Node *lnode = new_node(ND_LVAR, NULL, NULL, tok);
                         lnode->type = t;
                         lnode->offset = locals->offset;
@@ -1064,7 +1120,7 @@ Node *stmt()
                 return stmt();
                 // skip token
         }
-        if ((tok = consume_Token(TK_RETURN)))
+        if ((tok = consume_Token(TK_RETURN))) // jump-statement
         {
                 fprintf(tout, "ret \n<%s>\n", __func__);
                 node = new_node(ND_RETURN, node, expr(), tok);
@@ -1072,7 +1128,7 @@ Node *stmt()
                 fprintf(tout, "ret \n</%s>\n", __func__);
                 return node;
         }
-        if ((tok = consume_Token(TK_IF)))
+        if ((tok = consume_Token(TK_IF))) // selection-statement
         {
                 fprintf(tout, " if\n<%s>\n", __func__);
                 expect("(");
@@ -1087,7 +1143,7 @@ Node *stmt()
                 fprintf(tout, " if\n</%s>\n", __func__);
                 return node;
         }
-        if ((tok = consume_Token(TK_WHILE)))
+        if ((tok = consume_Token(TK_WHILE))) // iteration-statement
         {
                 fprintf(tout, " while\n<%s>\n", __func__);
                 expect("(");
@@ -1098,7 +1154,7 @@ Node *stmt()
                 fprintf(tout, " while\n</%s>\n", __func__);
                 return node;
         }
-        if ((tok = consume_Token(TK_FOR)))
+        if ((tok = consume_Token(TK_FOR)))//iteration-statement
         {
                 /* Node *init;//for init */
                 /* Node *cond;//if,while,for cond */
@@ -1132,25 +1188,10 @@ Node *stmt()
                 fprintf(tout, " </for>\n");
                 return node;
         }
-        // "{" stmt* "}"
-        if ((tok = consume("{")))
-        {
-                fprintf(tout, " {\n<%s>\n", __func__);
-                lstack[lstack_i++] = locals;
-                locals = calloc(1, sizeof(LVar));
-                node = new_node(ND_BLOCK, NULL, NULL, tok);
-
-                while (!consume("}"))
-                {
-                        add_node(node, stmt());
-                }
-
-                fprintf(tout, " }\n</%s>\n", __func__);
-                locals = lstack[--lstack_i];
-                return node;
-        }
+        if ((tok = consume("{")))//compound-statement
+                return compound_statement();
         fprintf(tout, " <%s>\n", __func__);
-        node = expr();
+        node = expr();//expression-statement
         expect(";");
         fprintf(tout, " </%s>\n", __func__);
         return node;
@@ -1277,13 +1318,16 @@ Node *decl()
                                         params[i] = arg();
                                         consume(",");
                                 }
-                        }else if(!consume(")")){
-                                error_at(token->pos,"arg void\n");
+                        }
+                        else if (!consume(")"))
+                        {
+                                error_at(token->pos, "arg void\n");
                         }
                         if (consume(";"))
                                 return decl();
-                        ans->then = stmt(); // block
-                        // ans->then->params=params;
+                        if(!consume("{"))
+                                error_at(token->pos, "need block\n");
+                        ans->then = compound_statement(); // block
                         ans->offset = loffset;
                         loffset = 0;
 

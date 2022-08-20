@@ -46,11 +46,6 @@ void add_hash(HashMap *h, char *key, void *value)
         h->begin = h->nodes[hash];
 }
 
-void add_set(HashMap *h, char *key)
-{
-        add_hash(h, key, 1);
-}
-
 void *get_hash(HashMap *h, char *key)
 {
         int hash = 0;

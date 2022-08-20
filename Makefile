@@ -17,7 +17,7 @@ test/%.exe: 9cc test/%.c
 	./9cc test/$*.e > test/$*.s	
 #テストバイナリ作成
 	cp test/$*.s tmp.s
-	$(CC) -static -g -o $@ test/$*.s test/common.c
+	$(CC) -static -g -o $@ test/$*.s test/common.c hashmap.c
 
 test: $(TESTS)
 	for i in $^; do \
