@@ -97,8 +97,8 @@ struct Node
        Node **stmts; // block
        Node *tail;
        Node *head;
-       Node *next2;
-       Node **params; // funcall
+       Node *next2; // treat as list
+       //Node **params; // funcall
        Type *type;
        int val;    // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR

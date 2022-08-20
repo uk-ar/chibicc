@@ -716,19 +716,20 @@ Node *primary()
                 { // call
                         fprintf(tout, "<%s>funcall\n", __func__);
                         Node *ans = new_node(ND_FUNCALL, NULL, NULL, tok);
-                        ans->params = NULL;
+                        // ans->params = NULL;
                         if (consume(")"))
                         {
                                 fprintf(tout, " funcall</%s>\n", __func__);
                                 return ans;
                         }
-                        ans->params = calloc(6, sizeof(Node *));
+                        // ans->params = calloc(6, sizeof(Node *));
                         int i = 0;
-                        ans->params[i++] = expr();
+                        //ans->params[i++] = expr();
                         for (; i < 6 && !consume(")"); i++)
                         {
+                                add_node(ans, expr());
+                                //ans->params[i] = expr();
                                 consume(",");
-                                ans->params[i] = expr();
                         }
                         fprintf(tout, "funcall</%s>\n", __func__);
                         return ans;
@@ -823,7 +824,7 @@ Node *postfix()
 Type *parameter_type_list()//it should return LVar*?
 {
         Type *t = declaration_specifier();
-        
+
         if(consume(","))
                 return parameter_type_list();
         return t;
@@ -1362,12 +1363,12 @@ Node *init_declarator(Type *base_t, bool top)
         if (consume("("))
         { // function declaration
                 Node *ans = new_node(ND_FUNC, NULL, NULL, tok);
-                Node **params = NULL;
-                params = calloc(6, sizeof(Node *));
+                //Node **params = NULL;
+                //params = calloc(6, sizeof(Node *));
 
                 lstack[lstack_i++] = locals;
                 locals = calloc(1, sizeof(LVar));
-                ans->params = params;
+                //ans->params = params;
                 int i = 0;
                 // int off=locals->offset;
                 if (!consume("void"))
@@ -1381,7 +1382,8 @@ Node *init_declarator(Type *base_t, bool top)
                                         else
                                                 error_at(token->pos, "va arg error\n");
                                 }
-                                params[i] = arg();
+                                //params[i] = arg();
+                                add_node(ans, arg());
                                 consume(",");
                         }
                 }
