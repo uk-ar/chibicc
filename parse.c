@@ -1260,25 +1260,26 @@ Node *decl()
 
                         lstack[lstack_i++] = locals;
                         locals = calloc(1, sizeof(LVar));
-
+                        ans->params = params;
                         int i = 0;
                         // int off=locals->offset;
-                        if (!consume(")"))
+                        if (!consume("void"))
                         {
-                                params[i++] = arg();
                                 for (; i < 6 && !consume(")"); i++)
                                 {
-                                        consume(",");
-                                        if(consume("...")){
-                                                if(consume(")"))
+                                        if (consume("..."))
+                                        {
+                                                if (consume(")"))
                                                         break;
                                                 else
                                                         error_at(token->pos, "va arg error\n");
                                         }
                                         params[i] = arg();
+                                        consume(",");
                                 }
+                        }else if(!consume(")")){
+                                error_at(token->pos,"arg void\n");
                         }
-                        ans->params = params;
                         if (consume(";"))
                                 return decl();
                         ans->then = stmt(); // block
