@@ -716,19 +716,14 @@ Node *primary()
                 { // call
                         fprintf(tout, "<%s>funcall\n", __func__);
                         Node *ans = new_node(ND_FUNCALL, NULL, NULL, tok);
-                        // ans->params = NULL;
                         if (consume(")"))
                         {
                                 fprintf(tout, " funcall</%s>\n", __func__);
                                 return ans;
                         }
-                        // ans->params = calloc(6, sizeof(Node *));
-                        int i = 0;
-                        //ans->params[i++] = expr();
-                        for (; i < 6 && !consume(")"); i++)
+                        for (int i = 0; i < 6 && !consume(")"); i++)
                         {
                                 add_node(ans, expr());
-                                //ans->params[i] = expr();
                                 consume(",");
                         }
                         fprintf(tout, "funcall</%s>\n", __func__);

@@ -93,13 +93,11 @@ Type *gen(Node *node)
                 printf("  push rbp\n");     // save base pointer
                 printf("  mov rbp, rsp\n"); // save stack pointer
                 Node *n=node->head;
-                //for (int i = 0; i < 6 && node->params[i]; i++,n=n->next2)
                 for (int i = 0; i < 6 && n; i++, n = n->next2)
                 {
                         // printf("  mov rax, %s\n", argreg[i]); // args to local
                         // printf("  push rax\n");               // args to local
                         printf("  mov rbx, %s\n", argreg[i]); // args to local
-                        //Node *n = node->params[i];
                         if (n->type->kind == TY_CHAR)
                         {
                                 printf("  mov BYTE PTR [rbp-%d], bl\n", n->offset); // get data from address
@@ -282,7 +280,6 @@ Type *gen(Node *node)
         {
                 int i;
                 Node *n = node->head;
-                // for (int i = 0; i < 6 && node->params[i]; i++,n=n->next2)
                 for (i = 0; i < 6 && n; i++, n = n->next2)
                 {
                         gen(n);
