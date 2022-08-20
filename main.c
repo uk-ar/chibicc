@@ -110,7 +110,7 @@ int main(int argc, char **argv)
                 char *p = var->init;
                 if (!p)
                 {
-                        printf("  .zero %d\n", var->type->size);
+                        printf("  .zero %ld\n", var->type->size);
                 }
                 else
                 {

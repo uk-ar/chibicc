@@ -1047,7 +1047,6 @@ Node *compound_statement()
         locals = lstack[--lstack_i];
         return node;
 }
-
 Node *stmt()
 {
         /* stmt       = expr ";"
@@ -1154,7 +1153,7 @@ Node *stmt()
                 fprintf(tout, " while\n</%s>\n", __func__);
                 return node;
         }
-        if ((tok = consume_Token(TK_FOR)))//iteration-statement
+        if ((tok = consume_Token(TK_FOR))) // iteration-statement
         {
                 /* Node *init;//for init */
                 /* Node *cond;//if,while,for cond */
@@ -1188,10 +1187,10 @@ Node *stmt()
                 fprintf(tout, " </for>\n");
                 return node;
         }
-        if ((tok = consume("{")))//compound-statement
+        if ((tok = consume("{"))) // compound-statement
                 return compound_statement();
         fprintf(tout, " <%s>\n", __func__);
-        node = expr();//expression-statement
+        node = expr(); // expression-statement
         expect(";");
         fprintf(tout, " </%s>\n", __func__);
         return node;
@@ -1227,7 +1226,6 @@ Node *arg()
         fprintf(tout, " \n</%s>\n", __func__);
         return ans;
 }
-
 LVar *var_decl(LVar *lvar)
 {
         Type *base_t = declaration_specifier();
@@ -1270,136 +1268,142 @@ LVar *var_decl(LVar *lvar)
         }
         return lvar;
 }
-
-Node *decl()
-{
-        Type *base_t = declaration_specifier();
-        if (consume(";"))
-                return decl();
-        if (!base_t)
-                error_at(token->pos, "declaration should start with \"type\"");
-
-        while (base_t)
+void initilizer(bool top){
+        consume("&");
+        char *p = token->pos;
+        consume_ident();
+        consume("+");
+        Token *tok;
+        if ((tok = consume_Token(TK_STR)))
         {
-                Type *t = base_t;
-                while (consume("*"))
-                        t = new_type(TY_PTR, t, 8);
-                Token *tok = consume_ident();
-                if (!tok)
-                        return NULL;
-                fprintf(tout, " \n<%s>\n", __func__);
-                LVar *var = find_gvar(tok); //
-                if (var)
+                if (globals->type->kind == TY_ARRAY)
                 {
-                        error_at(tok->pos, "token '%s' is already defined", tok->pos);
-                }
-                if (consume("("))
-                { // function declaration
-                        Node *ans = new_node(ND_FUNC, NULL, NULL, tok);
-                        Node **params = NULL;
-                        params = calloc(6, sizeof(Node *));
-
-                        lstack[lstack_i++] = locals;
-                        locals = calloc(1, sizeof(LVar));
-                        ans->params = params;
-                        int i = 0;
-                        // int off=locals->offset;
-                        if (!consume("void"))
-                        {
-                                for (; i < 6 && !consume(")"); i++)
-                                {
-                                        if (consume("..."))
-                                        {
-                                                if (consume(")"))
-                                                        break;
-                                                else
-                                                        error_at(token->pos, "va arg error\n");
-                                        }
-                                        params[i] = arg();
-                                        consume(",");
-                                }
-                        }
-                        else if (!consume(")"))
-                        {
-                                error_at(token->pos, "arg void\n");
-                        }
-                        if (consume(";"))
-                                return decl();
-                        if(!consume("{"))
-                                error_at(token->pos, "need block\n");
-                        ans->then = compound_statement(); // block
-                        ans->offset = loffset;
-                        loffset = 0;
-
-                        locals = lstack[--lstack_i];
-
-                        fprintf(tout, " \n</%s>\n", __func__);
-                        return ans;
-                }
-                else if (consume("["))
-                {
-                        if (consume("]"))
-                        {
-                                globals = new_var(tok, globals, new_type(TY_ARRAY, t, 0));
-                        }
-                        else
-                        {
-                                int n = expect_num();
-                                globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size));
-                                globals->type->array_size = n;
-                                expect("]");
-                        }
-                        /*expect(";");
-                        fprintf(tout," \n</%s>\n",__func__);
-                        return decl();*/
+                        int n = tok->len;
+                        globals->init = calloc(n + 3, sizeof(char));
+                        snprintf(globals->init, n + 3, "\"%s\"", p);
                 }
                 else
                 {
-                        globals = new_var(tok, globals, t);
+                        // int n=token->pos-p;
+                        int n = 15;
+                        globals->init = calloc(n + 1, sizeof(char));
+                        snprintf(globals->init, n, ".LC%d", find_string(tok)->offset);
+                        // globals->init = format(".LC%d", find_string(tok)->offset);
+                        globals->type->array_size = MAX(globals->type->array_size, tok->len);                   // todo fix for escape charactors
+                        globals->type->size = MAX(globals->type->size, tok->len * globals->type->ptr_to->size); // todo fix for escape charactors
                 }
-                if (consume("="))
-                {
-                        consume("&");
-                        char *p = token->pos;
-                        consume_ident();
-                        consume("+");
-                        if ((tok = consume_Token(TK_STR)))
-                        {
-                                if (globals->type->kind == TY_ARRAY)
-                                {
-                                        int n = tok->len;
-                                        globals->init = calloc(n + 3, sizeof(char));
-                                        snprintf(globals->init, n + 3, "\"%s\"", p);
-                                }
-                                else
-                                {
-                                        // int n=token->pos-p;
-                                        int n = 15;
-                                        globals->init = calloc(n + 1, sizeof(char));
-                                        snprintf(globals->init, n, ".LC%d", find_string(tok)->offset);
-                                        // globals->init = format(".LC%d", find_string(tok)->offset);
-                                        globals->type->array_size = MAX(globals->type->array_size, tok->len);                   // todo fix for escape charactors
-                                        globals->type->size = MAX(globals->type->size, tok->len * globals->type->ptr_to->size); // todo fix for escape charactors
-                                }
-                        }
-                        else
-                        {
-                                consume_Token(TK_NUM);
-                                int n = token->pos - p + 1;
-                                globals->init = format("%.*s", n, p);
-                                // globals->init = calloc(n, sizeof(char));
-                                // snprintf(globals->init, n, p);
-                        }
-                }
-                if (consume(","))
-                {
-                        continue;
-                }
-                expect(";");
-                fprintf(tout, " \n</%s>\n", __func__);
-                return decl();
         }
-        return NULL;
+        else
+        {
+                consume_Token(TK_NUM);
+                int n = token->pos - p + 1;
+                globals->init = format("%.*s", n, p);
+                // globals->init = calloc(n, sizeof(char));
+                // snprintf(globals->init, n, p);
+        }
+}
+Node *declaration(bool top);
+Node *init_declarator(Type *base_t,bool top)
+{
+        //LVar *vars = globals;
+        Type *t = base_t;
+        while (consume("*"))
+                t = new_type(TY_PTR, t, 8);
+        Token *tok = consume_ident();
+        if (!tok)
+                return NULL;
+        fprintf(tout, " \n<%s>\n", __func__);
+        LVar *var = find_gvar(tok); //
+        if (var)
+        {
+                error_at(tok->pos, "token '%s' is already defined", tok->pos);
+        }
+        if (consume("("))
+        { // function declaration
+                Node *ans = new_node(ND_FUNC, NULL, NULL, tok);
+                Node **params = NULL;
+                params = calloc(6, sizeof(Node *));
+
+                lstack[lstack_i++] = locals;
+                locals = calloc(1, sizeof(LVar));
+                ans->params = params;
+                int i = 0;
+                // int off=locals->offset;
+                if (!consume("void"))
+                {
+                        for (; i < 6 && !consume(")"); i++)
+                        {
+                                if (consume("..."))
+                                {
+                                        if (consume(")"))
+                                                break;
+                                        else
+                                                error_at(token->pos, "va arg error\n");
+                                }
+                                params[i] = arg();
+                                consume(",");
+                        }
+                }
+                else if (!consume(")"))
+                {
+                        error_at(token->pos, "arg void\n");
+                }
+                if (consume(";"))
+                        return declaration(top);
+                if (!consume("{"))
+                        error_at(token->pos, "need block\n");
+                ans->then = compound_statement(); // block
+                ans->offset = loffset;
+                loffset = 0;
+
+                locals = lstack[--lstack_i];
+
+                fprintf(tout, " \n</%s>\n", __func__);
+                return ans;
+        }
+        else if (consume("["))
+        {
+                if (consume("]"))
+                {
+                        globals = new_var(tok, globals, new_type(TY_ARRAY, t, 0));
+                }
+                else
+                {
+                        int n = expect_num();
+                        globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size));
+                        globals->type->array_size = n;
+                        expect("]");
+                }
+                /*expect(";");
+                fprintf(tout," \n</%s>\n",__func__);
+                return decl();*/
+        }
+        else
+        {
+                globals = new_var(tok, globals, t);
+        }
+        if (consume("="))
+        {
+                initilizer(top);
+        }
+        if (consume(","))
+        {
+                return init_declarator(base_t,top);
+        }
+        expect(";");
+        fprintf(tout, " \n</%s>\n", __func__);
+        return declaration(top);
+}
+
+Node *declaration(bool top)
+{
+        Type *base_t = declaration_specifier();
+        if (consume(";"))
+                return declaration(top);
+        if (!base_t)
+                error_at(token->pos, "declaration should start with \"type\"");
+
+        return init_declarator(base_t,top);
 }
 
 Node *code[100] = {0};
@@ -1412,7 +1416,7 @@ void program()
         {
                 // fprintf(tout," c:%d:%s\n",i,token->pos);
                 // fprintf(tout," c:%d:%d\n",i,code[i]->kind);
-                code[i++] = decl();
+                code[i++] = declaration(true);
         }
         fprintf(tout, " \n</%s>\n", __func__);
         code[i] = NULL;
