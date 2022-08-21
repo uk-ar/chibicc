@@ -45,7 +45,6 @@ foo c, *d;
 int
 main(int argc, char **argv)
 {
-    sizeof(int);
     char start;
     struct s1 o1; // 4+8+1+4+1=18 offset
     struct s1 o2, *o3 = &o1;

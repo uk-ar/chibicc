@@ -85,10 +85,14 @@ Token *consume_Token(TokenKind kind)
         token = token->next;
         return ans;
 }
+bool equal(char *op)
+{
+        return (strncmp(op, token->pos, strlen(op)) == 0);
+}
 
 Token *consume(char *op)
 { // if next == op, advance & return true;
-        if (strncmp(op, token->pos, strlen(op)) != 0)
+        if(!equal(op))
                 return NULL;
         // printf("t:%s:%d\n",token->pos,token->len);
         Token *ans = token;
@@ -458,7 +462,7 @@ LVar *new_var(Token *tok, LVar *next, Type *t)
         var->type = t;
         return var;
 }
-LVar *var_decl(LVar *lvar);
+LVar *struct_declarator_list(LVar *lvar);
 // in order to reset offset
 int loffset = 0;
 
@@ -470,7 +474,7 @@ LVar *struct_declaration(Type *type)
         // add_hash(types, format("%s %s", type_str, str1), type);
         while (!consume("}"))
         {
-                st_vars = var_decl(st_vars);
+                st_vars = struct_declarator_list(st_vars);
                 consume(";");
         }
         // add_hash(structs, str1, st_vars);
@@ -815,24 +819,20 @@ Node *postfix()
         // TODO:--
         return ans;
 }
-
-Type *parameter_type_list()//it should return LVar*?
-{
-        Type *t = declaration_specifier();
-
-        if(consume(","))
-                return parameter_type_list();
-        return t;
-}
+Type *parameter_type_list(Node *ans);
 Type *abstract_declarator(Type *t);
 Type *direct_abstract_declarator(Type *t)
 {
         if (consume("("))
         {
-                t = abstract_declarator(t);
-                if (!t)
-                        t = parameter_type_list();
-                expect(")");
+                if ((t = abstract_declarator(t)))
+                {
+                        expect(")");
+                }
+                else
+                {
+                        t = parameter_type_list(NULL);
+                }
                 return t;
         }
         // TODO:constant-expression(conditional-expression : ?)
@@ -851,8 +851,10 @@ Type *type_name()
 {
         // specifier-qualifier
         consume_Token(TK_TYPE_QUAL);
-        Type *t = consume_Token(TK_TYPE_SPEC);
-        return abstract_declarator(t);
+        Token *t = consume_Token(TK_TYPE_SPEC);
+        if (t)
+                return abstract_declarator(get_hash(types, t->str));
+        return abstract_declarator(NULL);
 }
 
 /* unary   = "-"? primary | "+"? primary
@@ -871,9 +873,17 @@ Node *unary()
         if ((tok = consume_Token(TK_SIZEOF)))
         {
                 fprintf(tout, " <%s>\"\n", __func__);
-                Type *t = declaration_specifier();
-                if (t)
+                Type *t = NULL;
+                if (equal("(") && equal_Token(token->next, TK_TYPE_SPEC))
                 {
+                        consume("(");
+                        t = type_name();
+                        expect(")");
+                        return new_node_num(t->size, NULL, t);
+                }
+                if (equal_Token(token->next, TK_TYPE_SPEC))
+                {
+                        t = type_name();
                         fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
                         return new_node_num(t->size, NULL, t);
                 }
@@ -1231,21 +1241,24 @@ Node *stmt()
         fprintf(tout, " </%s>\n", __func__);
         return node;
 }
-Node *arg()
+Node *parameter_declaration()
 {
         fprintf(tout, " \n<%s>\n", __func__);
 
         Type *base_t = declaration_specifier();
         if (!base_t)
-                error_at(token->pos, "declaration should start with \"type\"");
+                return NULL;
+        // error_at(token->pos, "declaration should start with \"type\"");
 
-        Type *t = base_t;
-        while (consume("*"))
-                t = new_type(TY_PTR, t, 8);
-
+        /*Type *t = base_t;
+        //while (consume("*"))
+                t = new_type(TY_PTR, t, 8);*/
+        Type *t = abstract_declarator(base_t);
         Token *tok = consume_ident();
         Node *ans = new_node(ND_LVAR, NULL, NULL, tok);
         ans->type = t;
+        if (!tok) // type only
+                return ans;
         LVar *var = find_lvar(tok);
         if (!var)
         {
@@ -1262,7 +1275,7 @@ Node *arg()
         fprintf(tout, " \n</%s>\n", __func__);
         return ans;
 }
-LVar *var_decl(LVar *lvar)
+LVar *struct_declarator_list(LVar *lvar)
 {
         Type *base_t = declaration_specifier();
         if (!base_t)
@@ -1270,8 +1283,7 @@ LVar *var_decl(LVar *lvar)
         while (base_t)
         {
                 Type *t = base_t;
-                while (consume("*"))
-                        t = new_type(TY_PTR, t, 8);
+                t = abstract_declarator(t);
                 Token *tok = consume_ident();
                 if (!tok)
                         return lvar;
@@ -1339,11 +1351,53 @@ void initilizer(bool top)
                 // snprintf(globals->init, n, p);
         }
 }
+
+Type *parameter_type_list(Node *ans) // it should return LVar*?
+{
+        /*Type *t = declaration_specifier();
+
+        if (consume(","))
+                return parameter_type_list();
+        return t;*/
+        lstack[lstack_i++] = locals;
+        locals = calloc(1, sizeof(LVar));
+        // int off=locals->offset;
+        Type *t = NULL;
+        if (!consume("void"))
+        {
+                for (int i = 0; i < 6 && !consume(")"); i++)
+                {
+                        if (consume("..."))
+                        {
+                                if (consume(")"))
+                                        break;
+                                else
+                                        error_at(token->pos, "va arg error\n");
+                        }
+                        if (ans)
+                                add_node(ans, parameter_declaration());
+                        else
+                        {
+                                Node *n = parameter_declaration();
+                                if (n)
+                                        t = n->type;
+                        }
+                        consume(",");
+                }
+        }
+        else if (!consume(")"))
+        {
+                error_at(token->pos, "arg void\n");
+        }
+        return t;
+}
+
 Node *declaration(bool top);
 Node *init_declarator(Type *base_t, bool top)
 {
         // LVar *vars = globals;
         Type *t = base_t;
+
         while (consume("*"))
                 t = new_type(TY_PTR, t, 8);
         Token *tok = consume_ident();
@@ -1358,34 +1412,7 @@ Node *init_declarator(Type *base_t, bool top)
         if (consume("("))
         { // function declaration
                 Node *ans = new_node(ND_FUNC, NULL, NULL, tok);
-                //Node **params = NULL;
-                //params = calloc(6, sizeof(Node *));
-
-                lstack[lstack_i++] = locals;
-                locals = calloc(1, sizeof(LVar));
-                //ans->params = params;
-                int i = 0;
-                // int off=locals->offset;
-                if (!consume("void"))
-                {
-                        for (; i < 6 && !consume(")"); i++)
-                        {
-                                if (consume("..."))
-                                {
-                                        if (consume(")"))
-                                                break;
-                                        else
-                                                error_at(token->pos, "va arg error\n");
-                                }
-                                //params[i] = arg();
-                                add_node(ans, arg());
-                                consume(",");
-                        }
-                }
-                else if (!consume(")"))
-                {
-                        error_at(token->pos, "arg void\n");
-                }
+                parameter_type_list(ans);
                 if (consume(";"))
                         return declaration(top);
                 if (!consume("{"))
@@ -1412,9 +1439,6 @@ Node *init_declarator(Type *base_t, bool top)
                         globals->type->array_size = n;
                         expect("]");
                 }
-                /*expect(";");
-                fprintf(tout," \n</%s>\n",__func__);
-                return decl();*/
         }
         else
         {
