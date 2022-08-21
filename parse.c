@@ -92,7 +92,7 @@ bool equal(char *op)
 
 Token *consume(char *op)
 { // if next == op, advance & return true;
-        if(!equal(op))
+        if (!equal(op))
                 return NULL;
         // printf("t:%s:%d\n",token->pos,token->len);
         Token *ans = token;
@@ -669,7 +669,8 @@ Type *declaration_specifier() // bool declaration)
 /* equality   = relational ("==" relational | "!=" relational)* */
 /* relational = add ("<" add | "<=" add | ">" add | ">=" add)* */
 /* add        = mul ("+" mul | "-" mul)* */
-/* mul     = unary ("*" unary | "/" unary)* */
+/* mul     = cast ("*" cast | "/" cast)* */
+/* cast    = (type-name) cast | unary */
 /* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
 /* postfix */
 /* primary = ident.ident | ident->ident | num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" | TK_STR*/
@@ -928,15 +929,15 @@ Node *unary()
 
 Node *cast()
 {
-        if (token->next &&
-            equal_Token(token->next, TK_TYPE_SPEC) &&
-            (strncmp("(", token->str, 2) == 0))
+        if (equal("(") &&
+            token->next &&
+            equal_Token(token->next, TK_TYPE_SPEC))//TODO: fix to is_typename
         {
                 expect("(");
-                Token *type_name = consume_Token(TK_TYPE_SPEC);
+                Type *type = type_name();
                 expect(")");
                 Node *node = cast();
-                node->type = get_hash(types, type_name->str);
+                node->type = type;
                 return node;
         }
         return unary();

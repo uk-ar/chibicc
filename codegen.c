@@ -8,6 +8,7 @@
 
 FILE *tout2;
 char *nodeKind[] = {
+    "ND_CAST",
     "ND_STR",
     "ND_GVAR",
     "ND_DEREF",
@@ -92,7 +93,7 @@ Type *gen(Node *node)
                 printf("%s:\n", node->token->str);
                 printf("  push rbp\n");     // save base pointer
                 printf("  mov rbp, rsp\n"); // save stack pointer
-                Node *n=node->head;
+                Node *n = node->head;
                 for (int i = 0; i < 6 && n; i++, n = n->next2)
                 {
                         // printf("  mov rax, %s\n", argreg[i]); // args to local
