@@ -65,7 +65,7 @@ Type *gen_lval(Node *node)
         }
         else
         {
-                error_at(node->token->pos, "token is not lvalue\n", node->token->pos);
+                error_at(node->token->pos, "token is not lvalue\n", node->token->str);
                 abort();
         }
 }

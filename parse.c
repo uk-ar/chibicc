@@ -744,7 +744,7 @@ Node *primary()
                                 var = find_gvar(tok);
                                 ans = new_node(ND_GVAR, NULL, NULL, tok);
                                 if (!var)
-                                        error_at(tok->pos, "token '%s' is not defined", tok->pos);
+                                        error_at(tok->pos, "token '%s' is not defined", tok->str);
                         }
                         else
                         {
@@ -1115,7 +1115,7 @@ Node *stmt()
                 LVar *var = find_lvar(tok);   //
                 if (var)
                 {
-                        error_at(tok->pos, "token '%s' is already defined", tok->pos);
+                        error_at(tok->pos, "token '%s' is already defined", tok->str);
                 }
                 else if (consume("["))
                 {
@@ -1293,7 +1293,7 @@ LVar *struct_declarator_list(LVar *lvar)
 
                 if (var)
                 {
-                        error_at(tok->pos, "token '%s' is already defined", tok->pos);
+                        error_at(tok->pos, "token '%s' is already defined", tok->str);
                 }
                 else if (consume("["))
                 {
@@ -1408,7 +1408,7 @@ Node *init_declarator(Type *base_t, bool top)
         LVar *var = find_gvar(tok); //
         if (var)
         {
-                error_at(tok->pos, "token '%s' is already defined", tok->pos);
+                error_at(tok->pos, "token '%s' is already defined", tok->str);
         }
         if (consume("("))
         { // function declaration
