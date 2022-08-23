@@ -737,20 +737,19 @@ Node *primary()
                 else
                 { // var ref
                         fprintf(tout, "<%s>var\n", __func__);
-                        LVar *var = find_lvar_all(tok);
+                        LVar *var = NULL;
                         Node *ans = NULL;
-                        if (!var) // todo fix it for struct;
-                        {
-                                var = find_gvar(tok);
-                                ans = new_node(ND_GVAR, NULL, NULL, tok);
-                                if (!var)
-                                        error_at(tok->pos, "token '%s' is not defined", tok->str);
-                        }
-                        else
+                        if ((var = find_lvar_all(tok)))
                         {
                                 ans = new_node(ND_LVAR, NULL, NULL, tok);
                         }
-
+                        else if ((var = find_gvar(tok)))
+                        {
+                                ans = new_node(ND_GVAR, NULL, NULL, tok);
+                        }
+                        else{
+                                error_at(tok->pos, "token '%s' is not defined", tok->str);
+                        }
                         ans->offset = var->offset;
                         ans->type = var->type;
 
@@ -778,11 +777,12 @@ Node *primary()
                        | <postfix-expression> -> <identifier>
                        | <postfix-expression> ++
                        | <postfix-expression> --*/
+/* postfix = primary ("->" postfix) ? */
 Node *postfix()
 {
         Token *tok = NULL;
         Node *ans = primary();
-        if ((tok = (consume("["))))
+        if ((tok = consume("["))) 
         {
                 Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
                 ans1->type = ans->type->ptr_to;
@@ -790,7 +790,7 @@ Node *postfix()
                 fprintf(tout, "array\n</%s>\n", __func__);
                 return ans1;
         }
-        else if ((tok = (consume("."))))
+        if ((tok = consume(".")))
         {
                 tok = consume_ident();
                 LVar *var = get_hash(structs, format("struct %s", ans->type->str));
