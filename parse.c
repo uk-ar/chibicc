@@ -85,14 +85,14 @@ Token *consume_Token(TokenKind kind)
         token = token->next;
         return ans;
 }
-bool equal(char *op)
+bool equal(Token *tok, char *op)
 {
-        return (strncmp(op, token->pos, strlen(op)) == 0);
+        return (strcmp(op, tok->str) == 0);
 }
 
 Token *consume(char *op)
 { // if next == op, advance & return true;
-        if (!equal(op))
+        if (!equal(token, op))
                 return NULL;
         // printf("t:%s:%d\n",token->pos,token->len);
         Token *ans = token;
@@ -875,7 +875,7 @@ Node *unary()
         {
                 fprintf(tout, " <%s>\"\n", __func__);
                 Type *t = NULL;
-                if (equal("(") && equal_Token(token->next, TK_TYPE_SPEC))
+                if (equal(token, "(") && equal_Token(token->next, TK_TYPE_SPEC))
                 {
                         consume("(");
                         t = type_name();
@@ -924,14 +924,20 @@ Node *unary()
                 Node *lhs = unary();
                 return new_node(ND_ADDR, lhs, NULL, tok);
         }
+        if ((tok = consume("!")))
+        {
+                fprintf(tout, " <%s>\n", __func__);
+                ans = new_node(ND_EQ, unary(), new_node_num(0, NULL, new_type(TY_INT, NULL, 4)), tok);
+                return ans;
+        }
         return postfix();
 }
 
 Node *cast()
 {
-        if (equal("(") &&
+        if (equal(token, "(") &&
             token->next &&
-            equal_Token(token->next, TK_TYPE_SPEC))//TODO: fix to is_typename
+            equal_Token(token->next, TK_TYPE_SPEC)) // TODO: fix to is_typename
         {
                 expect("(");
                 Type *type = type_name();
