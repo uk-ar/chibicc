@@ -794,6 +794,8 @@ Node *postfix()
                 if ((tok = consume(".")))
                 {
                         tok = consume_ident();
+                        if (!tok)
+                                error_at(token->pos, "no ident defined in struct %s", ans->type->str);
                         LVar *var = get_hash(structs, format("struct %s", ans->type->str));
                         if (!var)
                                 error_at(token->pos, "no struct %s defined", ans->type->str);
@@ -814,6 +816,8 @@ Node *postfix()
                         if (!st_vars)
                                 error_at(token->pos, "no struct %s defined", ans->type->str);
                         Token *right = consume_ident();
+                        if (!right)
+                                error_at(token->pos, "no ident defined in struct %s", ans->type->str);
                         LVar *field = find_var(right, st_vars);
                         if (!field)
                                 error_at(token->pos, "no field defined %s", right->str);

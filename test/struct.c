@@ -37,7 +37,7 @@ struct list
     node *tail;
 };
 
-list* list_add(list *l, int var)
+list *list_add(list *l, int var)
 {
     /*node *n;
     n = calloc(1, sizeof(node));
@@ -107,16 +107,23 @@ int main(int argc, char **argv)
     ASSERT(1, o3->f1);
     ASSERT(2, o3->f2);
 
-    node a, c, *b = &a;
-    ASSERT(1, ({ a.val = 1; a.val; }));
-    ASSERT(1, ({ b->val; }));
-    ASSERT(2, ({ c.val = 2; c.val; }));
-    c.val = 2;
-    a.next = c;
-    b->next->val;
-    ASSERT(2, ({ b->next->val; }));
-    // ASSERT(2, 3);
-    //struct list l = calloc(1, sizeof(struct list));
-    // ASSERT(16, sizeof(Node));
+    struct s2 a, c, *b = &a, d;
+    ASSERT(1, ({ a.f3 = 1; a.f3; }));
+    ASSERT(1, ({ b->f3; }));
+    ASSERT(2, ({ c.f3 = 2; c.f3; }));
+    // ASSERT(2, ({ c.3}));//raise error
+
+    d.f3 = 3;
+    // TODO: copy struct
+    // a.f5 = d;
+    // ASSERT(3, ({ a.f5->f3; }));
+    // ASSERT(3, ({ b->f5->f3; }));
+    a.f6 = &c;
+    ASSERT(2, ({ b->f6->f3; }));
+    ASSERT(2, ({ a.f6->f3; }));
+    // ASSERT(2, ({ a.next->val; }));
+    //  ASSERT(2, 3);
+    // struct list l = calloc(1, sizeof(struct list));
+    //  ASSERT(16, sizeof(Node));
     return 0;
 }
