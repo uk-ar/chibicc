@@ -372,25 +372,23 @@ Token *tokenize(char *p)
         return head.next;
 }
 
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs, Token *token)
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs, Token *token, Type *type)
 {
         Node *ans = calloc(1, sizeof(Node));
         ans->kind = kind;
         ans->lhs = lhs;
         ans->rhs = rhs;
         ans->token = token;
-        if (lhs)
-                ans->type = lhs->type;
+        ans->type = type;
+        // if (lhs)
+        // ans->type = lhs->type;
         return ans;
 }
 Node *new_node_num(int val, Token *token, Type *type)
 {
         // leaf node
-        Node *ans = calloc(1, sizeof(Node));
-        ans->kind = ND_NUM;
+        Node *ans = new_node(ND_NUM, NULL, NULL, token, type);
         ans->val = val;
-        ans->token = token;
-        ans->type = type;
         return ans;
 }
 void add_node(Node *node, Node *new_node)
@@ -687,7 +685,7 @@ Node *primary()
                 if ((tok = consume("{")))
                 {
                         fprintf(tout, " <%s>{\n", __func__);
-                        Node *node = new_node(ND_EBLOCK, NULL, NULL, tok);
+                        Node *node = new_node(ND_EBLOCK, NULL, NULL, tok, NULL);
                         lstack[lstack_i++] = locals;
                         locals = calloc(1, sizeof(LVar));
 
@@ -711,7 +709,7 @@ Node *primary()
         else if ((tok = consume_Token(TK_STR)))
         {
                 fprintf(tout, "<%s>\"\n", __func__);
-                Node *ans = new_node(ND_STR, NULL, NULL, tok);
+                Node *ans = new_node(ND_STR, NULL, NULL, tok, NULL);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
         }
@@ -720,7 +718,7 @@ Node *primary()
                 if (consume("("))
                 { // call
                         fprintf(tout, "<%s>funcall\n", __func__);
-                        Node *ans = new_node(ND_FUNCALL, NULL, NULL, tok);
+                        Node *ans = new_node(ND_FUNCALL, NULL, NULL, tok, NULL);
                         if (consume(")"))
                         {
                                 fprintf(tout, " funcall</%s>\n", __func__);
@@ -741,18 +739,17 @@ Node *primary()
                         Node *ans = NULL;
                         if ((var = find_lvar_all(tok)))
                         {
-                                ans = new_node(ND_LVAR, NULL, NULL, tok);
+                                ans = new_node(ND_LVAR, NULL, NULL, tok, var->type);
                         }
                         else if ((var = find_gvar(tok)))
                         {
-                                ans = new_node(ND_GVAR, NULL, NULL, tok);
+                                ans = new_node(ND_GVAR, NULL, NULL, tok, var->type);
                         }
                         else
                         {
                                 error_at(tok->pos, "token '%s' is not defined", tok->str);
                         }
                         ans->offset = var->offset;
-                        ans->type = var->type;
 
                         fprintf(tout, "var\n</%s>\n", __func__);
                         // ans->offset=(tok->pos[0]-'a'+1)*8;
@@ -788,8 +785,8 @@ Node *postfix()
                 if ((tok = consume("[")))
                 {
                         Type *type = ans->type->ptr_to;
-                        ans = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
-                        ans->type = type;
+                        ans = new_node(ND_DEREF,
+                                       new_node(ND_ADD, ans, expr(), NULL, type), NULL, NULL, type);
                         expect("]"); // important
                         fprintf(tout, "array\n</%s>\n", __func__);
                         continue;
@@ -805,7 +802,7 @@ Node *postfix()
                         // ans1->type = field->type;
                         // return ans1;
                         if (!field)
-                                error_at(token->pos, "no %s field defined in %s struct", tok->str,ans->type->str);
+                                error_at(token->pos, "no %s field defined in %s struct", tok->str, ans->type->str);
                         ans->type = field->type;
                         ans->offset -= field->offset;
                         continue;
@@ -820,12 +817,12 @@ Node *postfix()
                         LVar *field = find_var(right, st_vars);
                         if (!field)
                                 error_at(token->pos, "no field defined %s", right->str);
+                        Node *lhs = new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1));
                         ans = new_node(ND_DEREF,
-                                              new_node(ND_ADD,
-                                                       new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)),
-                                                       ans, NULL),
-                                              NULL, NULL);
-                        ans->type = field->type;
+                                       new_node(ND_ADD,
+                                                lhs,
+                                                ans, NULL, lhs->type),
+                                       NULL, NULL, field->type);
                         continue;
                         /*tok = consume_ident();                                                      // field
                         LVar *var = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
@@ -839,11 +836,11 @@ Node *postfix()
                         //  ans->offset += field->offset;
                         //   ans->type->ptr_to = field->type;
                         // return ans1;
-                }        
+                }
                 // TODO:++
                 // TODO:--
-                //else
-                return ans;                
+                // else
+                return ans;
         }
 }
 Type *parameter_type_list(Node *ans);
@@ -905,7 +902,7 @@ Node *unary()
         if ((tok = consume_Token(TK_STR))) // TODO:fix it
         {
                 fprintf(tout, " <%s>\"\n", __func__);
-                Node *ans = new_node(ND_STR, NULL, NULL, tok);
+                Node *ans = new_node(ND_STR, NULL, NULL, tok, NULL);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
         }
@@ -943,7 +940,10 @@ Node *unary()
         {
                 // important
                 fprintf(tout, " <%s>-\"\n", __func__);
-                ans = new_node(ND_SUB, new_node_num(0, NULL, new_type(TY_INT, NULL, 4)), unary(), tok); // 0-primary()
+                Type *type = new_type(TY_INT, NULL, 4);
+                ans = new_node(ND_SUB,
+                               new_node_num(0, NULL, type),
+                               unary(), tok, type); // 0-primary()
                 return ans;
                 fprintf(tout, " -\n</%s>\n", __func__);
         }
@@ -951,8 +951,7 @@ Node *unary()
         {
                 fprintf(tout, " deref\n<%s>\n", __func__);
                 Node *lhs = unary();
-                Node *node = new_node(ND_DEREF, lhs, NULL, tok);
-                node->type = lhs->type->ptr_to;
+                Node *node = new_node(ND_DEREF, lhs, NULL, tok, lhs->type->ptr_to);
                 fprintf(tout, " deref\n</%s>\n", __func__);
                 return node;
         }
@@ -960,12 +959,13 @@ Node *unary()
         {
                 fprintf(tout, " ref\n<%s>\n", __func__);
                 Node *lhs = unary();
-                return new_node(ND_ADDR, lhs, NULL, tok);
+                return new_node(ND_ADDR, lhs, NULL, tok, lhs->type);
         }
         if ((tok = consume("!")))
         {
                 fprintf(tout, " <%s>\n", __func__);
-                ans = new_node(ND_EQ, unary(), new_node_num(0, NULL, new_type(TY_INT, NULL, 4)), tok);
+                Node *lhs = new_node_num(0, NULL, new_type(TY_INT, NULL, 4));
+                ans = new_node(ND_EQ, unary(), lhs, tok, lhs->type);
                 return ans;
         }
         return postfix();
@@ -995,14 +995,14 @@ Node *mul()
                 if ((tok = consume("*")))
                 {
                         fprintf(tout, " mul\n<%s>\n", __func__);
-                        node = new_node(ND_MUL, node, cast(), tok);
+                        node = new_node(ND_MUL, node, cast(), tok, node->type);
                         fprintf(tout, " mul\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume("/")))
                 {
                         fprintf(tout, " div\n<%s>\n", __func__);
-                        node = new_node(ND_DIV, node, cast(), token);
+                        node = new_node(ND_DIV, node, cast(), token, node->type);
                         fprintf(tout, " div\n</%s>\n", __func__);
                         continue;
                 }
@@ -1020,14 +1020,14 @@ Node *add()
                         fprintf(tout, " sub\n<%s>\n", __func__);
                         //左結合なのでmulを再帰する！
                         // addを再帰すると右結合になってしまう！
-                        node = new_node(ND_SUB, node, mul(), tok);
+                        node = new_node(ND_SUB, node, mul(), tok, node->type);
                         fprintf(tout, " sub\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume("+")))
                 {
                         fprintf(tout, " plus\n<%s>\n", __func__);
-                        node = new_node(ND_ADD, node, mul(), tok);
+                        node = new_node(ND_ADD, node, mul(), tok, node->type);
                         fprintf(tout, " plus\n</%s>\n", __func__);
                         continue;
                 }
@@ -1043,28 +1043,30 @@ Node *relational()
                 if ((tok = consume("<=")))
                 {
                         fprintf(tout, " le\n<%s>\n", __func__);
-                        node = new_node(ND_LE, node, add(), tok);
+                        node = new_node(ND_LE, node, add(), tok, node->type);
                         fprintf(tout, " le\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume(">=")))
                 {
                         fprintf(tout, " le\n<%s>\n", __func__);
-                        node = new_node(ND_LE, add(), node, tok); // swap!
+                        Node *lhs = add();
+                        node = new_node(ND_LE, lhs, node, tok, lhs->type); // swap!
                         fprintf(tout, " le\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume("<")))
                 {
                         fprintf(tout, " lt\n<%s>\n", __func__);
-                        node = new_node(ND_LT, node, add(), tok);
+                        node = new_node(ND_LT, node, add(), tok, node->type);
                         fprintf(tout, " lt\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume(">")))
                 {
                         fprintf(tout, " lt\n<%s>\n", __func__);
-                        node = new_node(ND_LT, add(), node, tok); // swap!
+                        Node *lhs = add();
+                        node = new_node(ND_LT, lhs, node, tok, lhs->type); // swap!
                         fprintf(tout, " lt\n</%s>\n", __func__);
                         continue;
                 }
@@ -1080,18 +1082,18 @@ Node *equality()
                 if ((tok = consume("==")))
                 {
                         fprintf(tout, " eq\n<%s>\n", __func__);
-                        node = new_node(ND_EQ, node, relational(), tok);
+                        node = new_node(ND_EQ, node, relational(), tok, node->type);
                         fprintf(tout, " eq\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume("!=")))
                 {
                         fprintf(tout, " ne\n<%s>\n", __func__);
-                        node = new_node(ND_NE, node, relational(), tok);
+                        node = new_node(ND_NE, node, relational(), tok, node->type);
                         fprintf(tout, " ne\n</%s>\n", __func__);
                         continue;
                 }
-                //else
+                // else
                 return node;
         }
 }
@@ -1103,7 +1105,7 @@ Node *assign()
         if ((tok = consume("=")))
         {
                 fprintf(tout, " ass\n<%s>\n", __func__);
-                node = new_node(ND_ASSIGN, node, assign(), tok);
+                node = new_node(ND_ASSIGN, node, assign(), tok, node->type);
                 fprintf(tout, " ass\n</%s>\n", __func__);
                 return node;
         }
@@ -1122,7 +1124,7 @@ Node *compound_statement()
         fprintf(tout, " {\n<%s>\n", __func__);
         lstack[lstack_i++] = locals;
         locals = calloc(1, sizeof(LVar));
-        Node *node = new_node(ND_BLOCK, NULL, NULL, NULL);
+        Node *node = new_node(ND_BLOCK, NULL, NULL, NULL, NULL);
 
         while (!consume("}"))
         {
@@ -1187,13 +1189,12 @@ Node *stmt()
                 {
                         if (!node)
                         {
-                                node = new_node(ND_BLOCK, NULL, NULL, NULL);
+                                node = new_node(ND_BLOCK, NULL, NULL, NULL, NULL);
                                 // node->type = t;
                         }
-                        Node *lnode = new_node(ND_LVAR, NULL, NULL, tok);
-                        lnode->type = t;
+                        Node *lnode = new_node(ND_LVAR, NULL, NULL, tok, t);
                         lnode->offset = locals->offset;
-                        add_node(node, new_node(ND_ASSIGN, lnode, assign(), NULL));
+                        add_node(node, new_node(ND_ASSIGN, lnode, assign(), NULL, lnode->type));
                 }
                 if (consume(","))
                 {
@@ -1208,7 +1209,7 @@ Node *stmt()
         if ((tok = consume_Token(TK_RETURN))) // jump-statement
         {
                 fprintf(tout, "ret \n<%s>\n", __func__);
-                node = new_node(ND_RETURN, node, expr(), tok);
+                node = new_node(ND_RETURN, NULL, expr(), tok, NULL);
                 expect(";");
                 fprintf(tout, "ret \n</%s>\n", __func__);
                 return node;
@@ -1217,7 +1218,7 @@ Node *stmt()
         {
                 fprintf(tout, " if\n<%s>\n", __func__);
                 expect("(");
-                node = new_node(ND_IF, NULL, NULL, tok);
+                node = new_node(ND_IF, NULL, NULL, tok, NULL);
                 node->cond = expr();
                 expect(")");
                 node->then = stmt();
@@ -1232,7 +1233,7 @@ Node *stmt()
         {
                 fprintf(tout, " while\n<%s>\n", __func__);
                 expect("(");
-                node = new_node(ND_WHILE, NULL, NULL, tok);
+                node = new_node(ND_WHILE, NULL, NULL, tok, NULL);
                 node->cond = expr();
                 expect(")");
                 node->then = stmt();
@@ -1247,7 +1248,7 @@ Node *stmt()
                 /* Node *then;//if,while,for then */
                 fprintf(tout, " <for>\n");
                 expect("(");
-                node = new_node(ND_FOR, NULL, NULL, tok);
+                node = new_node(ND_FOR, NULL, NULL, tok, NULL);
                 fprintf(tout, " <init>\n");
                 if (!consume(";"))
                 {
@@ -1295,8 +1296,7 @@ Node *parameter_declaration()
                 t = new_type(TY_PTR, t, 8);*/
         Type *t = abstract_declarator(base_t);
         Token *tok = consume_ident();
-        Node *ans = new_node(ND_LVAR, NULL, NULL, tok);
-        ans->type = t;
+        Node *ans = new_node(ND_LVAR, NULL, NULL, tok, t);
         if (!tok) // type only
                 return ans;
         LVar *var = find_lvar(tok);
@@ -1451,7 +1451,7 @@ Node *init_declarator(Type *base_t, bool top)
         }
         if (consume("("))
         { // function declaration
-                Node *ans = new_node(ND_FUNC, NULL, NULL, tok);
+                Node *ans = new_node(ND_FUNC, NULL, NULL, tok, NULL);
                 parameter_type_list(ans);
                 if (consume(";"))
                         return declaration(top);
