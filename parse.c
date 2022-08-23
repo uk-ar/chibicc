@@ -508,10 +508,10 @@ LVar *enumerator_list()
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
-        Token *type_qual = consume_Token(TK_TYPE_QUAL);
+        //Token *type_qual = consume_Token(TK_TYPE_QUAL);
         Token *type_spec = consume_Token(TK_TYPE_SPEC);
         Token *identifier = NULL;
-        char *def_name = NULL;
+        //char *def_name = NULL;
         char *src_name = NULL;
         if (!type_spec)
                 return NULL;
@@ -1069,14 +1069,6 @@ Node *expr()
         node = assign();
         return node;
 }
-
-/*void initializer(Node *node, Type *t, Token *tok)
-{
-        Node *lnode = new_node(ND_LVAR, NULL, NULL, tok);
-        lnode->type = t;
-        lnode->offset = locals->offset;
-        add_node(node, new_node(ND_ASSIGN, lnode, assign(), NULL));
-}*/
 
 Node *compound_statement()
 {

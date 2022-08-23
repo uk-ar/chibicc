@@ -21,13 +21,13 @@ char *read_file(char *path)
 {
         FILE *fp = fopen(path, "r");
         if (!fp)
-                error("cannot open %s:", path, strerror(errno));
+                fprintf(stderr, "cannot open %s:%s", path, strerror(errno));
 
         if (fseek(fp, 0, SEEK_END) == -1)
-                error("%s:fseek:%s", path, strerror(errno));
+                fprintf(stderr, "%s:fseek:%s", path, strerror(errno));
         size_t size = ftell(fp);
         if (fseek(fp, 0, SEEK_SET) == -1)
-                error("%s:fseek:%s", path, strerror(errno));
+                fprintf(stderr, "%s:fseek:%s", path, strerror(errno));
         char *buf = calloc(sizeof(char), size + 2);
         fread(buf, size, 1, fp);
 
@@ -67,19 +67,19 @@ int main(int argc, char **argv)
         type_alias = new_hash(100);
 
         keyword2token = new_hash(100);
-        add_hash(keyword2token, "enum", TK_TYPE_SPEC);
-        add_hash(keyword2token, "void", TK_TYPE_SPEC);
+        add_hash(keyword2token, "enum", (void*)TK_TYPE_SPEC);
+        add_hash(keyword2token, "void", (void*)TK_TYPE_SPEC);
 
-        add_hash(keyword2token, "auto", TK_STORAGE);
-        add_hash(keyword2token, "register", TK_STORAGE);
-        add_hash(keyword2token, "static", TK_STORAGE);
-        add_hash(keyword2token, "extern", TK_STORAGE);
-        add_hash(keyword2token, "typedef", TK_STORAGE);
+        add_hash(keyword2token, "auto", (void*)TK_STORAGE);
+        add_hash(keyword2token, "register", (void*)TK_STORAGE);
+        add_hash(keyword2token, "static", (void*)TK_STORAGE);
+        add_hash(keyword2token, "extern", (void*)TK_STORAGE);
+        add_hash(keyword2token, "typedef", (void*)TK_STORAGE);
 
-        add_hash(keyword2token, "const", TK_TYPE_QUAL);
-        add_hash(keyword2token, "restrict", TK_TYPE_QUAL);
-        add_hash(keyword2token, "volatile", TK_TYPE_QUAL);
-        add_hash(keyword2token, "_Atomic", TK_TYPE_QUAL);
+        add_hash(keyword2token, "const", (void*)TK_TYPE_QUAL);
+        add_hash(keyword2token, "restrict", (void*)TK_TYPE_QUAL);
+        add_hash(keyword2token, "volatile", (void*)TK_TYPE_QUAL);
+        add_hash(keyword2token, "_Atomic", (void*)TK_TYPE_QUAL);
 
         filename = argv[1];
         // fprintf(tout,"# %s\n",filename);
