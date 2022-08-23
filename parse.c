@@ -508,10 +508,10 @@ LVar *enumerator_list()
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
-        //Token *type_qual = consume_Token(TK_TYPE_QUAL);
+        // Token *type_qual = consume_Token(TK_TYPE_QUAL);
         Token *type_spec = consume_Token(TK_TYPE_SPEC);
         Token *identifier = NULL;
-        //char *def_name = NULL;
+        // char *def_name = NULL;
         char *src_name = NULL;
         if (!type_spec)
                 return NULL;
@@ -671,8 +671,8 @@ Type *declaration_specifier() // bool declaration)
 /* add        = mul ("+" mul | "-" mul)* */
 /* mul     = cast ("*" cast | "/" cast)* */
 /* cast    = (type-name) cast | unary */
-/* unary   = "-"? primary | "+"? primary | "*" unary | "&" unary  */
-/* postfix */
+/* unary   = "-"? postfix | "+"? postfix | "*" postfix | "&" postfix  */
+/* postfix = primary ("->" postfix) ? */
 /* primary = ident.ident | ident->ident | num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" | TK_STR*/
 Node *expr();
 Node *stmt();
@@ -747,7 +747,8 @@ Node *primary()
                         {
                                 ans = new_node(ND_GVAR, NULL, NULL, tok);
                         }
-                        else{
+                        else
+                        {
                                 error_at(tok->pos, "token '%s' is not defined", tok->str);
                         }
                         ans->offset = var->offset;
@@ -782,43 +783,68 @@ Node *postfix()
 {
         Token *tok = NULL;
         Node *ans = primary();
-        if ((tok = consume("["))) 
+        for (;;)
         {
-                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
-                ans1->type = ans->type->ptr_to;
-                expect("]"); // important
-                fprintf(tout, "array\n</%s>\n", __func__);
-                return ans1;
+                if ((tok = consume("[")))
+                {
+                        Type *type = ans->type->ptr_to;
+                        ans = new_node(ND_DEREF, new_node(ND_ADD, ans, expr(), NULL), NULL, NULL);
+                        ans->type = type;
+                        expect("]"); // important
+                        fprintf(tout, "array\n</%s>\n", __func__);
+                        continue;
+                }
+                if ((tok = consume(".")))
+                {
+                        tok = consume_ident();
+                        LVar *var = get_hash(structs, format("struct %s", ans->type->str));
+                        if (!var)
+                                error_at(token->pos, "no struct %s defined", ans->type->str);
+                        LVar *field = find_var(tok, var);
+                        // Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
+                        // ans1->type = field->type;
+                        // return ans1;
+                        if (!field)
+                                error_at(token->pos, "no %s field defined in %s struct", tok->str,ans->type->str);
+                        ans->type = field->type;
+                        ans->offset -= field->offset;
+                        continue;
+                }
+                if ((tok = consume("->")))
+                {
+                        //(ans->(right))
+                        LVar *st_vars = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
+                        if (!st_vars)
+                                error_at(token->pos, "no struct %s defined", ans->type->str);
+                        Token *right = consume_ident();
+                        LVar *field = find_var(right, st_vars);
+                        if (!field)
+                                error_at(token->pos, "no field defined %s", right->str);
+                        ans = new_node(ND_DEREF,
+                                              new_node(ND_ADD,
+                                                       new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)),
+                                                       ans, NULL),
+                                              NULL, NULL);
+                        ans->type = field->type;
+                        continue;
+                        /*tok = consume_ident();                                                      // field
+                        LVar *var = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
+                        LVar *field = find_var(tok, var);
+                        Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)), ans, NULL), NULL, NULL);
+                        return ans1;
+                        */
+                        // Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
+                        //  Node *ans1 = new_node(ND_DEREF, ans, NULL, NULL);
+                        //  ans1->type = field->type;
+                        //  ans->offset += field->offset;
+                        //   ans->type->ptr_to = field->type;
+                        // return ans1;
+                }        
+                // TODO:++
+                // TODO:--
+                //else
+                return ans;                
         }
-        if ((tok = consume(".")))
-        {
-                tok = consume_ident();
-                LVar *var = get_hash(structs, format("struct %s", ans->type->str));
-                LVar *field = find_var(tok, var);
-                // Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
-                // ans1->type = field->type;
-                // return ans1;
-                ans->type = field->type;
-                ans->offset -= field->offset;
-                return ans;
-        }
-        else if ((tok = consume("->")))
-        {
-                tok = consume_ident();                                                      // field
-                LVar *var = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
-                LVar *field = find_var(tok, var);
-                Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)), ans, NULL), NULL, NULL);
-                // Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
-                //  Node *ans1 = new_node(ND_DEREF, ans, NULL, NULL);
-                //  ans1->type = field->type;
-                //  ans->offset += field->offset;
-                //   ans->type->ptr_to = field->type;
-                return ans1;
-                // return ans1;
-        }
-        // TODO:++
-        // TODO:--
-        return ans;
 }
 Type *parameter_type_list(Node *ans);
 Type *abstract_declarator(Type *t);
@@ -993,7 +1019,7 @@ Node *add()
                 {
                         fprintf(tout, " sub\n<%s>\n", __func__);
                         //左結合なのでmulを再帰する！
-                        //addを再帰すると右結合になってしまう！
+                        // addを再帰すると右結合になってしまう！
                         node = new_node(ND_SUB, node, mul(), tok);
                         fprintf(tout, " sub\n</%s>\n", __func__);
                         continue;
@@ -1065,6 +1091,7 @@ Node *equality()
                         fprintf(tout, " ne\n</%s>\n", __func__);
                         continue;
                 }
+                //else
                 return node;
         }
 }

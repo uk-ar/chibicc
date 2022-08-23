@@ -25,7 +25,7 @@ typedef struct Node node;
 
 struct Node
 {
-    int var;
+    int val;
     node *next;
 };
 
@@ -106,6 +106,17 @@ int main(int argc, char **argv)
     // printf("i:%p\n", o3->f2);
     ASSERT(1, o3->f1);
     ASSERT(2, o3->f2);
+
+    node a, c, *b = &a;
+    ASSERT(1, ({ a.val = 1; a.val; }));
+    ASSERT(1, ({ b->val; }));
+    ASSERT(2, ({ c.val = 2; c.val; }));
+    c.val = 2;
+    a.next = c;
+    b->next->val;
+    ASSERT(2, ({ b->next->val; }));
     // ASSERT(2, 3);
+    //struct list l = calloc(1, sizeof(struct list));
+    // ASSERT(16, sizeof(Node));
     return 0;
 }
