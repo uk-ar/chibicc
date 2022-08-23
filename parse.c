@@ -848,13 +848,25 @@ Type *abstract_declarator(Type *t)
         return t;
 }
 
-Type *type_name()
+Type *type_name() // TODO:need non consume version?
 {
         // specifier-qualifier
         consume_Token(TK_TYPE_QUAL);
         Token *t = consume_Token(TK_TYPE_SPEC);
         if (t)
-                return abstract_declarator(get_hash(types, t->str));
+        {
+                char *str = t->str;
+                while (get_hash(type_alias, str))
+                {
+                        str = get_hash(type_alias, str);
+                }
+                if (strcmp(str, "struct") == 0)
+                {
+                        Token *id = consume_ident();
+                        str = format("%s %s", str, id->str);
+                }
+                return abstract_declarator(get_hash(types, str));
+        }
         return abstract_declarator(NULL);
 }
 
