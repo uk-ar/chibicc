@@ -957,14 +957,14 @@ Node *mul()
                 if ((tok = consume("*")))
                 {
                         fprintf(tout, " mul\n<%s>\n", __func__);
-                        node = new_node(ND_MUL, node, mul(), tok);
+                        node = new_node(ND_MUL, node, cast(), tok);
                         fprintf(tout, " mul\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume("/")))
                 {
                         fprintf(tout, " div\n<%s>\n", __func__);
-                        node = new_node(ND_DIV, node, mul(), token);
+                        node = new_node(ND_DIV, node, cast(), token);
                         fprintf(tout, " div\n</%s>\n", __func__);
                         continue;
                 }
@@ -980,14 +980,16 @@ Node *add()
                 if ((tok = consume("-")))
                 {
                         fprintf(tout, " sub\n<%s>\n", __func__);
-                        node = new_node(ND_SUB, node, add(), tok);
+                        //左結合なのでmulを再帰する！
+                        //addを再帰すると右結合になってしまう！
+                        node = new_node(ND_SUB, node, mul(), tok);
                         fprintf(tout, " sub\n</%s>\n", __func__);
                         continue;
                 }
                 if ((tok = consume("+")))
                 {
                         fprintf(tout, " plus\n<%s>\n", __func__);
-                        node = new_node(ND_ADD, node, add(), tok);
+                        node = new_node(ND_ADD, node, mul(), tok);
                         fprintf(tout, " plus\n</%s>\n", __func__);
                         continue;
                 }
