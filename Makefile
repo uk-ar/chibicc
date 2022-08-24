@@ -18,7 +18,7 @@ test/%.exe: 9cc test/%.c
 	./9cc test/$*.e > test/$*.s	
 #テストバイナリ作成
 	cp test/$*.s tmp.s
-	$(CC) -static -g -o $@ test/$*.s test/common.c hashmap.c
+	$(CC) -static -g -o $@ test/$*.s test/common.o hashmap.o
 
 test: $(TESTS)
 #実行時エラー解析のため名前を統一
