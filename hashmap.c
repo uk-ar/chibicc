@@ -25,7 +25,7 @@ HashNode *new_hashnode(char *key, void *value, HashNode *next_bucket, HashNode *
         return n;
 }
 
-void add_hash(HashMap *h, char *key, void *value)
+HashNode *add_hash(HashMap *h, char *key, void *value)
 {
         int hash = 0;
         for (char *p = key; *p; p++)
@@ -33,17 +33,23 @@ void add_hash(HashMap *h, char *key, void *value)
                 hash += *p;
         }
         // return add_hashI(h,c,value);
-        hash = hash % (h->size);//8
+        hash = hash % (h->size); // 8
         for (HashNode *c = h->nodes[hash]; c; c = c->next_bucket)
         {
                 if (strcmp(c->key, key) == 0)
                 {
                         c->value = value;
-                        return;
+                        return c;
                 }
         }
         h->nodes[hash] = new_hashnode(key, value, h->nodes[hash], h->begin);
         h->begin = h->nodes[hash];
+        return h->nodes[hash];
+}
+
+void *get_node_value(HashNode *n)
+{
+        return n->value;
 }
 
 void *get_hash(HashMap *h, char *key)

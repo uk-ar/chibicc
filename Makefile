@@ -26,8 +26,12 @@ test: $(TESTS)
 	cp $${i%.*}.e tmp.cx; \
 	cp $${i%.*}.s tmp.s; \
 	cp $${i%.*}.exe tmp; \
-	./$$i || exit 1; echo; \
+	if ! ./$$i ; then gcc -static -g -o tmp tmp.s test/common.c hashmap.c; exit 1; fi; echo; \
 	done
+# 失敗したらデバッグ情報付で再コンパイル
+#./$$i || exit 1; echo; \
+
+#if [ ! ./$$i ]; then echo "fail"; else echo "succ"; fi \
 
 test_o: 9cc test/common.o
 	sh ./test.sh

@@ -74,6 +74,13 @@ int count()
         static int cnt = 0;
         return cnt++;
 }
+void dump()
+{
+        printf("  mov rsi, rsp\n");
+        printf("  mov edi, OFFSET FLAT:.LCdebug\n");
+        printf("  mov eax, 0\n");
+        printf("  call printf\n");
+}
 extern LVar *find_string(Token *tok);
 // static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};

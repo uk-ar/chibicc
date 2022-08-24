@@ -144,7 +144,9 @@ struct HashMap
 };
 
 HashMap *new_hash(int size);
-void add_hash(HashMap *h, char *key, void *value);
+HashNode *add_hash(HashMap *h, char *key, void *value);
 void *get_hash(HashMap *h, char *key);
+void *get_node_value(HashNode *n);
+char *format(char *fmt, ...);
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

@@ -1,7 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "test.h"
 
-int assert(int expected, int actual, char *code)
+struct s1 *func()
+{
+        // struct s1 o2;
+        // return &o2;
+        struct s1 *o1 = calloc(1, sizeof(struct s1));
+        return o1;
+}
+
+int assert(int expected, int actual, char *code,char *file)
 {
         if (expected == actual)
         {
@@ -9,7 +18,7 @@ int assert(int expected, int actual, char *code)
         }
         else
         {
-                printf("%s => %d expected but got %d\n", code, expected, actual);
+                printf("%s => %d expected but got %d:file %s\n", code, expected, actual,file);
                 exit(1);
         }
         return 0;
@@ -129,6 +138,8 @@ void printA(int *p)
 }
 char *distance(char *p1, char *p2)
 {
-        char *ans = (char*)(p2 - p1);
+        printf("%p\n", p1);
+        printf("%p\n", p2);
+        char *ans = (char *)(p2 - p1);
         return ans;
 }

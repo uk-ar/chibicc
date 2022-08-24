@@ -41,7 +41,7 @@ char *read_file(char *path)
 
 char *global_types[] = {".byte", ".long", ".quad", ".quad"};
 extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size);
-extern void add_hash(HashMap *h, char *key, void *value);
+extern HashNode *add_hash(HashMap *h, char *key, void *value);
 
 int main(int argc, char **argv)
 {
@@ -100,6 +100,9 @@ int main(int argc, char **argv)
                 printf("  .string \"%s\"\n", var->name);
                 // printf("  .text \n");
         }
+        // for debug
+        printf(".LCdebug:\n");
+        printf("  .string \"%s\"\n", "rsp:%p\\n");
 
         for (LVar *var = globals; var; var = var->next)
         { // gvar
