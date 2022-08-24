@@ -532,7 +532,8 @@ Type *declaration_specifier() // bool declaration)
                         {
                                 type = new_type(TY_STRUCT, NULL, 0);
                                 type->str = identifier->str;
-                                add_hash(types, src_name, type); // for recursive field type
+                                if (!add_hash(types, src_name, type)) // for recursive field type
+                                        error_at(token->pos, "redefine %s", src_name);
                                 st_vars = struct_declaration(type);
                                 add_hash(structs, src_name, st_vars);
                         }
@@ -806,6 +807,8 @@ Node *postfix()
                 }
                 if ((tok = consume(".")))
                 {
+                        if (ans->type->kind != TY_STRUCT)
+                                error_at(token->pos, "%s is not struct", ans->token->str);
                         tok = consume_ident();
                         if (!tok)
                                 error_at(token->pos, "no ident defined in struct %s", ans->type->str);
@@ -825,6 +828,8 @@ Node *postfix()
                 if ((tok = consume("->")))
                 {
                         //(ans->(right))
+                        if (ans->type->kind != TY_PTR || ans->type->ptr_to->kind != TY_STRUCT)
+                                error_at(token->pos, "%s is not pointer to struct", ans->token->str);
                         LVar *st_vars = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
                         if (!st_vars)
                                 error_at(token->pos, "no struct %s defined", ans->type->str);
@@ -1337,13 +1342,16 @@ LVar *struct_declarator_list(LVar *lvar)
         Type *base_t = declaration_specifier();
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
+
         while (base_t)
         {
                 Type *t = base_t;
                 t = abstract_declarator(t);
                 Token *tok = consume_ident();
                 if (!tok)
-                        return lvar;
+                {
+                        break;
+                }
                 fprintf(tout, " \n<%s>\n", __func__);
                 LVar *var = find_lvar(tok); //
 

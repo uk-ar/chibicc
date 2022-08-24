@@ -39,7 +39,7 @@ HashNode *add_hash(HashMap *h, char *key, void *value)
                 if (strcmp(c->key, key) == 0)
                 {
                         c->value = value;
-                        return c;
+                        return NULL;//already exist
                 }
         }
         h->nodes[hash] = new_hashnode(key, value, h->nodes[hash], h->begin);
