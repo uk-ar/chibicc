@@ -1,5 +1,5 @@
 #include "test.h"
-//#include "../9cc.h"
+#include "../9cc.h"
 
 struct s1
 {

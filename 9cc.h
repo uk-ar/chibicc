@@ -23,7 +23,8 @@ struct Type
 
 typedef enum
 {
-       TK_DUMMY,
+       TK_IDENT, // default : identifier
+       TK_NOT_SUPPORT,
        TK_TYPE_QUAL,
        TK_STORAGE,
        TK_STR,
@@ -35,8 +36,7 @@ typedef enum
        TK_FOR,
        TK_RESERVED, // symbol
        TK_RETURN,   // return
-       TK_IDENT,    // identifier
-       TK_NUM,      // int
+       TK_NUM, // int
        TK_EOF,
 } TokenKind;
 
@@ -128,10 +128,10 @@ typedef struct HashNode HashNode;
 
 struct HashNode
 {
-       HashNode *next_bucket;//8
-       HashNode *next; // for iteration;//8
-       char *key;//1+(7)
-       void *value;//8
+       HashNode *next_bucket; // 8
+       HashNode *next;        // for iteration;//8
+       char *key;             // 1+(7)
+       void *value;           // 8
 };
 
 typedef struct HashMap HashMap;

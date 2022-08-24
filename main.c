@@ -81,6 +81,9 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "volatile", (void *)TK_TYPE_QUAL);
         add_hash(keyword2token, "_Atomic", (void *)TK_TYPE_QUAL);
 
+        add_hash(keyword2token, "__extension__", (void *)TK_NOT_SUPPORT);
+        add_hash(keyword2token, "unsigned", (void *)TK_NOT_SUPPORT);
+        
         filename = argv[1];
         // fprintf(tout,"# %s\n",filename);
         user_input = read_file(filename);

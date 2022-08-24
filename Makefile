@@ -9,9 +9,14 @@ CC=gcc
 	$(CC) -o 9cc $(OBJS) $(LDFLAGS)
 
 $(OBJS):9cc.h
+ 
+%.s: %.c
+	$(CC) -o $*.e -E -P -C $*.c
+	cp $*.e tmp.cx
+	./9cc $*.e > $*.s	
 
-test/%.exe: 9cc test/%.c
-#プリプロセス結果をcompile
+test/%.exe: 9cc test/%.c test/common.s hashmap.s
+#プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)
 	$(CC) -o test/$*.e -E -P -C test/$*.c
 #コンパイル時エラー解析のため名前を統一
 	cp test/$*.e tmp.cx
@@ -29,7 +34,6 @@ test: $(TESTS)
 	if ! ./$$i ; then gcc -static -g -o tmp tmp.s test/common.c hashmap.c; exit 1; fi; echo; \
 	done
 # 失敗したらデバッグ情報付で再コンパイル
-#./$$i || exit 1; echo; \
 
 #if [ ! ./$$i ]; then echo "fail"; else echo "succ"; fi \
 

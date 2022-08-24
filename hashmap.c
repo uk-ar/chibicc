@@ -1,10 +1,6 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <assert.h>
 #include "9cc.h"
 
 HashMap *new_hash(int size)

@@ -346,7 +346,7 @@ Token *tokenize(char *p)
                         // printf("%d",p-pre);
                         continue;
                 }
-                if (isalpha(*p))
+                if (isalpha(*p) || *p=='_')
                 {
                         char *pre = p;
                         while (isalpha(*p) || isdigit(*p) || *p == '_')
@@ -354,15 +354,11 @@ Token *tokenize(char *p)
                                 p++;
                         }
                         char *str = format("%.*s", p - pre, pre);
-                        TokenKind t;
-                        if ((t = (TokenKind)get_hash(keyword2token, str)))
+                        TokenKind t = (TokenKind)get_hash(keyword2token, str);
+                        if (t!=TK_NOT_SUPPORT)
                         {
                                 cur = new_token(t, cur, pre, p - pre);
-                        }
-                        else
-                        {
-                                cur = new_token(TK_IDENT, cur, pre, p - pre);
-                        }
+                        }                        
                         continue;
                 }
                 // printf("eee");
