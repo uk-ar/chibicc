@@ -23,7 +23,8 @@ struct Type
 
 typedef enum
 {
-       TK_IDENT, // default : identifier
+       TK_NOT_EXIST, // default
+       TK_IDENT, // identifier
        TK_NOT_SUPPORT,
        TK_TYPE_QUAL,
        TK_STORAGE,
@@ -36,7 +37,7 @@ typedef enum
        TK_FOR,
        TK_RESERVED, // symbol
        TK_RETURN,   // return
-       TK_NUM, // int
+       TK_NUM,      // int
        TK_EOF,
 } TokenKind;
 

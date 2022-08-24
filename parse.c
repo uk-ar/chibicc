@@ -236,6 +236,7 @@ Token *tokenize(char *p)
                                 error_at(p, "'\'' is not closing");
                         p++;
                         cur->len = p - pre;
+                        continue;
                 }
                 if (isspace(*p))
                 {
@@ -346,7 +347,7 @@ Token *tokenize(char *p)
                         // printf("%d",p-pre);
                         continue;
                 }
-                if (isalpha(*p) || *p=='_')
+                if (isalpha(*p) || *p == '_')
                 {
                         char *pre = p;
                         while (isalpha(*p) || isdigit(*p) || *p == '_')
@@ -355,10 +356,18 @@ Token *tokenize(char *p)
                         }
                         char *str = format("%.*s", p - pre, pre);
                         TokenKind t = (TokenKind)get_hash(keyword2token, str);
-                        if (t!=TK_NOT_SUPPORT)
+                        if (t == TK_NOT_SUPPORT)
+                        {
+                                continue;
+                        }
+                        if (t == TK_NOT_EXIST)
+                        {
+                                cur = new_token(TK_IDENT, cur, pre, p - pre);
+                        }
+                        else
                         {
                                 cur = new_token(t, cur, pre, p - pre);
-                        }                        
+                        }
                         continue;
                 }
                 // printf("eee");
@@ -718,7 +727,7 @@ Node *primary()
                 Node *ans = new_node(ND_STR, NULL, NULL, tok, NULL);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
-        }
+        } // tk_num
         else if ((tok = consume_ident()))
         {
                 if (consume("("))

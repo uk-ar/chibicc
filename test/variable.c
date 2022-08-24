@@ -38,7 +38,6 @@ int main(int argc, char **argv)
     ASSERT(102, ({ g[0]; }));
     ASSERT(98, ({ h[0]; }));
     ASSERT('q', ({ i[0]; }));
-    ASSERT('b', ({ j[0]; }));
     ASSERT('b', ({ *j; }));
     a = 2;
     // nested

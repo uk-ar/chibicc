@@ -22,9 +22,9 @@ struct
     int anonymous;
 };
 
-typedef struct Node node;
+typedef struct TNode node;
 
-struct Node
+struct TNode
 {
     int val;
     node *next;
