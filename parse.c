@@ -405,15 +405,17 @@ void add_node(Node *node, Node *new_node)
 }
 LVar *locals = NULL;
 LVar *globals = NULL;
+LVar *functions = NULL;
 // HashMap *globals=NULL;
 LVar *lstack[100];
 int lstack_i = 0;
 
-LVar *find_var(Token *tok, LVar *var0)
+LVar *find_var(char *str, LVar *var0)
 {
+        int n = strlen(str);
         for (LVar *var = var0; var; var = var->next)
         {
-                if (tok->len == var->len && !memcmp(tok->pos, var->name, tok->len))
+                if ((n == var->len) && !memcmp(str, var->name, n))
                 {
                         return var;
                 }
@@ -422,7 +424,7 @@ LVar *find_var(Token *tok, LVar *var0)
 }
 LVar *find_lvar(Token *tok)
 {
-        return find_var(tok, locals);
+        return find_var(tok->str, locals);
 }
 LVar *find_lvar_all(Token *tok)
 {
@@ -431,7 +433,7 @@ LVar *find_lvar_all(Token *tok)
                 return ans;
         for (int i = lstack_i; i >= 0; i--)
         {
-                LVar *ans = find_var(tok, lstack[i]);
+                LVar *ans = find_var(tok->str, lstack[i]);
                 if (ans)
                 {
                         return ans;
@@ -444,11 +446,11 @@ LVar *find_gvar(Token *tok)
         // char *s=calloc(tok->len+1,sizeof(char));
         // snprintf(s,tok->len,tok->pos);
         // return get_hash(globals,s);
-        return find_var(tok, globals);
+        return find_var(tok->str, globals);
 }
 LVar *find_string(Token *tok)
 {
-        return find_var(tok, strings);
+        return find_var(tok->str, strings);
 }
 LVar *new_var(Token *tok, LVar *next, Type *t)
 {
@@ -718,7 +720,18 @@ Node *primary()
                 if (consume("("))
                 { // call
                         fprintf(tout, "<%s>funcall\n", __func__);
-                        Node *ans = new_node(ND_FUNCALL, NULL, NULL, tok, NULL);
+
+                        Type *t = NULL;
+                        LVar *var = find_var(tok->str, functions);
+                        if (var)
+                        {
+                                t = var->type;
+                        }
+                        else
+                        {
+                                t = new_type(TY_INT, NULL, 4);
+                        }
+                        Node *ans = new_node(ND_FUNCALL, NULL, NULL, tok, t);
                         if (consume(")"))
                         {
                                 fprintf(tout, " funcall</%s>\n", __func__);
@@ -799,7 +812,7 @@ Node *postfix()
                         LVar *var = get_hash(structs, format("struct %s", ans->type->str));
                         if (!var)
                                 error_at(token->pos, "no struct %s defined", ans->type->str);
-                        LVar *field = find_var(tok, var);
+                        LVar *field = find_var(tok->str, var);
                         // Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
                         // ans1->type = field->type;
                         // return ans1;
@@ -818,7 +831,7 @@ Node *postfix()
                         Token *right = consume_ident();
                         if (!right)
                                 error_at(token->pos, "no ident defined in struct %s", ans->type->str);
-                        LVar *field = find_var(right, st_vars);
+                        LVar *field = find_var(right->str, st_vars);
                         if (!field)
                                 error_at(token->pos, "no field defined %s", right->str);
                         Node *lhs = new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1));
@@ -1389,7 +1402,7 @@ void initilizer(bool top)
         else
         {
                 consume_Token(TK_NUM);
-                int n = token->pos - p + 1;
+                int n = token->pos - p;
                 globals->init = format("%.*s", n, p);
                 // globals->init = calloc(n, sizeof(char));
                 // snprintf(globals->init, n, p);
@@ -1455,12 +1468,14 @@ Node *init_declarator(Type *base_t, bool top)
         }
         if (consume("("))
         { // function declaration
-                Node *ans = new_node(ND_FUNC, NULL, NULL, tok, NULL);
+                functions = new_var(tok, functions, t);
+                Node *ans = new_node(ND_FUNC, NULL, NULL, tok, t);
                 parameter_type_list(ans);
                 if (consume(";"))
                         return declaration(top);
                 if (!consume("{"))
                         error_at(token->pos, "need block\n");
+                // TODO:check mismatch
                 ans->then = compound_statement(); // block
                 ans->offset = loffset;
                 loffset = 0;

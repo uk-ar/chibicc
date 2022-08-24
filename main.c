@@ -13,7 +13,7 @@ extern char *user_input;
 extern char *filename;
 extern Token *token;
 extern Node *code[];
-extern LVar *locals, *globals, *strings;
+extern LVar *locals, *globals, *strings, *functions;
 extern HashMap *structs, *types, *keyword2token, *type_alias;
 // struct name->vars,type name->type,,defname->type name
 
@@ -67,19 +67,19 @@ int main(int argc, char **argv)
         type_alias = new_hash(100);
 
         keyword2token = new_hash(100);
-        add_hash(keyword2token, "enum", (void*)TK_TYPE_SPEC);
-        add_hash(keyword2token, "void", (void*)TK_TYPE_SPEC);
+        add_hash(keyword2token, "enum", (void *)TK_TYPE_SPEC);
+        add_hash(keyword2token, "void", (void *)TK_TYPE_SPEC);
 
-        add_hash(keyword2token, "auto", (void*)TK_STORAGE);
-        add_hash(keyword2token, "register", (void*)TK_STORAGE);
-        add_hash(keyword2token, "static", (void*)TK_STORAGE);
-        add_hash(keyword2token, "extern", (void*)TK_STORAGE);
-        add_hash(keyword2token, "typedef", (void*)TK_STORAGE);
+        add_hash(keyword2token, "auto", (void *)TK_STORAGE);
+        add_hash(keyword2token, "register", (void *)TK_STORAGE);
+        add_hash(keyword2token, "static", (void *)TK_STORAGE);
+        add_hash(keyword2token, "extern", (void *)TK_STORAGE);
+        add_hash(keyword2token, "typedef", (void *)TK_STORAGE);
 
-        add_hash(keyword2token, "const", (void*)TK_TYPE_QUAL);
-        add_hash(keyword2token, "restrict", (void*)TK_TYPE_QUAL);
-        add_hash(keyword2token, "volatile", (void*)TK_TYPE_QUAL);
-        add_hash(keyword2token, "_Atomic", (void*)TK_TYPE_QUAL);
+        add_hash(keyword2token, "const", (void *)TK_TYPE_QUAL);
+        add_hash(keyword2token, "restrict", (void *)TK_TYPE_QUAL);
+        add_hash(keyword2token, "volatile", (void *)TK_TYPE_QUAL);
+        add_hash(keyword2token, "_Atomic", (void *)TK_TYPE_QUAL);
 
         filename = argv[1];
         // fprintf(tout,"# %s\n",filename);
