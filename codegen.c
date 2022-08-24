@@ -8,6 +8,7 @@
 
 FILE *tout2;
 char *nodeKind[] = {
+    "ND_MOD",
     "ND_CAST",
     "ND_STR",
     "ND_GVAR",
@@ -404,6 +405,10 @@ Type *gen(Node *node)
                 break;
         case ND_SUB:
                 printf("  sub rax, rdi\n");
+                break;
+        case ND_MOD:
+                printf("  cdq\n");
+                printf("  idiv rdi\n");
                 break;
         case ND_MUL:
                 printf("  imul rax, rdi\n");

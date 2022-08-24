@@ -95,7 +95,23 @@ int main(int argc, char **argv)
         ASSERT(&(a.f3), &(c->f3));
         ASSERT(&(a.f4), &(c->f4));
     }
-
+    {
+        HashNode o1, *o2 = &o1;
+        // ASSERT(32, sizeof(HashNode));
+        ASSERT(&(o1.next_bucket), &(o2->next_bucket));
+        ASSERT(&(o1.next), &(o2->next));
+        ASSERT(&(o1.key), &(o2->key));
+        ASSERT(&(o1.value), &(o2->value));
+        printf("actual\n");
+        printf("%p\n", o2);
+        printf("%p\n", &(o2->next_bucket));
+        printf("%p\n", &(o2->next));
+        printf("%p\n", &(o2->key));
+        printf("%p\n", &(o2->value));
+        printf("expected\n");
+        get_node_value(o2);
+        ASSERT(32, sizeof(HashNode));
+    }
     ASSERT(12, sizeof(o1)); // 1+(3)+4+1+(3)
     ASSERT(0, distance(&o1, &o1.f1));
     ASSERT(1, ({ o1.f1 = 1; o1.f1 ; }));

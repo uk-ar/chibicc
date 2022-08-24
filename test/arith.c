@@ -18,5 +18,7 @@ int main(int argc, char **argv)
     ASSERT(10, -10 + 20);
     ASSERT(1, 1 <= 2);
     ASSERT(1, 2 == 2);
+    ASSERT(0, 2 % 2);
+    ASSERT(1, 1 % 2);
     return 0;
 }

@@ -332,7 +332,7 @@ Token *tokenize(char *p)
                 }
                 if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' ||
                     *p == ')' || *p == '=' || *p == ';' || *p == '{' || *p == '}' || *p == ',' || *p == '&' ||
-                    *p == '[' || *p == ']' || *p == '.' || *p == '!')
+                    *p == '[' || *p == ']' || *p == '.' || *p == '!' || *p == '%')
                 {
                         cur = new_token(TK_RESERVED, cur, p++, 1);
                         continue;
@@ -1028,6 +1028,13 @@ Node *mul()
                 {
                         fprintf(tout, " div\n<%s>\n", __func__);
                         node = new_node(ND_DIV, node, cast(), token, node->type);
+                        fprintf(tout, " div\n</%s>\n", __func__);
+                        continue;
+                }
+                if ((tok = consume("%")))
+                {
+                        fprintf(tout, " div\n<%s>\n", __func__);
+                        node = new_node(ND_MOD, node, cast(), token, node->type);
                         fprintf(tout, " div\n</%s>\n", __func__);
                         continue;
                 }
