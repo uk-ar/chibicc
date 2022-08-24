@@ -407,8 +407,9 @@ Type *gen(Node *node)
                 printf("  sub rax, rdi\n");
                 break;
         case ND_MOD:
-                printf("  cdq\n");
+                printf("  cqo\n");
                 printf("  idiv rdi\n");
+                printf("  mov rax, rdx\n");
                 break;
         case ND_MUL:
                 printf("  imul rax, rdi\n");
