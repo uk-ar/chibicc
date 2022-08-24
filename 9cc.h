@@ -128,10 +128,10 @@ typedef struct HashNode HashNode;
 
 struct HashNode
 {
-       HashNode *next_bucket;
-       HashNode *next; // for iteration;
-       char *key;
-       void *value;
+       HashNode *next_bucket;//8
+       HashNode *next; // for iteration;//8
+       char *key;//1+(7)
+       void *value;//8
 };
 
 typedef struct HashMap HashMap;

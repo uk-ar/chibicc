@@ -5,8 +5,9 @@ struct s1
 {
     char f1; // 1
     // padding:3
-    int f2;  // 4
-    char f3; // 4
+    int f2; // 4
+    // padding:3
+    char f3; // 1
 };
 
 struct s2
@@ -66,6 +67,15 @@ typedef struct
 } foo;
 foo c, *d;
 
+struct s3
+{
+    char f1; // 1 -> 0
+    int f2;  // 4 -> 1
+    long f3; // 8 -> 8
+    char f4; // 1 -> 17
+    // 1+(3)+4+8+1+(7)=24;
+};
+
 int main(int argc, char **argv)
 {
     char start;
@@ -76,8 +86,17 @@ int main(int argc, char **argv)
     //  ASSERT(5, distance(&o2, &o1));
     //  ASSERT(10, distance(&o2, &start));
     //  ASSERT(8, distance(&o3, &o2));
+    {
+        struct s3 a, *c = &a;          // 4+(4)+8+24=40
+        int b;                         // 4+(4)+8+24+4+(4)=48
+        ASSERT(24, sizeof(struct s3)); // 81->24
+        ASSERT(&(a.f1), &(c->f1));
+        ASSERT(&(a.f2), &(c->f2));
+        ASSERT(&(a.f3), &(c->f3));
+        ASSERT(&(a.f4), &(c->f4));
+    }
 
-    ASSERT(9, sizeof(o1));
+    ASSERT(12, sizeof(o1)); // 1+(3)+4+1+(3)
     ASSERT(0, distance(&o1, &o1.f1));
     ASSERT(1, ({ o1.f1 = 1; o1.f1 ; }));
     ASSERT(2, ({ o1.f2 = 2; o1.f2 ; }));
@@ -88,7 +107,7 @@ int main(int argc, char **argv)
     printf("i:%p\n", &(o1.f2));
     printf("c:%p\n", &(o2.f1));
     printf("i:%p\n", &(o2.f2));
-    ASSERT(9, sizeof(o2));
+    ASSERT(12, sizeof(o2));
     ASSERT(0, distance(&o2, &o2.f1));
     ASSERT(3, ({ o2.f2 = 3; o2.f2 ; }));
     ASSERT(4, ({ o2.f1 = 4; o2.f1 ; }));

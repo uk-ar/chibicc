@@ -465,6 +465,11 @@ LVar *new_var(Token *tok, LVar *next, Type *t)
 LVar *struct_declarator_list(LVar *lvar);
 // in order to reset offset
 int loffset = 0;
+int align_to(int offset, int size)
+{
+        offset = (offset + size - 1) / size * size;
+        return offset;
+}
 
 LVar *struct_declaration(Type *type)
 {
@@ -472,13 +477,15 @@ LVar *struct_declaration(Type *type)
         // Type *type = new_type(TY_STRUCT, NULL, 0);
         // type->str = str1;
         // add_hash(types, format("%s %s", type_str, str1), type);
+        int max_offset = 0;
         while (!consume("}"))
         {
                 st_vars = struct_declarator_list(st_vars);
+                max_offset = MAX(max_offset, st_vars->type->size);
                 consume(";");
         }
         // add_hash(structs, str1, st_vars);
-        type->size = loffset;
+        type->size = align_to(loffset, max_offset);
         loffset = 0;
         return st_vars;
 }
@@ -1195,8 +1202,16 @@ Node *stmt()
                 {
                         locals = new_var(tok, locals, t);
                         int size = locals->type->size;
-                        locals->offset = (loffset + size - 1) / size * size; // ajust
+                        if (size <= 8)
+                        {
+                                locals->offset = (loffset + size - 1) / size * size; // ajust
+                        }
+                        else
+                        {
+                                locals->offset = (loffset + 8 - 1) / 8 * 8; // ajust
+                        }
                         locals->offset += locals->type->size;
+
                         // locals->offset = loffset + locals->type->size; // TODO:fix it
                 }
 
@@ -1332,6 +1347,7 @@ Node *parameter_declaration()
 
                 var = locals;
         }
+        // init_declarator側でクリアされる
         loffset = locals->offset;
         ans->offset = var->offset; // TODO: shadow
         fprintf(tout, " \n</%s>\n", __func__);
@@ -1370,15 +1386,18 @@ LVar *struct_declarator_list(LVar *lvar)
                 {
                         lvar = new_var(tok, lvar, t);
                 }
-                int size = lvar->type->size;
-                lvar->offset = (loffset + size - 1) / size * size;
-                loffset = lvar->offset + size;
+                loffset = align_to(loffset, lvar->type->size);
+                lvar->offset = loffset;
+                // struct_declaration 側でクリアされる
+                loffset += lvar->type->size;
+
                 if (consume(","))
                 {
                         continue;
                 }
                 fprintf(tout, " \n</%s>\n", __func__);
         }
+
         return lvar;
 }
 void initilizer(bool top)
@@ -1526,6 +1545,7 @@ Node *init_declarator(Type *base_t, bool top)
 
 Node *declaration(bool top)
 {
+        loffset = 0;
         Type *base_t = declaration_specifier();
         if (consume(";"))
                 return declaration(top);

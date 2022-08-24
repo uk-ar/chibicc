@@ -2,15 +2,32 @@
 #include <stdlib.h>
 #include "test.h"
 
-struct s1 *func()
+struct s3
+{
+        char f1; // 1 -> 0
+        int f2;  // 4 -> 1
+        long f3; // 8 -> 8
+        char f4; // 1 -> 17
+                 // 1+(3)+4+8+1+(7)=24;
+};
+void printA(int *p);
+void printS1(struct s3 *a)
+{
+        printA(&(a->f1));
+        printA(&(a->f2));
+        printA(&(a->f3));
+        printA(&(a->f4));
+        printf("%d,%d,%ld,%d\n", a->f1, a->f2, a->f3, a->f4);
+}
+struct s3 *func()
 {
         // struct s1 o2;
         // return &o2;
-        struct s1 *o1 = calloc(1, sizeof(struct s1));
+        struct s3 *o1 = calloc(1, sizeof(struct s3));
         return o1;
 }
 
-int assert(int expected, int actual, char *code,char *file)
+int assert(int expected, int actual, char *code, char *file)
 {
         if (expected == actual)
         {
@@ -18,7 +35,7 @@ int assert(int expected, int actual, char *code,char *file)
         }
         else
         {
-                printf("%s => %d expected but got %d:file %s\n", code, expected, actual,file);
+                printf("%s => %d expected but got %d:file %s\n", code, expected, actual, file);
                 exit(1);
         }
         return 0;

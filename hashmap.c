@@ -49,6 +49,11 @@ HashNode *add_hash(HashMap *h, char *key, void *value)
 
 void *get_node_value(HashNode *n)
 {
+        printf("%p\n", n);
+        printf("%p\n", &(n->next_bucket));
+        printf("%p\n", &(n->next));
+        printf("%p\n", &(n->key));
+        printf("%p\n", &(n->value));
         return n->value;
 }
 
