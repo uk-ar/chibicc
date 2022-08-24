@@ -1,4 +1,8 @@
 *~
+*.e
+*.exe
+*.s
+*.log
 *.o
 tmp*
 a.out
