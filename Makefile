@@ -13,7 +13,7 @@ $(OBJS):9cc.h
 %.s: %.c
 	$(CC) -o $*.e -E -P -C $*.c
 	cp $*.e tmp.cx
-#./9cc $*.e > $*.s	
+	./9cc $*.e > $*.s	
 
 test/%.exe: 9cc test/%.c test/common.s hashmap.s
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)

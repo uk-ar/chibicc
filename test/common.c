@@ -1,5 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
+//#include <stdio.h>
+extern int printf(const char *__restrict __fmt, ...);
+//#include <stdlib.h>
+typedef long unsigned int size_t;
+extern void *calloc(size_t __nmemb, size_t __size);
+extern void exit(int __status);
+extern void *malloc(size_t __size);
 #include "test.h"
 
 struct s3

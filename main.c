@@ -63,6 +63,7 @@ int main(int argc, char **argv)
         add_hash(types, "char", new_type(TY_CHAR, NULL, 1, "char"));
         add_hash(types, "long", new_type(TY_LONG, NULL, 8, "long"));
         add_hash(types, "long int", new_type(TY_LONG, NULL, 8, "long int"));
+        add_hash(types, "long long int", new_type(TY_LONG, NULL, 8, "long long int"));
         add_hash(types, "void", new_type(TY_INT, NULL, 4, "void"));
 
         type_alias = new_hash(100);
@@ -83,7 +84,9 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "_Atomic", (void *)TK_TYPE_QUAL);
 
         add_hash(keyword2token, "__extension__", (void *)TK_NOT_SUPPORT);
+        add_hash(keyword2token, "__attribute__", (void *)TK_NOT_SUPPORT);
         add_hash(keyword2token, "unsigned", (void *)TK_NOT_SUPPORT);
+        add_hash(keyword2token, "__restrict", (void *)TK_NOT_SUPPORT);
 
         filename = argv[1];
         // fprintf(tout,"# %s\n",filename);

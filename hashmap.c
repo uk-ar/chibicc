@@ -1,6 +1,12 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+//#include <stdlib.h>
+typedef long unsigned int size_t;
+extern void *calloc(size_t __nmemb, size_t __size);
+//#include <stdio.h>
+extern int printf(const char *__restrict __fmt, ...);
+//#include <string.h>
+extern int strcmp(const char *__s1, const char *__s2);
+//#include <stddef.h>
+#define NULL ((void *)0)
 #include "9cc.h"
 
 HashMap *new_hash(int size)
