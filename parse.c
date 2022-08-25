@@ -326,7 +326,8 @@ Token *tokenize(char *p)
                         continue;
                 }
                 if (!strncmp(p, "<=", 2) || !strncmp(p, ">=", 2) ||
-                    !strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "->", 2))
+                    !strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "->", 2) ||
+                    !strncmp(p, "++", 2) || !strncmp(p, "--", 2))
                 {
                         cur = new_token(TK_RESERVED, cur, p, 2);
                         p += 2;
@@ -523,7 +524,8 @@ Type *type_name();
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
-        // Token *type_qual = consume_Token(TK_TYPE_QUAL);
+        // Token *type_qual =
+        consume_Token(TK_TYPE_QUAL);
         Token *type_spec = consume_Token(TK_TYPE_SPEC);
         // Type *type_spec = type_name();
         Token *identifier = NULL;
@@ -891,8 +893,24 @@ Node *postfix()
                         //   ans->type->ptr_to = field->type;
                         // return ans1;
                 }
-                // TODO:++
-                // TODO:--
+                if ((tok = consume("++")))
+                {
+                        Type *type = ans->type;
+                        ans = new_node(ND_ASSIGN,
+                                       ans,
+                                       new_node(ND_ADD, ans, new_node_num(1, tok, type), NULL, type),
+                                       NULL, type);
+                        continue;
+                }
+                if ((tok = consume("--")))
+                {
+                        Type *type = ans->type;
+                        ans = new_node(ND_ASSIGN,
+                                       ans,
+                                       new_node(ND_SUB, ans, new_node_num(1, tok, type), NULL, type),
+                                       NULL, type);
+                        continue;
+                }
                 // else
                 return ans;
         }
