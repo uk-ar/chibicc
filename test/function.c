@@ -58,12 +58,11 @@ int qux()
 
 void no_return()
 {
-    return;
 }
 
 int main(int argc, char **argv)
 {
-
+    ASSERT(3, ({ no_return(); 3; }));
     ASSERT(1, f1());
     ASSERT(2, f2(2));
     ASSERT(3, f3(1, 2));

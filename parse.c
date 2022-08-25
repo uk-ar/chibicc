@@ -1626,6 +1626,9 @@ Node *init_declarator(Type *base_t, bool top)
                         error_at(token->pos, "need block\n");
                 // TODO:check mismatch
                 ans->then = compound_statement(); // block
+                // force insert return
+                add_node(ans->then, new_node(ND_RETURN, NULL, NULL, tok, NULL));
+
                 ans->offset = loffset;
                 loffset = 0;
 

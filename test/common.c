@@ -159,12 +159,10 @@ void printVC(char *v, int l)
                 printf("%c,", v[i]);
         }
         printf("\n");
-        return;
 }
 void printA(void *p)
 {
         printf("%p\n", p);
-        return;
 }
 char *distance(char *p1, char *p2)
 {
