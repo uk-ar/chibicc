@@ -1406,7 +1406,7 @@ Node *stmt()
                 if (!consume(";"))
                 {
                         node->init = stmt();
-                        //expect(";");
+                        // expect(";");
                 }
                 fprintf(tout, " </init>\n");
                 fprintf(tout, " <cond>\n");

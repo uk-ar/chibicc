@@ -9,7 +9,7 @@ struct s1
     // padding:3
     char f3; // 1
     // padding:4
-    long int quot;//8
+    long int quot; // 8
 };
 
 struct s2
@@ -78,7 +78,12 @@ struct s3
     // 1+(3)+4+8+1+(7)=24;
 };
 
-//TODO:
+struct s7
+{
+    char v[1];
+};
+
+// TODO:
 /*struct empty{
 
 }*/
@@ -167,5 +172,10 @@ int main(int argc, char **argv)
     //  ASSERT(2, 3);
     // struct list l = calloc(1, sizeof(struct list));
     //  ASSERT(16, sizeof(Node));
+    {
+        struct s7 o1, *o2 = &o1;
+        ASSERT(2, ({o2->v[1] = 2;o2->v[1]; }));
+        ASSERT(2, ({ o1.v[1]; }));
+    }
     return 0;
 }
