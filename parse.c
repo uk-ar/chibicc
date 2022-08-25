@@ -635,11 +635,18 @@ Type *declaration_specifier() // bool declaration)
         }
         else
         {
+                src_name = type_str;
                 if (storage && (strncmp(storage->str, "typedef", 6) == 0))
                 {
+                        while (!equal(token->next, ";"))
+                        {
+                                src_name = format("%s %s", src_name, token->str);
+                                if (!consume_ident())
+                                        consume_Token(TK_TYPE_SPEC);
+                        }
                         Token *declarator = consume_ident();
                         if (!declarator) // || !type || !st_vars)
-                                error_at(token->pos, "need declarator for struct\n");
+                                error_at(token->pos, "need declarator for\n");
                         // src_name = format("%s %s", type_str, identifier->str);
                         // add_hash(types, declarator->str, type);
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
