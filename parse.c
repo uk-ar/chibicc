@@ -58,7 +58,7 @@ void error_at(char *loc, char *fmt, ...)
         exit(1);
 }
 
-HashMap *structs, *types, *keyword2token, *type_alias;
+HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str)
 { //
         Type *type = calloc(1, sizeof(Type));
@@ -513,8 +513,10 @@ LVar *enumerator_list()
                 st_vars->offset = st_vars->next->offset + 1;
                 // consume_Token(TK_NUM);
                 // int n = token->pos - p + 1;
-                globals = new_var(tok, globals, new_type(TY_INT, NULL, 4, "int"));
-                globals->init = format("%d", st_vars->offset);
+                // globals = new_var(tok, globals, new_type(TY_INT, NULL, 4, "int"));
+                // globals->init = format("%d", st_vars->offset);
+                add_hash(keyword2token, tok->str, (void*)TK_ENUM);
+                add_hash(enums, tok->str, (void*)st_vars->offset);
                 // add_hash(keyword2token, st_vars->name, TK_NUM);
                 //  st_vars = var_decl(st_vars);
                 consume(",");
@@ -750,6 +752,13 @@ Node *primary()
         {
                 fprintf(tout, "<%s>\"\n", __func__);
                 Node *ans = new_node(ND_STR, NULL, NULL, tok, NULL);
+                fprintf(tout, "\"\n</%s>\n", __func__);
+                return ans;
+        } // tk_num
+        else if ((tok = consume_Token(TK_ENUM)))
+        {
+                fprintf(tout, "<%s>\"\n", __func__);
+                Node *ans = new_node_num((int)get_hash(enums, tok->str), tok, new_type(TY_INT, NULL, 4, "int"));
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
         } // tk_num

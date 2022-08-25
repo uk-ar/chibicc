@@ -14,8 +14,8 @@ extern char *filename;
 extern Token *token;
 extern Node *code[];
 extern LVar *locals, *globals, *strings, *functions;
-extern HashMap *structs, *types, *keyword2token, *type_alias;
-// struct name->vars,type name->type,,defname->type name
+extern HashMap *structs, *types, *keyword2token, *type_alias,*enums;
+// struct name->LVars,type name->Type,,defname->(char*)type name,(char*)enum id->int
 
 char *read_file(char *path)
 {
@@ -87,6 +87,8 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "__attribute__", (void *)TK_NOT_SUPPORT);
         add_hash(keyword2token, "unsigned", (void *)TK_NOT_SUPPORT);
         add_hash(keyword2token, "__restrict", (void *)TK_NOT_SUPPORT);
+
+        enums = new_hash(100);
 
         filename = argv[1];
         // fprintf(tout,"# %s\n",filename);

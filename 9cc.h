@@ -24,6 +24,7 @@ struct Type
 typedef enum
 {
        TK_NOT_EXIST, // default
+       TK_ENUM,
        TK_IDENT, // identifier
        TK_NOT_SUPPORT,
        TK_TYPE_QUAL,
