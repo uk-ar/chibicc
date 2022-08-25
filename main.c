@@ -102,10 +102,10 @@ int main(int argc, char **argv)
 
         for (LVar *var = strings; var; var = var->next)
         {
-                // printf("  .text \n");
+                printf("  .text \n");
+                //printf("  .section      .rodata \n");
                 printf(".LC%d:\n", var->offset);
                 printf("  .string \"%s\"\n", var->name);
-                // printf("  .text \n");
         }
         // for debug
         printf(".LCdebug:\n");
@@ -134,8 +134,9 @@ int main(int argc, char **argv)
                         }
                 }
         }
-
-        printf(".global main\n");
+        printf("  .text \n");
+        printf("  .global main\n");
+        printf("  .type main, @function\n");
         for (int i = 0; code[i]; i++)
         {
                 gen(code[i]);

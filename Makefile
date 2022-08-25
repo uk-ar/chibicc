@@ -5,15 +5,7 @@ TESTSRCS=$(filter-out test/common.c,$(wildcard test/*.c))
 TESTS=$(TESTSRCS:.c=.exe)
 CC=gcc
 
-9cc: $(OBJS)
-	$(CC) -o 9cc $(OBJS) $(LDFLAGS)
-
-$(OBJS):9cc.h
- 
-%.s: %.c
-	$(CC) -o $*.e -E -P -C $*.c
-	cp $*.e tmp.cx
-	./9cc $*.e > $*.s	
+.PRECIOUS: test/common.s hashmap.s
 
 test/%.exe: 9cc test/%.c test/common.s hashmap.s
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)
@@ -23,7 +15,17 @@ test/%.exe: 9cc test/%.c test/common.s hashmap.s
 	./9cc test/$*.e > test/$*.s	
 #テストバイナリ作成
 	cp test/$*.s tmp.s
-	$(CC) -static -g -o $@ test/$*.s test/common.o hashmap.o
+	$(CC) -static -g -o $@ test/$*.s test/common.s hashmap.o
+
+9cc: $(OBJS)
+	$(CC) -o 9cc $(OBJS) $(LDFLAGS)
+
+$(OBJS):9cc.h
+ 
+%.s: %.c
+	$(CC) -o $*.e -E -P -C $*.c
+	cp $*.e tmp.cx
+	./9cc $*.e > $*.s	
 
 test: $(TESTS)
 #実行時エラー解析のため名前を統一

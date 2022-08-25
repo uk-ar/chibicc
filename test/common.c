@@ -23,6 +23,7 @@ void printS1(struct s3 *a)
         printA((void *)&(a->f3));
         printA((void *)&(a->f4));
         printf("%d,%d,%ld,%d\n", a->f1, a->f2, a->f3, a->f4);
+        return;
 }
 struct s3 *func()
 {
@@ -64,14 +65,17 @@ int baz(int x)
 void printI(int i)
 {
         printf("%d\n", i);
+        return;
 }
 void printC(char i)
 {
         printf("%c:%d\n", i, i);
+        return;
 }
 void printP(int *p)
 {
         printf("%d\n", *p);
+        return;
 }
 void alloc4(int **a, int v0, int v1, int v2, int v3)
 {
@@ -141,6 +145,7 @@ void printVI(int *v, int l)
                 printf("%d,", v[i]);
         }
         printf("\n");
+        return;
 }
 void printVC(char *v, int l)
 {
@@ -154,10 +159,12 @@ void printVC(char *v, int l)
                 printf("%c,", v[i]);
         }
         printf("\n");
+        return;
 }
 void printA(void *p)
 {
         printf("%p\n", p);
+        return;
 }
 char *distance(char *p1, char *p2)
 {

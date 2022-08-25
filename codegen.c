@@ -113,6 +113,9 @@ Type *gen(Node *node)
         }
         if (node->kind == ND_FUNC)
         {
+                printf("  .text \n");
+                printf("  .global %s\n", node->token->str);
+                printf("  .type %s, @function\n", node->token->str);
                 printf("%s:\n", node->token->str);
                 align = 0;
                 // dump();
