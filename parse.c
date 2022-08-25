@@ -839,7 +839,7 @@ Node *postfix()
                         {
                                 Type *type = ans->type->ptr_to;
                                 ans = new_node(ND_DEREF,
-                                               new_node(ND_ADD, ans, expr(), NULL, type),
+                                               new_node(ND_ADD, ans, expr(), NULL, ans->type),
                                                NULL, tok, type);
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
@@ -851,8 +851,8 @@ Node *postfix()
                                 ans = new_node(ND_DEREF,
                                                new_node(ND_ADD,
                                                         new_node(ND_ADDR, ans, NULL, ans->token, ans->type),
-                                                        expr(), NULL, new_type(TY_PTR, ans->type->ptr_to, 8, "from array")),
-                                               NULL, NULL,type);
+                                                        expr(), NULL, new_type(TY_PTR, ans->type, 8, "from array")),
+                                               NULL, NULL, type);
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
                                 continue;
@@ -896,8 +896,9 @@ Node *postfix()
                         Node *lhs = new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1, "char"));
                         ans = new_node(ND_DEREF,
                                        new_node(ND_ADD,
-                                                lhs,
-                                                ans, NULL, lhs->type),
+                                                lhs, // ans
+                                                ans, // lhs
+                                                NULL, lhs->type),
                                        NULL, tok, field->type);
                         continue;
                 }
@@ -1294,7 +1295,11 @@ Node *stmt()
                 while (consume("*"))
                         t = new_type(TY_PTR, t, 8, "ptr");
                 Token *tok = consume_ident(); // ident
-                LVar *var = find_lvar(tok);   //
+                if (!tok)
+                {
+                        error_at(token->pos, "need identifier");
+                }
+                LVar *var = find_lvar(tok); //
                 if (var)
                 {
                         error_at(tok->pos, "token '%s' is already defined", tok->str);

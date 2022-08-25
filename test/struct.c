@@ -82,7 +82,10 @@ struct s7
 {
     char v[1];
 };
-
+struct s8
+{
+    int **a;
+};
 // TODO:
 /*struct empty{
 
@@ -176,6 +179,16 @@ int main(int argc, char **argv)
         struct s7 o1, *o2 = &o1;
         ASSERT(2, ({o2->v[1] = 2;o2->v[1]; }));
         ASSERT(2, ({ o1.v[1]; }));
+    }
+    {
+        struct s8 o1, *o2 = &o1;
+        int *v[3];
+
+        o2->a = v;
+        ASSERT(&(o2->a[0]), &(v[0]));
+        o2->a[0] = 1;
+        ASSERT(1, v[0]);
+        ASSERT(1, o2->a[0]);
     }
     return 0;
 }

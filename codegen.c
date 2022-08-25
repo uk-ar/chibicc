@@ -439,5 +439,5 @@ Type *gen(Node *node)
         // printf("  push rax\n");
         printf(push("rax"));
         fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
-        return t;
+        return node->type;
 }
