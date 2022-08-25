@@ -127,6 +127,7 @@ void printVL(long *v, int l)
                 printf("%ld,", v[i]);
         }
         printf("\n");
+        return;
 }
 void printVI(int *v, int l)
 {

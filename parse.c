@@ -1353,6 +1353,8 @@ Node *stmt()
         if ((tok = consume_Token(TK_RETURN))) // jump-statement
         {
                 fprintf(tout, "ret \n<%s>\n", __func__);
+                if (consume(";"))
+                        return new_node(ND_RETURN, NULL, NULL, tok, NULL);
                 node = new_node(ND_RETURN, NULL, expr(), tok, NULL);
                 expect(";");
                 fprintf(tout, "ret \n</%s>\n", __func__);

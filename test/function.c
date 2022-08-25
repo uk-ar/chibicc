@@ -56,6 +56,11 @@ int qux()
     return quxx();
 }
 
+void no_return()
+{
+    return;
+}
+
 int main(int argc, char **argv)
 {
 

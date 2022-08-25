@@ -208,8 +208,10 @@ Type *gen(Node *node)
         }
         else if (node->kind == ND_RETURN)
         {
-                gen(node->rhs);
-                printf(pop("rax")); // move result to rax
+                if(node->rhs){
+                        gen(node->rhs);
+                        printf(pop("rax")); // move result to rax
+                }                
                 // printf("  pop rax\n");     //
                 printf("  mov rsp,rbp\n"); // restore stack pointer
                 printf("  pop rbp\n");     // restore base pointer
