@@ -8,6 +8,8 @@ struct s1
     int f2; // 4
     // padding:3
     char f3; // 1
+    // padding:4
+    long int quot;//8
 };
 
 struct s2
@@ -76,6 +78,11 @@ struct s3
     // 1+(3)+4+8+1+(7)=24;
 };
 
+//TODO:
+/*struct empty{
+
+}*/
+
 int main(int argc, char **argv)
 {
     char start;
@@ -112,7 +119,7 @@ int main(int argc, char **argv)
         get_node_value(o2);
         ASSERT(32, sizeof(HashNode));
     }
-    ASSERT(12, sizeof(o1)); // 1+(3)+4+1+(3)
+    ASSERT(24, sizeof(o1)); // 1+(3)+4+1+(3)
     ASSERT(0, distance(&o1, &o1.f1));
     ASSERT(1, ({ o1.f1 = 1; o1.f1 ; }));
     ASSERT(2, ({ o1.f2 = 2; o1.f2 ; }));
@@ -123,7 +130,7 @@ int main(int argc, char **argv)
     printf("i:%p\n", &(o1.f2));
     printf("c:%p\n", &(o2.f1));
     printf("i:%p\n", &(o2.f2));
-    ASSERT(12, sizeof(o2));
+    ASSERT(24, sizeof(o2));
     ASSERT(0, distance(&o2, &o2.f1));
     ASSERT(3, ({ o2.f2 = 3; o2.f2 ; }));
     ASSERT(4, ({ o2.f1 = 4; o2.f1 ; }));

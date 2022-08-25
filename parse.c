@@ -519,19 +519,23 @@ LVar *enumerator_list()
         // loffset = 0;
         return st_vars;
 }
-
+Type *type_name();
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
         // Token *type_qual = consume_Token(TK_TYPE_QUAL);
         Token *type_spec = consume_Token(TK_TYPE_SPEC);
+        // Type *type_spec = type_name();
         Token *identifier = NULL;
         // char *def_name = NULL;
         char *src_name = NULL;
         if (!type_spec)
                 return NULL;
+        // char *type_str = type_spec->str;
+
         char *type_str = type_spec->str;
         if (strncmp(type_str, "struct", 6) == 0)
+        // if (type_spec->kind == TY_STRUCT)
         {
                 Type *type = NULL;
                 LVar *st_vars = NULL;
@@ -584,6 +588,7 @@ Type *declaration_specifier() // bool declaration)
                 }
                 return type;
         }
+        // if (type_spec->kind == TY_STRUCT)
         if (strcmp(type_str, "enum") == 0)
         {
                 Type *type = NULL;
@@ -652,11 +657,16 @@ Type *declaration_specifier() // bool declaration)
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                         add_hash(type_alias, declarator->str, src_name);
                 }
-                while (get_hash(type_alias, type_str))
+                Token *tok = NULL;
+                while ((tok = consume_Token(TK_TYPE_SPEC)))
                 {
-                        type_str = get_hash(type_alias, type_str);
+                        src_name = format("%s %s", src_name, tok->str);
                 }
-                return get_hash(types, type_str); // support typedef
+                while (get_hash(type_alias, src_name))
+                {
+                        src_name = get_hash(type_alias, src_name);
+                }
+                return get_hash(types, src_name);
         }
         /*return get_hash(types, type_str); // support typedef
                                           // TODO:union typedef
