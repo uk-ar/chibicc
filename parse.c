@@ -1395,11 +1395,13 @@ Node *stmt()
                 fprintf(tout, " <for>\n");
                 expect("(");
                 node = new_node(ND_FOR, NULL, NULL, tok, NULL);
+                lstack[lstack_i++] = locals;
+                locals = calloc(1, sizeof(LVar));
                 fprintf(tout, " <init>\n");
                 if (!consume(";"))
                 {
-                        node->init = expr();
-                        expect(";");
+                        node->init = stmt();
+                        //expect(";");
                 }
                 fprintf(tout, " </init>\n");
                 fprintf(tout, " <cond>\n");
@@ -1416,8 +1418,9 @@ Node *stmt()
                         expect(")");
                 }
                 fprintf(tout, " </next>\n");
-                node->then = stmt();
+                node->then = stmt();//composed statement
                 fprintf(tout, " </for>\n");
+                locals = lstack[--lstack_i];
                 return node;
         }
         if ((tok = consume("{"))) // compound-statement
