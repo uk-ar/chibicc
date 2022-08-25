@@ -1569,31 +1569,31 @@ Type *parameter_type_list(Node *ans) // it should return LVar*?
         locals = calloc(1, sizeof(LVar));
         // int off=locals->offset;
         Type *t = NULL;
-        if (!consume("void"))
+        if (equal(token, "void") && equal(token->next, ")"))
         {
-                for (int i = 0; i < 6 && !consume(")"); i++)
-                {
-                        if (consume("..."))
-                        {
-                                if (consume(")"))
-                                        break;
-                                else
-                                        error_at(token->pos, "va arg error\n");
-                        }
-                        if (ans)
-                                add_node(ans, parameter_declaration());
-                        else
-                        {
-                                Node *n = parameter_declaration();
-                                if (n)
-                                        t = n->type;
-                        }
-                        consume(",");
-                }
+                consume("void");
+                consume(")");
+                return t;
         }
-        else if (!consume(")"))
+
+        for (int i = 0; i < 6 && !consume(")"); i++)
         {
-                error_at(token->pos, "arg void\n");
+                if (consume("..."))
+                {
+                        if (consume(")"))
+                                break;
+                        else
+                                error_at(token->pos, "va arg error\n");
+                }
+                if (ans)
+                        add_node(ans, parameter_declaration());
+                else
+                {
+                        Node *n = parameter_declaration();
+                        if (n)
+                                t = n->type;
+                }
+                consume(",");
         }
         return t;
 }
