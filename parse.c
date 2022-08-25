@@ -920,21 +920,25 @@ Type *type_name() // TODO:need non consume version?
         // specifier-qualifier
         consume_Token(TK_TYPE_QUAL);
         Token *t = consume_Token(TK_TYPE_SPEC);
-        if (t)
+        if (!t)
+                return NULL;
+        char *str = t->str;
+        while (t)
         {
-                char *str = t->str;
-                while (get_hash(type_alias, str))
-                {
-                        str = get_hash(type_alias, str);
-                }
-                if (strcmp(str, "struct") == 0)
-                {
-                        Token *id = consume_ident();
-                        str = format("%s %s", str, id->str);
-                }
-                return abstract_declarator(get_hash(types, str));
+                t = consume_Token(TK_TYPE_SPEC);
+                if (t)
+                        str = format("%s %s", str, t->str);
         }
-        return abstract_declarator(NULL);
+        while (get_hash(type_alias, str))
+        {
+                str = get_hash(type_alias, str);
+        }
+        if (strcmp(str, "struct") == 0)
+        {
+                Token *id = consume_ident();
+                str = format("%s %s", str, id->str);
+        }
+        return abstract_declarator(get_hash(types, str));
 }
 
 /* unary   = "-"? primary | "+"? primary
