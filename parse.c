@@ -59,12 +59,13 @@ void error_at(char *loc, char *fmt, ...)
 }
 
 HashMap *structs, *types, *keyword2token, *type_alias;
-Type *new_type(TypeKind ty, Type *ptr_to, size_t size)
+Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str)
 { //
         Type *type = calloc(1, sizeof(Type));
         type->kind = ty;
         type->ptr_to = ptr_to;
         type->size = size;
+        type->str = str;
         return type;
 }
 
@@ -398,6 +399,8 @@ Node *new_node_num(int val, Token *token, Type *type)
 }
 void add_node(Node *node, Node *new_node)
 {
+        if (!new_node)
+                error_at(token->pos, "node empty");
         if (!node->head)
         {
                 node->head = new_node;
@@ -479,7 +482,7 @@ int align_to(int offset, int size)
 LVar *struct_declaration(Type *type)
 {
         LVar *st_vars = calloc(1, sizeof(LVar));
-        // Type *type = new_type(TY_STRUCT, NULL, 0);
+        // Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
         // type->str = str1;
         // add_hash(types, format("%s %s", type_str, str1), type);
         int max_offset = 0;
@@ -502,11 +505,11 @@ LVar *enumerator_list()
         while (!consume("}"))
         {
                 Token *tok = consume_ident();
-                st_vars = new_var(tok, st_vars, new_type(TY_INT, NULL, 4));
+                st_vars = new_var(tok, st_vars, new_type(TY_INT, NULL, 4, "int"));
                 st_vars->offset = st_vars->next->offset + 1;
                 // consume_Token(TK_NUM);
                 // int n = token->pos - p + 1;
-                globals = new_var(tok, globals, new_type(TY_INT, NULL, 4));
+                globals = new_var(tok, globals, new_type(TY_INT, NULL, 4, "int"));
                 globals->init = format("%d", st_vars->offset);
                 // add_hash(keyword2token, st_vars->name, TK_NUM);
                 //  st_vars = var_decl(st_vars);
@@ -534,7 +537,7 @@ Type *declaration_specifier() // bool declaration)
                 LVar *st_vars = NULL;
                 if (consume("{"))
                 { // anonymous
-                        type = new_type(TY_STRUCT, NULL, 0);
+                        type = new_type(TY_STRUCT, NULL, 0, NULL);
                         st_vars = struct_declaration(type);
                 }
                 else if ((identifier = consume_ident())) // struct name
@@ -542,7 +545,7 @@ Type *declaration_specifier() // bool declaration)
                         src_name = format("%s %s", type_str, identifier->str);
                         if (consume("{"))
                         {
-                                type = new_type(TY_STRUCT, NULL, 0);
+                                type = new_type(TY_STRUCT, NULL, 0, NULL);
                                 type->str = identifier->str;
                                 if (!add_hash(types, src_name, type)) // for recursive field type
                                         error_at(token->pos, "redefine %s", src_name);
@@ -587,7 +590,7 @@ Type *declaration_specifier() // bool declaration)
                 LVar *st_vars = NULL;
                 if (consume("{"))
                 { // anonymous
-                        // type = new_type(TY_STRUCT, NULL, 0);
+                        // type = new_type(TY_STRUCT, NULL, 0,NULL);
                         // st_vars = struct_declaration(type);
                         st_vars = enumerator_list();
                 }
@@ -596,14 +599,14 @@ Type *declaration_specifier() // bool declaration)
                         src_name = format("%s %s", type_str, identifier->str);
                         if (consume("{"))
                         {
-                                /*type = new_type(TY_STRUCT, NULL, 0);
+                                /*type = new_type(TY_STRUCT, NULL, 0,NULL);
                                 type->str = identifier->str;
                                 add_hash(types, src_name, type); // for recursive field type
                                 st_vars = struct_declaration(type);
                                 add_hash(structs, src_name, st_vars);*/
-                                // type = new_type(TY_STRUCT, NULL, 0);
+                                // type = new_type(TY_STRUCT, NULL, 0,NULL);
                                 st_vars = enumerator_list();
-                                add_hash(types, src_name, new_type(TY_INT, NULL, 4));
+                                add_hash(types, src_name, new_type(TY_INT, NULL, 4, "int"));
                                 add_hash(structs, src_name, st_vars);
                         }
                         else
@@ -625,7 +628,7 @@ Type *declaration_specifier() // bool declaration)
                         {
                                 add_hash(type_alias, declarator->str, src_name);
                         }
-                        add_hash(types, declarator->str, new_type(TY_INT, NULL, 4));
+                        add_hash(types, declarator->str, new_type(TY_INT, NULL, 4, "int"));
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                 }
                 return type;
@@ -654,7 +657,7 @@ Type *declaration_specifier() // bool declaration)
         Token *identifier = consume_ident();
         if (!identifier)
         { // anonymouse
-                Type *type = new_type(TY_STRUCT, NULL, 0);
+                Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
                 return struct_declaration(type);
                 error_at(token->pos, "need identifier for struct\n");
         }
@@ -663,7 +666,7 @@ Type *declaration_specifier() // bool declaration)
         if (!consume("{"))
                 // struct reference
                 return get_hash(types, format("%s %s", type_str, str1));
-        Type *type = new_type(TY_STRUCT, NULL, 0);
+        Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
         return struct_declaration(type);*/
 }
 // https://cs.wmich.edu/~gupta/teaching/cs4850/sumII06/The%20syntax%20of%20C%20in%20Backus-Naur%20form.htm
@@ -742,7 +745,7 @@ Node *primary()
                         }
                         else
                         {
-                                t = new_type(TY_INT, NULL, 4);
+                                t = new_type(TY_INT, NULL, 4, "int");
                         }
                         Node *ans = new_node(ND_FUNCALL, NULL, NULL, tok, t);
                         if (consume(")"))
@@ -790,7 +793,7 @@ Node *primary()
         }
         fprintf(tout, "<%s>num\n", __func__);
         // TODO:add enum
-        Node *ans = new_node_num(expect_num(), NULL, new_type(TY_INT, NULL, 4));
+        Node *ans = new_node_num(expect_num(), NULL, new_type(TY_INT, NULL, 4, "int"));
         fprintf(tout, "num\n</%s>\n", __func__);
         return ans;
 }
@@ -851,7 +854,7 @@ Node *postfix()
                         LVar *field = find_var(right->str, st_vars);
                         if (!field)
                                 error_at(token->pos, "no field defined %s", right->str);
-                        Node *lhs = new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1));
+                        Node *lhs = new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1, "char"));
                         ans = new_node(ND_DEREF,
                                        new_node(ND_ADD,
                                                 lhs,
@@ -861,7 +864,7 @@ Node *postfix()
                         /*tok = consume_ident();                                                      // field
                         LVar *var = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
                         LVar *field = find_var(tok, var);
-                        Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1)), ans, NULL), NULL, NULL);
+                        Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1,"char")), ans, NULL), NULL, NULL);
                         return ans1;
                         */
                         // Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
@@ -900,7 +903,7 @@ Type *direct_abstract_declarator(Type *t)
 Type *abstract_declarator(Type *t)
 {
         while (consume("*"))
-                t = new_type(TY_PTR, t, 8);
+                t = new_type(TY_PTR, t, 8, "ptr");
         t = direct_abstract_declarator(t);
         return t;
 }
@@ -974,7 +977,7 @@ Node *unary()
         {
                 // important
                 fprintf(tout, " <%s>-\"\n", __func__);
-                Type *type = new_type(TY_INT, NULL, 4);
+                Type *type = new_type(TY_INT, NULL, 4, "int");
                 ans = new_node(ND_SUB,
                                new_node_num(0, NULL, type),
                                unary(), tok, type); // 0-primary()
@@ -998,7 +1001,7 @@ Node *unary()
         if ((tok = consume("!")))
         {
                 fprintf(tout, " <%s>\n", __func__);
-                Node *lhs = new_node_num(0, NULL, new_type(TY_INT, NULL, 4));
+                Node *lhs = new_node_num(0, NULL, new_type(TY_INT, NULL, 4, "int"));
                 ans = new_node(ND_EQ, unary(), lhs, tok, lhs->type);
                 return ans;
         }
@@ -1192,7 +1195,7 @@ Node *stmt()
                 Type *t = base_t;
                 fprintf(tout, " var decl\n<%s>\n", __func__);
                 while (consume("*"))
-                        t = new_type(TY_PTR, t, 8);
+                        t = new_type(TY_PTR, t, 8, "ptr");
                 Token *tok = consume_ident(); // ident
                 LVar *var = find_lvar(tok);   //
                 if (var)
@@ -1202,7 +1205,7 @@ Node *stmt()
                 else if (consume("["))
                 {
                         int n = expect_num();
-                        locals = new_var(tok, locals, new_type(TY_ARRAY, t, n * t->size));
+                        locals = new_var(tok, locals, new_type(TY_ARRAY, t, n * t->size, "array"));
                         locals->type->array_size = n;
                         int size = locals->type->size;
                         locals->offset = (loffset + size - 1) / size * size; // ajust
@@ -1342,7 +1345,7 @@ Node *parameter_declaration()
 
         /*Type *t = base_t;
         //while (consume("*"))
-                t = new_type(TY_PTR, t, 8);*/
+                t = new_type(TY_PTR, t, 8,"ptr");*/
         Type *t = abstract_declarator(base_t);
         Token *tok = consume_ident();
         Node *ans = new_node(ND_LVAR, NULL, NULL, tok, t);
@@ -1390,7 +1393,7 @@ LVar *struct_declarator_list(LVar *lvar)
                 else if (consume("["))
                 {
                         int n = expect_num();
-                        lvar = new_var(tok, lvar, new_type(TY_ARRAY, t, n * t->size));
+                        lvar = new_var(tok, lvar, new_type(TY_ARRAY, t, n * t->size, "array"));
                         lvar->type->array_size = n;
                         expect("]");
                 }
@@ -1495,7 +1498,7 @@ Node *init_declarator(Type *base_t, bool top)
         Type *t = base_t;
 
         while (consume("*"))
-                t = new_type(TY_PTR, t, 8);
+                t = new_type(TY_PTR, t, 8, "ptr");
         Token *tok = consume_ident();
         if (!tok)
                 return NULL;
@@ -1528,12 +1531,12 @@ Node *init_declarator(Type *base_t, bool top)
         {
                 if (consume("]"))
                 {
-                        globals = new_var(tok, globals, new_type(TY_ARRAY, t, 0));
+                        globals = new_var(tok, globals, new_type(TY_ARRAY, t, 0, "array"));
                 }
                 else
                 {
                         int n = expect_num();
-                        globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size));
+                        globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size, "array"));
                         globals->type->array_size = n;
                         expect("]");
                 }

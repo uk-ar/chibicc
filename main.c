@@ -40,7 +40,7 @@ char *read_file(char *path)
 }
 
 char *global_types[] = {".byte", ".long", ".quad", ".quad"};
-extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size);
+extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str);
 extern HashNode *add_hash(HashMap *h, char *key, void *value);
 
 int main(int argc, char **argv)
@@ -59,10 +59,11 @@ int main(int argc, char **argv)
         structs = new_hash(100);
 
         types = new_hash(100);
-        add_hash(types, "int", new_type(TY_INT, NULL, 4));
-        add_hash(types, "char", new_type(TY_CHAR, NULL, 1));
-        add_hash(types, "long", new_type(TY_LONG, NULL, 8));
-        add_hash(types, "void", new_type(TY_INT, NULL, 4));
+        add_hash(types, "int", new_type(TY_INT, NULL, 4, "int"));
+        add_hash(types, "char", new_type(TY_CHAR, NULL, 1, "char"));
+        add_hash(types, "long", new_type(TY_LONG, NULL, 8, "long"));
+        add_hash(types, "long int", new_type(TY_LONG, NULL, 8, "long int"));
+        add_hash(types, "void", new_type(TY_INT, NULL, 4, "void"));
 
         type_alias = new_hash(100);
 
