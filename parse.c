@@ -1629,8 +1629,6 @@ Node *init_declarator(Type *base_t, bool top)
                 ans->offset = loffset;
                 loffset = 0;
 
-                locals = lstack[--lstack_i];
-
                 fprintf(tout, " \n</%s>\n", __func__);
                 return ans;
         }
