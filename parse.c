@@ -327,7 +327,10 @@ Token *tokenize(char *p)
                 }
                 if (!strncmp(p, "<=", 2) || !strncmp(p, ">=", 2) ||
                     !strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "->", 2) ||
-                    !strncmp(p, "++", 2) || !strncmp(p, "--", 2))
+                    !strncmp(p, "++", 2) || !strncmp(p, "--", 2) ||
+                    !strncmp(p, "+=", 2) || !strncmp(p, "-=", 2) ||
+                    !strncmp(p, "/=", 2) || !strncmp(p, "*=", 2) ||
+                    !strncmp(p, "%=", 2))
                 {
                         cur = new_token(TK_RESERVED, cur, p, 2);
                         p += 2;
@@ -1185,6 +1188,56 @@ Node *assign()
 {
         Token *tok = NULL;
         Node *node = equality();
+        if ((tok = consume("+=")))
+        {
+                fprintf(tout, " ass\n<%s>\n", __func__);
+                node = new_node(ND_ASSIGN,
+                                node,
+                                new_node(ND_ADD, node, assign(), tok, node->type),
+                                tok, node->type);
+                fprintf(tout, " ass\n</%s>\n", __func__);
+                return node;
+        }
+        if ((tok = consume("-=")))
+        {
+                fprintf(tout, " ass\n<%s>\n", __func__);
+                node = new_node(ND_ASSIGN,
+                                node,
+                                new_node(ND_SUB, node, assign(), tok, node->type),
+                                tok, node->type);
+                fprintf(tout, " ass\n</%s>\n", __func__);
+                return node;
+        }
+        if ((tok = consume("/=")))
+        {
+                fprintf(tout, " ass\n<%s>\n", __func__);
+                node = new_node(ND_ASSIGN,
+                                node,
+                                new_node(ND_DIV, node, assign(), tok, node->type),
+                                tok, node->type);
+                fprintf(tout, " ass\n</%s>\n", __func__);
+                return node;
+        }
+        if ((tok = consume("*=")))
+        {
+                fprintf(tout, " ass\n<%s>\n", __func__);
+                node = new_node(ND_ASSIGN,
+                                node,
+                                new_node(ND_MUL, node, assign(), tok, node->type),
+                                tok, node->type);
+                fprintf(tout, " ass\n</%s>\n", __func__);
+                return node;
+        }
+        if ((tok = consume("%=")))
+        {
+                fprintf(tout, " ass\n<%s>\n", __func__);
+                node = new_node(ND_ASSIGN,
+                                node,
+                                new_node(ND_MOD, node, assign(), tok, node->type),
+                                tok, node->type);
+                fprintf(tout, " ass\n</%s>\n", __func__);
+                return node;
+        }
         if ((tok = consume("=")))
         {
                 fprintf(tout, " ass\n<%s>\n", __func__);

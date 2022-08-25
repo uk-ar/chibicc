@@ -24,7 +24,12 @@ int main(int argc, char **argv)
     ASSERT(1, 4 % 3);
     ASSERT(0, 3 % 3);
     int i = 0;
-    ASSERT(i++, 1);
-    ASSERT(i--, 0);
+    ASSERT(1, i++);
+    ASSERT(0, i--);
+    ASSERT(2, i += 2);
+    ASSERT(1, i -= 1);
+    ASSERT(6, i *= 6);
+    ASSERT(2, i /= 3);
+    ASSERT(0, i %= 2);
     return 0;
 }
