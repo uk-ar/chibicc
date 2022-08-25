@@ -10,13 +10,13 @@ struct s3
         char f4; // 1 -> 17
                  // 1+(3)+4+8+1+(7)=24;
 };
-void printA(int *p);
+void printA(void *p);
 void printS1(struct s3 *a)
 {
-        printA(&(a->f1));
-        printA(&(a->f2));
-        printA(&(a->f3));
-        printA(&(a->f4));
+        printA((void *)&(a->f1));
+        printA((void *)&(a->f2));
+        printA((void *)&(a->f3));
+        printA((void *)&(a->f4));
         printf("%d,%d,%ld,%d\n", a->f1, a->f2, a->f3, a->f4);
 }
 struct s3 *func()
@@ -150,7 +150,7 @@ void printVC(char *v, int l)
         }
         printf("\n");
 }
-void printA(int *p)
+void printA(void *p)
 {
         printf("%p\n", p);
 }

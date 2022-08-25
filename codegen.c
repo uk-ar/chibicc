@@ -183,16 +183,10 @@ Type *gen(Node *node)
                 gen(node->rhs);
                 printf(pop("rbx")); // rhs
                 printf(pop("rax")); // lhs
-                // printf("  pop rbx\n");
-                // printf("  pop rax\n");
-                //  if (t->kind == TY_CHAR || (t->kind == TY_ARRAY && t->ptr_to->kind == TY_CHAR) ||
-                //(t->kind==TY_STRUCT && node->type->kind==TY_CHAR))
                 if (node->type->kind == TY_CHAR)
                 {
                         printf("  mov [rax],bl\n");
-                } // bx for short
-                // else if (t->kind == TY_INT || (t->kind == TY_ARRAY && t->ptr_to->kind == TY_INT) ||
-                //(t->kind == TY_STRUCT && node->type->kind == TY_INT))
+                } // TODO:Add short type
                 else if (node->type->kind == TY_INT)
                 {
                         printf("  mov DWORD PTR [rax],ebx\n");
@@ -208,10 +202,11 @@ Type *gen(Node *node)
         }
         else if (node->kind == ND_RETURN)
         {
-                if(node->rhs){
+                if (node->rhs)
+                {
                         gen(node->rhs);
                         printf(pop("rax")); // move result to rax
-                }                
+                }
                 // printf("  pop rax\n");     //
                 printf("  mov rsp,rbp\n"); // restore stack pointer
                 printf("  pop rbp\n");     // restore base pointer

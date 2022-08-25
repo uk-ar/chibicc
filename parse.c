@@ -835,12 +835,32 @@ Node *postfix()
         {
                 if ((tok = consume("[")))
                 {
-                        Type *type = ans->type->ptr_to;
-                        ans = new_node(ND_DEREF,
-                                       new_node(ND_ADD, ans, expr(), NULL, type), NULL, NULL, type);
-                        expect("]"); // important
-                        fprintf(tout, "array\n</%s>\n", __func__);
-                        continue;
+                        if (ans->type->kind == TY_PTR)
+                        {
+                                Type *type = ans->type->ptr_to;
+                                ans = new_node(ND_DEREF,
+                                               new_node(ND_ADD, ans, expr(), NULL, type),
+                                               NULL, tok, type);
+                                expect("]"); // important
+                                fprintf(tout, "array\n</%s>\n", __func__);
+                                continue;
+                        }
+                        else if (ans->type->kind == TY_ARRAY)
+                        {
+                                Type *type = ans->type->ptr_to;
+                                ans = new_node(ND_DEREF,
+                                               new_node(ND_ADD,
+                                                        new_node(ND_ADDR, ans, NULL, ans->token, ans->type),
+                                                        expr(), NULL, new_type(TY_PTR, ans->type->ptr_to, 8, "from array")),
+                                               NULL, NULL,type);
+                                expect("]"); // important
+                                fprintf(tout, "array\n</%s>\n", __func__);
+                                continue;
+                        }
+                        else
+                        {
+                                error_at(token->pos, "[ takes array or pointer only");
+                        }
                 }
                 if ((tok = consume(".")))
                 {
@@ -853,9 +873,6 @@ Node *postfix()
                         if (!var)
                                 error_at(token->pos, "no struct %s defined", ans->type->str);
                         LVar *field = find_var(tok->str, var);
-                        // Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, ans, new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL), NULL, NULL);
-                        // ans1->type = field->type;
-                        // return ans1;
                         if (!field)
                                 error_at(token->pos, "no %s field defined in %s struct", tok->str, ans->type->str);
                         ans->type = field->type;
@@ -881,20 +898,8 @@ Node *postfix()
                                        new_node(ND_ADD,
                                                 lhs,
                                                 ans, NULL, lhs->type),
-                                       NULL, NULL, field->type);
+                                       NULL, tok, field->type);
                         continue;
-                        /*tok = consume_ident();                                                      // field
-                        LVar *var = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
-                        LVar *field = find_var(tok, var);
-                        Node *ans1 = new_node(ND_DEREF, new_node(ND_ADD, new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1,"char")), ans, NULL), NULL, NULL);
-                        return ans1;
-                        */
-                        // Node *ans1 = new_node(ND_ADD, new_node(ND_DEREF, ans, NULL, NULL), new_node_num(field->offset, NULL, new_type(TY_PTR, NULL, 8)), NULL);
-                        //  Node *ans1 = new_node(ND_DEREF, ans, NULL, NULL);
-                        //  ans1->type = field->type;
-                        //  ans->offset += field->offset;
-                        //   ans->type->ptr_to = field->type;
-                        // return ans1;
                 }
                 if ((tok = consume("++")))
                 {
@@ -1418,7 +1423,7 @@ Node *stmt()
                         expect(")");
                 }
                 fprintf(tout, " </next>\n");
-                node->then = stmt();//composed statement
+                node->then = stmt(); // composed statement
                 fprintf(tout, " </for>\n");
                 locals = lstack[--lstack_i];
                 return node;
