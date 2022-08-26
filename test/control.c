@@ -17,5 +17,17 @@ int main(int argc, char **argv)
     ASSERT(2, ({if(1!=1) y=1;else  y=2;y; }));
     ASSERT(2, ({int a;a=1;while(a)a=a-1; y=2;y; }));
     ASSERT(0, ({int a;a=1;while(a)a=a-1; y=0;a;y; }));
+    ASSERT(2, (0 || 2));
+    ASSERT(2, (0 || 2 || 3));
+    ASSERT(1, (1 || 0));
+    ASSERT(2, (2 || 1));
+    ASSERT(0, (0 || 0));
+    ASSERT(1, (0 || 0 || 1));
+    ASSERT(0, (0 && 2));
+    ASSERT(0, (1 && 0));
+    ASSERT(2, (1 && 2));
+    ASSERT(3, (1 && 2 && 3));
+    ASSERT(0, (1 && 2 && 0));
+    ASSERT(0, (0 && 0));
     return 0;
 }

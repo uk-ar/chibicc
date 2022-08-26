@@ -1,3 +1,4 @@
+
 //#include <stdlib.h>
 typedef long unsigned int size_t;
 extern void *calloc(size_t __nmemb, size_t __size);
@@ -7,7 +8,7 @@ extern int printf(const char *__restrict __fmt, ...);
 extern int strcmp(const char *__s1, const char *__s2);
 //#include <stddef.h>
 #define NULL ((void *)0)
-#include "9cc.h"
+#include "../9cc.h"
 
 HashMap *new_hash(int size)
 {
@@ -36,11 +37,11 @@ HashNode *add_hash(HashMap *h, char *key, void *value)
         }
         // return add_hashI(h,c,value);
         hash = hash % (h->size); // 8
-        //printf("hash=%d\n", hash);
-        //printf("h->nodes[hash]=%p\n", h->nodes[hash]);
+        // printf("hash=%d\n", hash);
+        // printf("h->nodes[hash]=%p\n", h->nodes[hash]);
         for (HashNode *c = h->nodes[hash]; c; c = c->next_bucket)
         {
-                //printf("c=%p\n", c);
+                // printf("c=%p\n", c);
                 if (strcmp(c->key, key) == 0)
                 {
                         c->value = value;
@@ -48,12 +49,12 @@ HashNode *add_hash(HashMap *h, char *key, void *value)
                 }
         }
         h->nodes[hash] = new_hashnode(key, value, h->nodes[hash], h->begin);
-        //printf("h->nodes[hash]=%p\n", h->nodes[hash]);
+        // printf("h->nodes[hash]=%p\n", h->nodes[hash]);
         h->begin = h->nodes[hash];
         return h->nodes[hash];
 }
 
-void print_hash(HashMap *h)
+void *print_hash(HashMap *h)
 {
         printf("%p\n", h);
         printf("%p\n", &(h->begin));
@@ -62,7 +63,7 @@ void print_hash(HashMap *h)
         return;
 }
 
-void print_hashnode(HashNode *n)
+void *print_hashnode(HashNode *n)
 {
         printf("%p\n", n);
         printf("%p\n", &(n->next_bucket));

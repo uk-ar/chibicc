@@ -8,6 +8,7 @@ CC=gcc
 .PRECIOUS: test/common.s test/self.s
 
 test/%.exe: 9cc test/%.c test/common.s test/self.s
+# codegen.s
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)
 	$(CC) -o test/$*.e -E -P -C test/$*.c
 #コンパイル時エラー解析のため名前を統一
@@ -15,7 +16,7 @@ test/%.exe: 9cc test/%.c test/common.s test/self.s
 	./9cc test/$*.e > test/$*.s	
 #テストバイナリ作成
 	cp test/$*.s tmp.s
-	$(CC) -static -g -o $@ test/$*.s test/common.s
+	$(CC) -static -g -o $@ test/$*.s test/common.s test/self.s
 
 9cc: $(OBJS)
 	$(CC) -o 9cc $(OBJS) $(LDFLAGS)
@@ -34,7 +35,7 @@ test: $(TESTS)
 	cp $${i%.*}.s tmp.s; \
 	cp $${i%.*}.exe tmp; \
 	echo ./$$i ; \
-	if ! ./$$i ; then gcc -static -g -o tmp tmp.s test/common.o ; exit 1; fi; echo; \
+	if ! ./$$i ; then gcc -static -g -o tmp tmp.s test/common.s test/self.s; exit 1; fi; echo; \
 	done
 # 失敗したらデバッグ情報付で再コンパイル
 # test/common.s1をリンクするとデバッガでmainが追えなくなる？

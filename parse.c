@@ -340,7 +340,7 @@ Token *tokenize(char *p)
                     !strncmp(p, "++", 2) || !strncmp(p, "--", 2) ||
                     !strncmp(p, "+=", 2) || !strncmp(p, "-=", 2) ||
                     !strncmp(p, "/=", 2) || !strncmp(p, "*=", 2) ||
-                    !strncmp(p, "%=", 2))
+                    !strncmp(p, "%=", 2) || !strncmp(p, "||", 2) || !strncmp(p, "&&", 2))
                 {
                         cur = new_token(TK_RESERVED, cur, p, 2, loc);
                         p += 2;
@@ -765,7 +765,7 @@ Node *primary()
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
         } // tk_num
-        else if ((tok = consume_Token(TK_ENUM)))
+        else if ((tok = consume_Token(TK_ENUM)))//constant
         {
                 fprintf(tout, "<%s>\"\n", __func__);
                 Node *ans = new_node_num((int)get_hash(enums, tok->str), tok, new_type(TY_INT, NULL, 4, "int"));
@@ -826,7 +826,7 @@ Node *primary()
                         return ans;
                 }
         }
-        Type *t = declaration_specifier();
+        Type *t = declaration_specifier();//constant
         if (t)
         {
                 Node *ans = new_node_num(0, token, t);
@@ -940,6 +940,7 @@ Node *postfix()
                         continue;
                 }
                 // else
+                // TODO: | <postfix-expression> ( {<assignment-expression>}* )?
                 return ans;
         }
 }
@@ -970,7 +971,6 @@ Type *abstract_declarator(Type *t)
         t = direct_abstract_declarator(t);
         return t;
 }
-
 Type *type_name() // TODO:need non consume version?
 {
         // specifier-qualifier
@@ -996,20 +996,12 @@ Type *type_name() // TODO:need non consume version?
         }
         return abstract_declarator(get_hash(types, str));
 }
-
 /* unary   = "-"? primary | "+"? primary
            | "*" unary | "&" unary  | "sizeof" unary */
 Node *unary()
 {
         Token *tok = NULL;
         Node *ans = NULL;
-        if ((tok = consume_Token(TK_STR))) // TODO:fix it
-        {
-                fprintf(tout, " <%s>\"\n", __func__);
-                Node *ans = new_node(ND_STR, NULL, NULL, tok, NULL);
-                fprintf(tout, "\"\n</%s>\n", __func__);
-                return ans;
-        }
         if ((tok = consume_Token(TK_SIZEOF)))
         {
                 fprintf(tout, " <%s>\"\n", __func__);
@@ -1051,7 +1043,7 @@ Node *unary()
                 return ans;
                 fprintf(tout, " -\n</%s>\n", __func__);
         }
-        if ((tok = consume("*")))
+        if ((tok = consume("*")))//TODO:move?
         {
                 fprintf(tout, " deref\n<%s>\n", __func__);
                 Node *lhs = unary();
@@ -1059,13 +1051,13 @@ Node *unary()
                 fprintf(tout, " deref\n</%s>\n", __func__);
                 return node;
         }
-        if ((tok = consume("&")))
+        if ((tok = consume("&"))) // TODO:move?
         {
                 fprintf(tout, " ref\n<%s>\n", __func__);
                 Node *lhs = unary();
                 return new_node(ND_ADDR, lhs, NULL, tok, lhs->type);
         }
-        if ((tok = consume("!")))
+        if ((tok = consume("!"))) // TODO:move?
         {
                 fprintf(tout, " <%s>\n", __func__);
                 Node *lhs = new_node_num(0, tok, new_type(TY_INT, NULL, 4, "int"));
@@ -1145,6 +1137,7 @@ Node *add()
                 return node;
         }
 }
+// TODO:shift()
 Node *relational()
 {
         Token *tok = NULL;
@@ -1208,17 +1201,56 @@ Node *equality()
                 return node;
         }
 }
-
-Node *assign()
+Node *logical_expr()
 {
         Token *tok = NULL;
         Node *node = equality();
-        if ((tok = consume("+=")))
+        for (;;)
+        {
+                if ((tok = consume("&&")))
+                {
+                        fprintf(tout, " eq\n<%s>\n", __func__);
+                        node = new_node(ND_AND, node, equality(), tok, node->type);
+                        fprintf(tout, " eq\n</%s>\n", __func__);
+                        continue;
+                }
+                if ((tok = consume("||")))
+                {
+                        fprintf(tout, " ne\n<%s>\n", __func__);
+                        node = new_node(ND_OR, node, equality(), tok, node->type);
+                        fprintf(tout, " ne\n</%s>\n", __func__);
+                        continue;
+                }
+                // else
+                return node;
+        }
+}
+Node *constant_expr()
+{
+        Node *node = NULL;
+        node = logical_expr();
+        Token *tok = NULL;
+        for (;;)
+        {
+                if ((tok = consume("?")))
+                {
+                        // node = expr();
+                        // expect(":")
+                        // node = constant_expr();
+                }
+        }
+        return node;
+}
+Node *assign()
+{
+        Token *tok = NULL;
+        Node *node = logical_expr();
+        if ((tok = consume("+=")))//右結合
         {
                 fprintf(tout, " ass\n<%s>\n", __func__);
                 node = new_node(ND_ASSIGN,
                                 node,
-                                new_node(ND_ADD, node, assign(), tok, node->type),
+                                new_node(ND_ADD, node, equality(), tok, node->type),
                                 tok, node->type);
                 fprintf(tout, " ass\n</%s>\n", __func__);
                 return node;
@@ -1280,7 +1312,7 @@ Node *expr()
         return node;
 }
 
-Node *compound_statement(Token*tok)
+Node *compound_statement(Token *tok)
 {
         fprintf(tout, " {\n<%s>\n", __func__);
         lstack[lstack_i++] = locals;
@@ -1693,7 +1725,7 @@ Node *declaration(bool top)
         return init_declarator(base_t, top);
 }
 
-Node *code[100] = {0};
+Node *code[10000] = {0};
 void program()
 {
         int i = 0;

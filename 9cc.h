@@ -57,6 +57,8 @@ struct Token
 
 typedef enum
 {
+       ND_OR,
+       ND_AND,
        ND_MOD,
        ND_CAST,
        ND_STR,
