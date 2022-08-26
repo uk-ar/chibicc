@@ -128,7 +128,7 @@ int expect_num()
         return ans;
 }
 
-Token *new_token(TokenKind kind, Token *cur, char *str, int len)
+Token *new_token(TokenKind kind, Token *cur, char *str, int len, int loc)
 {
         Token *tok = calloc(1, sizeof(Token));
         tok->kind = kind;
@@ -136,6 +136,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len)
         tok->len = len;
         cur->next = tok;
         tok->str = format("%.*s", len, str);
+        tok->loc = loc;
         return tok;
 }
 bool at_eof()
@@ -149,7 +150,7 @@ bool isIdent(char c)
 LVar *strings = NULL;
 extern LVar *find_string(Token *tok);
 extern LVar *new_var(Token *tok, LVar *next, Type *t);
-
+int loc = 1;
 Token *tokenize(char *p)
 {
         Token head, *cur = &head;
@@ -168,7 +169,7 @@ Token *tokenize(char *p)
                         }
                         if (!(*p))
                                 error_at(p, "'\"' is not closing");
-                        cur = new_token(TK_STR, cur, s, p - s); // skip "
+                        cur = new_token(TK_STR, cur, s, p - s, loc); // skip "
                         LVar *var = find_string(cur);
                         if (var)
                         {
@@ -186,7 +187,7 @@ Token *tokenize(char *p)
                 if (*p == '\'')
                 {
                         char *pre = p;
-                        cur = new_token(TK_NUM, cur, p, 0);
+                        cur = new_token(TK_NUM, cur, p, 0, loc);
                         p++;
                         if (*p == '\\')
                         {
@@ -241,6 +242,8 @@ Token *tokenize(char *p)
                 }
                 if (isspace(*p))
                 {
+                        if (*p == '\n')
+                                loc++;
                         p++;
                         continue;
                 }
@@ -249,11 +252,18 @@ Token *tokenize(char *p)
                         while (*p && *p != '\n')
                                 p++;
                         p++;
+                        loc++;
                         continue;
                 }
                 if (!strncmp(p, "/*", 2))
                 {
                         char *q = strstr(p + 2, "*/");
+                        char *r = strstr(p + 2, "\n");
+                        while (r < q)
+                        {
+                                loc++;
+                                r = strstr(r + 1, "\n");
+                        }
                         if (!(*p))
                                 error_at(p, "'/*' is not closing");
                         p = q + 2;
@@ -261,67 +271,67 @@ Token *tokenize(char *p)
                 }
                 if (!strncmp(p, "sizeof", 6) && !isIdent(p[6]))
                 {
-                        cur = new_token(TK_SIZEOF, cur, p, 6);
+                        cur = new_token(TK_SIZEOF, cur, p, 6, loc);
                         p += 6;
                         continue;
                 }
                 if (!strncmp(p, "...", 3) && !isIdent(p[3]))
                 {
-                        cur = new_token(TK_RESERVED, cur, p, 3);
+                        cur = new_token(TK_RESERVED, cur, p, 3, loc);
                         p += 3;
                         continue;
                 }
                 if (!strncmp(p, "int", 3) && !isIdent(p[3]))
                 {
-                        cur = new_token(TK_TYPE_SPEC, cur, p, 3);
+                        cur = new_token(TK_TYPE_SPEC, cur, p, 3, loc);
                         p += 3;
                         continue;
                 }
                 if (!strncmp(p, "char", 4) && !isIdent(p[4]))
                 {
-                        cur = new_token(TK_TYPE_SPEC, cur, p, 4);
+                        cur = new_token(TK_TYPE_SPEC, cur, p, 4, loc);
                         p += 4;
                         continue;
                 }
                 if (!strncmp(p, "long", 4) && !isIdent(p[4]))
                 {
-                        cur = new_token(TK_TYPE_SPEC, cur, p, 4);
+                        cur = new_token(TK_TYPE_SPEC, cur, p, 4, loc);
                         p += 4;
                         continue;
                 }
                 if (!strncmp(p, "struct", 6) && !isIdent(p[6]))
                 {
-                        cur = new_token(TK_TYPE_SPEC, cur, p, 6);
+                        cur = new_token(TK_TYPE_SPEC, cur, p, 6, loc);
                         p += 6;
                         continue;
                 }
                 if (!strncmp(p, "return", 6) && !isIdent(p[6]))
                 {
-                        cur = new_token(TK_RETURN, cur, p, 6);
+                        cur = new_token(TK_RETURN, cur, p, 6, loc);
                         p += 6;
                         continue;
                 }
                 if (!strncmp(p, "if", 2) && !isIdent(p[2]))
                 {
-                        cur = new_token(TK_IF, cur, p, 2);
+                        cur = new_token(TK_IF, cur, p, 2, loc);
                         p += 2;
                         continue;
                 }
                 if (!strncmp(p, "else", 4) && !isIdent(p[4]))
                 {
-                        cur = new_token(TK_ELSE, cur, p, 4);
+                        cur = new_token(TK_ELSE, cur, p, 4, loc);
                         p += 4;
                         continue;
                 }
                 if (!strncmp(p, "while", 5) && !isIdent(p[5]))
                 {
-                        cur = new_token(TK_WHILE, cur, p, 5);
+                        cur = new_token(TK_WHILE, cur, p, 5, loc);
                         p += 5;
                         continue;
                 }
                 if (!strncmp(p, "for", 3) && !isIdent(p[3]))
                 {
-                        cur = new_token(TK_FOR, cur, p, 3);
+                        cur = new_token(TK_FOR, cur, p, 3, loc);
                         p += 3;
                         continue;
                 }
@@ -332,7 +342,7 @@ Token *tokenize(char *p)
                     !strncmp(p, "/=", 2) || !strncmp(p, "*=", 2) ||
                     !strncmp(p, "%=", 2))
                 {
-                        cur = new_token(TK_RESERVED, cur, p, 2);
+                        cur = new_token(TK_RESERVED, cur, p, 2, loc);
                         p += 2;
                         continue;
                 }
@@ -340,13 +350,13 @@ Token *tokenize(char *p)
                     *p == ')' || *p == '=' || *p == ';' || *p == '{' || *p == '}' || *p == ',' || *p == '&' ||
                     *p == '[' || *p == ']' || *p == '.' || *p == '!' || *p == '%')
                 {
-                        cur = new_token(TK_RESERVED, cur, p++, 1);
+                        cur = new_token(TK_RESERVED, cur, p++, 1, loc);
                         continue;
                 }
                 if (isdigit(*p))
                 {
                         char *pre = p;
-                        cur = new_token(TK_NUM, cur, p, 0);
+                        cur = new_token(TK_NUM, cur, p, 0, loc);
                         cur->val = strtol(p, &p, 10);
                         cur->len = p - pre;
                         // printf("%d",p-pre);
@@ -367,18 +377,18 @@ Token *tokenize(char *p)
                         }
                         if (t == TK_NOT_EXIST)
                         {
-                                cur = new_token(TK_IDENT, cur, pre, p - pre);
+                                cur = new_token(TK_IDENT, cur, pre, p - pre, loc);
                         }
                         else
                         {
-                                cur = new_token(t, cur, pre, p - pre);
+                                cur = new_token(t, cur, pre, p - pre, loc);
                         }
                         continue;
                 }
                 // printf("eee");
                 error_at(p, " can not tokenize '%c'", *p);
         }
-        cur = new_token(TK_EOF, cur, p, 0);
+        cur = new_token(TK_EOF, cur, p, 0, loc);
         return head.next;
 }
 
@@ -515,8 +525,8 @@ LVar *enumerator_list()
                 // int n = token->pos - p + 1;
                 // globals = new_var(tok, globals, new_type(TY_INT, NULL, 4, "int"));
                 // globals->init = format("%d", st_vars->offset);
-                add_hash(keyword2token, tok->str, (void*)TK_ENUM);
-                add_hash(enums, tok->str, (void*)st_vars->offset);
+                add_hash(keyword2token, tok->str, (void *)TK_ENUM);
+                add_hash(enums, tok->str, (void *)st_vars->offset);
                 // add_hash(keyword2token, st_vars->name, TK_NUM);
                 //  st_vars = var_decl(st_vars);
                 consume(",");
@@ -819,12 +829,12 @@ Node *primary()
         Type *t = declaration_specifier();
         if (t)
         {
-                Node *ans = new_node_num(0, NULL, t);
+                Node *ans = new_node_num(0, token, t);
                 return ans;
         }
         fprintf(tout, "<%s>num\n", __func__);
         // TODO:add enum
-        Node *ans = new_node_num(expect_num(), NULL, new_type(TY_INT, NULL, 4, "int"));
+        Node *ans = new_node_num(expect_num(), token, new_type(TY_INT, NULL, 4, "int"));
         fprintf(tout, "num\n</%s>\n", __func__);
         return ans;
 }
@@ -848,7 +858,7 @@ Node *postfix()
                         {
                                 Type *type = ans->type->ptr_to;
                                 ans = new_node(ND_DEREF,
-                                               new_node(ND_ADD, ans, expr(), NULL, ans->type),
+                                               new_node(ND_ADD, ans, expr(), tok, ans->type),
                                                NULL, tok, type);
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
@@ -860,8 +870,8 @@ Node *postfix()
                                 ans = new_node(ND_DEREF,
                                                new_node(ND_ADD,
                                                         new_node(ND_ADDR, ans, NULL, ans->token, ans->type),
-                                                        expr(), NULL, new_type(TY_PTR, ans->type, 8, "from array")),
-                                               NULL, NULL, type);
+                                                        expr(), tok, new_type(TY_PTR, ans->type, 8, "from array")),
+                                               NULL, tok, type);
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
                                 continue;
@@ -902,12 +912,12 @@ Node *postfix()
                         LVar *field = find_var(right->str, st_vars);
                         if (!field)
                                 error_at(token->pos, "no field defined %s", right->str);
-                        Node *lhs = new_node_num(field->offset, NULL, new_type(TY_CHAR, NULL, 1, "char"));
+                        Node *lhs = new_node_num(field->offset, tok, new_type(TY_CHAR, NULL, 1, "char"));
                         ans = new_node(ND_DEREF,
                                        new_node(ND_ADD,
                                                 lhs, // ans
                                                 ans, // lhs
-                                                NULL, lhs->type),
+                                                tok, lhs->type),
                                        NULL, tok, field->type);
                         continue;
                 }
@@ -916,8 +926,8 @@ Node *postfix()
                         Type *type = ans->type;
                         ans = new_node(ND_ASSIGN,
                                        ans,
-                                       new_node(ND_ADD, ans, new_node_num(1, tok, type), NULL, type),
-                                       NULL, type);
+                                       new_node(ND_ADD, ans, new_node_num(1, tok, type), tok, type),
+                                       tok, type);
                         continue;
                 }
                 if ((tok = consume("--")))
@@ -925,8 +935,8 @@ Node *postfix()
                         Type *type = ans->type;
                         ans = new_node(ND_ASSIGN,
                                        ans,
-                                       new_node(ND_SUB, ans, new_node_num(1, tok, type), NULL, type),
-                                       NULL, type);
+                                       new_node(ND_SUB, ans, new_node_num(1, tok, type), tok, type),
+                                       tok, type);
                         continue;
                 }
                 // else
@@ -1009,17 +1019,17 @@ Node *unary()
                         consume("(");
                         t = type_name();
                         expect(")");
-                        return new_node_num(t->size, NULL, t);
+                        return new_node_num(t->size, token, t);
                 }
                 if (equal_Token(token->next, TK_TYPE_SPEC))
                 {
                         t = type_name();
                         fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
-                        return new_node_num(t->size, NULL, t);
+                        return new_node_num(t->size, token, t);
                 }
                 t = unary()->type;
                 fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
-                return new_node_num(t->size, NULL, t);
+                return new_node_num(t->size, token, t);
         }
         // TODO:++ unary
         // TODO:-- unary
@@ -1036,7 +1046,7 @@ Node *unary()
                 fprintf(tout, " <%s>-\"\n", __func__);
                 Type *type = new_type(TY_INT, NULL, 4, "int");
                 ans = new_node(ND_SUB,
-                               new_node_num(0, NULL, type),
+                               new_node_num(0, tok, type),
                                unary(), tok, type); // 0-primary()
                 return ans;
                 fprintf(tout, " -\n</%s>\n", __func__);
@@ -1058,7 +1068,7 @@ Node *unary()
         if ((tok = consume("!")))
         {
                 fprintf(tout, " <%s>\n", __func__);
-                Node *lhs = new_node_num(0, NULL, new_type(TY_INT, NULL, 4, "int"));
+                Node *lhs = new_node_num(0, tok, new_type(TY_INT, NULL, 4, "int"));
                 ans = new_node(ND_EQ, unary(), lhs, tok, lhs->type);
                 return ans;
         }
@@ -1270,12 +1280,12 @@ Node *expr()
         return node;
 }
 
-Node *compound_statement()
+Node *compound_statement(Token*tok)
 {
         fprintf(tout, " {\n<%s>\n", __func__);
         lstack[lstack_i++] = locals;
         locals = calloc(1, sizeof(LVar));
-        Node *node = new_node(ND_BLOCK, NULL, NULL, NULL, NULL);
+        Node *node = new_node(ND_BLOCK, NULL, NULL, tok, NULL);
 
         while (!consume("}"))
         {
@@ -1344,20 +1354,15 @@ Node *stmt()
                 loffset = locals->offset;
                 fprintf(tout, " var decl\n</%s>\n", __func__);
                 if (consume("="))
-                /*{
-                        if (!node)
-                                node = new_node(ND_BLOCK, NULL, NULL, NULL);
-                        initializer(node, t, tok);
-                }*/
                 {
                         if (!node)
                         {
-                                node = new_node(ND_BLOCK, NULL, NULL, NULL, NULL);
+                                node = new_node(ND_BLOCK, NULL, NULL, tok, NULL);
                                 // node->type = t;
                         }
                         Node *lnode = new_node(ND_LVAR, NULL, NULL, tok, t);
                         lnode->offset = locals->offset;
-                        add_node(node, new_node(ND_ASSIGN, lnode, assign(), NULL, lnode->type));
+                        add_node(node, new_node(ND_ASSIGN, lnode, assign(), tok, lnode->type));
                 }
                 if (consume(","))
                 {
@@ -1443,7 +1448,7 @@ Node *stmt()
                 return node;
         }
         if ((tok = consume("{"))) // compound-statement
-                return compound_statement();
+                return compound_statement(tok);
         fprintf(tout, " <%s>\n", __func__);
         node = expr(); // expression-statement
         expect(";");
@@ -1631,10 +1636,11 @@ Node *init_declarator(Type *base_t, bool top)
                 parameter_type_list(ans);
                 if (consume(";"))
                         return declaration(top);
-                if (!consume("{"))
+                Token *tok = consume("{");
+                if (!tok)
                         error_at(token->pos, "need block\n");
                 // TODO:check mismatch
-                ans->then = compound_statement(); // block
+                ans->then = compound_statement(tok); // block
                 // force insert return
                 add_node(ans->then, new_node(ND_RETURN, NULL, NULL, tok, NULL));
 

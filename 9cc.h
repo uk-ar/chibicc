@@ -52,6 +52,7 @@ struct Token
        char *pos;      // token position
        int len;        // token length
        char *str;      // token string
+       int loc;
 };
 
 typedef enum
