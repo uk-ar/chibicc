@@ -948,6 +948,7 @@ Type *parameter_type_list(Node *ans);
 Type *abstract_declarator(Type *t);
 Type *direct_abstract_declarator(Type *t)
 {
+        //not used?
         if (consume("("))
         {
                 if ((t = abstract_declarator(t)))
@@ -1611,8 +1612,7 @@ Type *parameter_type_list(Node *ans) // it should return LVar*?
         if (consume(","))
                 return parameter_type_list();
         return t;*/
-        lstack[lstack_i++] = locals;
-        locals = calloc(1, sizeof(LVar));
+
         // int off=locals->offset;
         Type *t = NULL;
         if (equal(token, "void") && equal(token->next, ")"))
@@ -1664,15 +1664,22 @@ Node *init_declarator(Type *base_t, bool top)
         if (consume("("))
         { // function declaration
                 functions = new_var(tok, functions, t);
+
                 Node *ans = new_node(ND_FUNC, NULL, NULL, tok, t);
+
+                lstack[lstack_i++] = locals;
+                locals = calloc(1, sizeof(LVar));
                 parameter_type_list(ans);
-                if (consume(";"))
+                if (consume(";")){
+                        locals = lstack[--lstack_i];
                         return declaration(top);
+                }
                 Token *tok = consume("{");
                 if (!tok)
                         error_at(token->pos, "need block\n");
                 // TODO:check mismatch
                 ans->then = compound_statement(tok); // block
+                locals = lstack[--lstack_i];
                 // force insert return
                 add_node(ans->then, new_node(ND_RETURN, NULL, NULL, tok, NULL));
 

@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <assert.h>
 #include "9cc.h"
 
 extern FILE *tout;
@@ -14,7 +15,8 @@ extern char *filename;
 extern Token *token;
 extern Node *code[];
 extern LVar *locals, *globals, *strings, *functions;
-extern HashMap *structs, *types, *keyword2token, *type_alias,*enums;
+extern int lstack_i;
+extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 // struct name->LVars,type name->Type,,defname->(char*)type name,(char*)enum id->int
 
 char *read_file(char *path)
@@ -96,6 +98,7 @@ int main(int argc, char **argv)
 
         token = tokenize(user_input);
         program();
+        assert(lstack_i == 0);
         fclose(tout);
 
         // header
