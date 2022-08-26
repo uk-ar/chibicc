@@ -99,7 +99,8 @@ int main(int argc, char **argv)
         fclose(tout);
 
         // header
-        printf(".file 1 \"%s\"\n", filename);
+        printf(".file \"%s\"\n", filename);
+        //printf(".file 1 \"%s\"\n", filename); unable to debug tms.s
         printf(".intel_syntax noprefix\n");
 
         for (LVar *var = strings; var; var = var->next)
@@ -136,9 +137,6 @@ int main(int argc, char **argv)
                         }
                 }
         }
-        printf("  .text \n");
-        printf("  .global main\n");
-        printf("  .type main, @function\n");
         for (int i = 0; code[i]; i++)
         {
                 gen(code[i]);

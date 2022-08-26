@@ -1,13 +1,13 @@
 CFLAGS=-std=c99 -g -static -Wall
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
-TESTSRCS=$(filter-out test/common.c,$(wildcard test/*.c))
+TESTSRCS=$(filter-out test/common.c test/self.c,$(wildcard test/*.c))
 TESTS=$(TESTSRCS:.c=.exe)
 CC=gcc
 
-.PRECIOUS: test/common.s hashmap.s
+.PRECIOUS: test/common.s test/self.s
 
-test/%.exe: 9cc test/%.c test/common.s hashmap.s
+test/%.exe: 9cc test/%.c test/common.s test/self.s
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)
 	$(CC) -o test/$*.e -E -P -C test/$*.c
 #コンパイル時エラー解析のため名前を統一
@@ -15,7 +15,7 @@ test/%.exe: 9cc test/%.c test/common.s hashmap.s
 	./9cc test/$*.e > test/$*.s	
 #テストバイナリ作成
 	cp test/$*.s tmp.s
-	$(CC) -static -g -o $@ test/$*.s test/common.s hashmap.o
+	$(CC) -static -g -o $@ test/$*.s test/common.s
 
 9cc: $(OBJS)
 	$(CC) -o 9cc $(OBJS) $(LDFLAGS)
@@ -33,9 +33,11 @@ test: $(TESTS)
 	cp $${i%.*}.e tmp.cx; \
 	cp $${i%.*}.s tmp.s; \
 	cp $${i%.*}.exe tmp; \
-	if ! ./$$i ; then gcc -static -g -o tmp tmp.s test/common.c hashmap.c; exit 1; fi; echo; \
+	echo ./$$i ; \
+	if ! ./$$i ; then gcc -static -g -o tmp tmp.s test/common.o ; exit 1; fi; echo; \
 	done
 # 失敗したらデバッグ情報付で再コンパイル
+# test/common.s1をリンクするとデバッガでmainが追えなくなる？
 
 #if [ ! ./$$i ]; then echo "fail"; else echo "succ"; fi \
 

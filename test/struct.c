@@ -80,7 +80,9 @@ struct s3
 
 struct s7
 {
-    char v[1];
+    char v1[2];
+    int v2[2];
+    void *v3[2];
 };
 struct s8
 {
@@ -109,23 +111,6 @@ int main(int argc, char **argv)
         ASSERT(&(a.f2), &(c->f2));
         ASSERT(&(a.f3), &(c->f3));
         ASSERT(&(a.f4), &(c->f4));
-    }
-    {
-        HashNode o1, *o2 = &o1;
-        // ASSERT(32, sizeof(HashNode));
-        ASSERT(&(o1.next_bucket), &(o2->next_bucket));
-        ASSERT(&(o1.next), &(o2->next));
-        ASSERT(&(o1.key), &(o2->key));
-        ASSERT(&(o1.value), &(o2->value));
-        printf("actual\n");
-        printf("%p\n", o2);
-        printf("%p\n", &(o2->next_bucket));
-        printf("%p\n", &(o2->next));
-        printf("%p\n", &(o2->key));
-        printf("%p\n", &(o2->value));
-        printf("expected\n");
-        get_node_value(o2);
-        ASSERT(32, sizeof(HashNode));
     }
     ASSERT(24, sizeof(o1)); // 1+(3)+4+1+(3)
     ASSERT(0, distance(&o1, &o1.f1));
@@ -177,8 +162,14 @@ int main(int argc, char **argv)
     //  ASSERT(16, sizeof(Node));
     {
         struct s7 o1, *o2 = &o1;
-        ASSERT(2, ({o2->v[1] = 2;o2->v[1]; }));
-        ASSERT(2, ({ o1.v[1]; }));
+        ASSERT(2, ({o2->v1[1] = 2;o2->v1[1]; }));
+        ASSERT(2, ({ o1.v1[1]; }));
+        ASSERT(1, ({ distance(&(o1.v1[0]), &(o1.v1[1])); }));
+        ASSERT(4, ({ distance(&(o1.v2[0]), &(o1.v2[1])); }));
+        ASSERT(8, ({ distance(&(o1.v3[0]), &(o1.v3[1])); }));
+        ASSERT(1, ({ distance(&(o2->v1[0]), &(o2->v1[1])); }));
+        ASSERT(4, ({ distance(&(o2->v2[0]), &(o2->v2[1])); }));
+        ASSERT(8, ({ distance(&(o2->v3[0]), &(o2->v3[1])); }));
     }
     {
         struct s8 o1, *o2 = &o1;

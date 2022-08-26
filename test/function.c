@@ -62,7 +62,6 @@ void no_return()
 
 int main(int argc, char **argv)
 {
-    ASSERT(3, ({ no_return(); 3; }));
     ASSERT(1, f1());
     ASSERT(2, f2(2));
     ASSERT(3, f3(1, 2));
@@ -98,5 +97,6 @@ int main(int argc, char **argv)
 
     ASSERT(1, ({arg2(1+2,3+4);1; }));
     ASSERT(2, ({arg3(1+2,3+4,2+3);2; }));
+    ASSERT(3, ({ no_return(); 3; }));
     return 0;
 }

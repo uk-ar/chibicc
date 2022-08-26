@@ -35,13 +35,13 @@ int main(int argc, char **argv)
    ASSERT(2, ({int a[2];*a=1;*(a+1)=2;a[1]; }));
    ASSERT(4, ({int a[2];*a=1;*(a+1)=2;distance(a,a+1); }));
    // TODO: fix local value offset for int
-   ASSERT(4 ,({int a;int b;a=1;b=2;printA(&a);printA(&b);distance(&b,&a);}));
+   ASSERT(4, ({int a;int b;a=1;b=2;printA(&a);printA(&b);distance(&b,&a); }));
 
    ASSERT(1, ({char a[2];*a=1;*a; }));
    ASSERT(2, ({char a[2];*a=1;*(a+1)=2;*(a+1); }));
    ASSERT(1, ({char a[2];*a=1;*(a+1)=2;*a; }));
    ASSERT(1, ({char a[2];*a=1;*(a+1)=2;printVC(a,2);*a; }));
-   
+
    ASSERT(1, ({char a[2];*a=1;*(a+1)=2;char *p=a;*p; }));
    ASSERT(2, ({char a[2];*a=1;*(a+1)=2;char *p=a;*(p+1); }));
    ASSERT(3, ({char a[2];*a=1;*(a+1)=2;char *p=a;*p+*(p+1); }));
@@ -63,11 +63,14 @@ int main(int argc, char **argv)
    ASSERT(1, ({long a[2];*a=1;*(a+1)=2;a[0]; }));
    ASSERT(2, ({long a[2];*a=1;*(a+1)=2;a[1]; }));
    ASSERT(8, ({long a[2];*a=1;*(a+1)=2;distance(a,a+1); }));
+   ASSERT(8, ({long a[2];distance(&(a[0]),&(a[1])); }));
 
    ASSERT(1, ({long a;long b;a=1;b=2;a; }));
    ASSERT(2, ({long a;long b;a=1;b=2;b; }));
    ASSERT(8, ({long a;long b;a=1;b=2;printA(&a);printA(&b);distance(&b,&a); }));
 
+   ASSERT(8, ({void* a[2];distance(&(a[0]),&(a[1])); }));
+   ASSERT(8, ({void* a[2];*a=1;*(a+1)=2;distance(a,a+1); }));
    // Not supported yet
    // ASSERT(1 ,({int a[2];*a=1;*(a+1)=2;0[a];}));
    // ASSERT(2 ,({int a[2];*a=1;*(a+1)=2;1[a];}));
