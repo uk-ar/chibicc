@@ -6,9 +6,6 @@ enum
 };
 int main(int argc, char **argv)
 {
-    //ASSERT(22, ({int a=EB,y=0;switch(a){case EA:y=21;break;case EB:y=22;break;default:y=23;break;}y; }));
-    //ASSERT(1, 0);
-    
     int y;
     ASSERT(3, ({ int x; if (0) x=2; else x=3; x; })); // works!
     ASSERT(2, ({if(1==1){y=2;} y; }));
@@ -41,6 +38,7 @@ int main(int argc, char **argv)
     ASSERT(2, ({int a=2,y=0;switch(a){case 1:y=1;break;case 2:y=2;break;default:y=3;break;}y; }));
     ASSERT(3, ({int a=10,y=0;switch(a){case 1:y=1;break;case 2:y=2;break;default:y=3;break;}y; }));
     ASSERT(2, ({int a=1,y=0;switch(a){case 1:y=1;case 2:y=2;break;default:y=3;break;}y; }));
+    ASSERT(22, ({int a=EB,y=0;switch(a){case EA:y=21;break;case EB:y=22;break;default:y=23;break;}y; }));
 
     return 0;
 }

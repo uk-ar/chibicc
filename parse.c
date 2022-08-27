@@ -118,14 +118,19 @@ void expect(char *op)
 
 int expect_num()
 { //
-        if (!token || token->kind != TK_NUM)
+        if (equal_Token(token, TK_ENUM))
         {
-                error_at(token->pos, "token is not number");
+                int ans = get_hash(enums, token->str);
+                token = token->next;
+                return ans;
         }
-        int ans = token->val;
-        // printf("t:%s:%d\n",token->pos,token->len);
-        token = token->next;
-        return ans;
+        if (equal_Token(token, TK_NUM))
+        {
+                int ans = token->val;
+                token = token->next;
+                return ans;
+        }
+        error_at(token->pos, "token is not number");
 }
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len, int loc)
@@ -319,11 +324,6 @@ Token *tokenize(char *p)
                         {
                                 cur = new_token(TK_IDENT, cur, pre, p - pre, loc);
                         }
-                        else if (t == TK_ENUM)
-                        {
-                                cur = new_token(TK_NUM, cur, pre, p - pre, loc);
-                                cur->val = get_hash(enums, cur->str);
-                        }
                         else
                         {
                                 cur = new_token(t, cur, pre, p - pre, loc);
@@ -468,14 +468,8 @@ LVar *enumerator_list()
                 Token *tok = consume_ident();
                 st_vars = new_var(tok, st_vars, new_type(TY_INT, NULL, 4, "int"));
                 st_vars->offset = st_vars->next->offset + 1;
-                // consume_Token(TK_NUM);
-                // int n = token->pos - p + 1;
-                // globals = new_var(tok, globals, new_type(TY_INT, NULL, 4, "int"));
-                // globals->init = format("%d", st_vars->offset);
                 add_hash(keyword2token, tok->str, (void *)TK_ENUM);
                 add_hash(enums, tok->str, (void *)st_vars->offset);
-                // add_hash(keyword2token, st_vars->name, TK_NUM);
-                //  st_vars = var_decl(st_vars);
                 consume(",");
         }
         // add_hash(structs, str1, st_vars);
