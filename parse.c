@@ -269,63 +269,9 @@ Token *tokenize(char *p)
                         p = q + 2;
                         continue;
                 }
-                if (!strncmp(p, "sizeof", 6) && !isIdent(p[6]))
-                {
-                        cur = new_token(TK_SIZEOF, cur, p, 6, loc);
-                        p += 6;
-                        continue;
-                }
                 if (!strncmp(p, "...", 3) && !isIdent(p[3]))
                 {
                         cur = new_token(TK_RESERVED, cur, p, 3, loc);
-                        p += 3;
-                        continue;
-                }
-                if (!strncmp(p, "int", 3) && !isIdent(p[3]))
-                {
-                        cur = new_token(TK_TYPE_SPEC, cur, p, 3, loc);
-                        p += 3;
-                        continue;
-                }
-                if (!strncmp(p, "char", 4) && !isIdent(p[4]))
-                {
-                        cur = new_token(TK_TYPE_SPEC, cur, p, 4, loc);
-                        p += 4;
-                        continue;
-                }
-                if (!strncmp(p, "long", 4) && !isIdent(p[4]))
-                {
-                        cur = new_token(TK_TYPE_SPEC, cur, p, 4, loc);
-                        p += 4;
-                        continue;
-                }
-                if (!strncmp(p, "struct", 6) && !isIdent(p[6]))
-                {
-                        cur = new_token(TK_TYPE_SPEC, cur, p, 6, loc);
-                        p += 6;
-                        continue;
-                }
-                if (!strncmp(p, "return", 6) && !isIdent(p[6]))
-                {
-                        cur = new_token(TK_RETURN, cur, p, 6, loc);
-                        p += 6;
-                        continue;
-                }
-                if (!strncmp(p, "else", 4) && !isIdent(p[4]))
-                {
-                        cur = new_token(TK_ELSE, cur, p, 4, loc);
-                        p += 4;
-                        continue;
-                }
-                if (!strncmp(p, "while", 5) && !isIdent(p[5]))
-                {
-                        cur = new_token(TK_WHILE, cur, p, 5, loc);
-                        p += 5;
-                        continue;
-                }
-                if (!strncmp(p, "for", 3) && !isIdent(p[3]))
-                {
-                        cur = new_token(TK_FOR, cur, p, 3, loc);
                         p += 3;
                         continue;
                 }

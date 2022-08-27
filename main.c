@@ -73,6 +73,10 @@ int main(int argc, char **argv)
         keyword2token = new_hash(100);
         add_hash(keyword2token, "enum", (void *)TK_TYPE_SPEC);
         add_hash(keyword2token, "void", (void *)TK_TYPE_SPEC);
+        add_hash(keyword2token, "int", (void *)TK_TYPE_SPEC);
+        add_hash(keyword2token, "char", (void *)TK_TYPE_SPEC);
+        add_hash(keyword2token, "long", (void *)TK_TYPE_SPEC);
+        add_hash(keyword2token, "struct", (void *)TK_TYPE_SPEC);
 
         add_hash(keyword2token, "auto", (void *)TK_STORAGE);
         add_hash(keyword2token, "register", (void *)TK_STORAGE);
@@ -97,6 +101,13 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "default", (void *)TK_RESERVED);
         add_hash(keyword2token, "break", (void *)TK_RESERVED);
         add_hash(keyword2token, "continue", (void *)TK_RESERVED);
+        //add_hash(keyword2token, "...", (void *)TK_RESERVED);// conflict with .
+
+        add_hash(keyword2token, "sizeof", (void *)TK_SIZEOF);
+        add_hash(keyword2token, "return", (void *)TK_RETURN);
+        add_hash(keyword2token, "else", (void *)TK_ELSE);
+        add_hash(keyword2token, "while", (void *)TK_WHILE);
+        add_hash(keyword2token, "for", (void *)TK_FOR);
 
         enums = new_hash(100);
 
