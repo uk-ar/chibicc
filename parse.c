@@ -1,5 +1,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
+// struct _IO_FILE;
+// typedef struct _IO_FILE FILE;
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -505,6 +507,15 @@ Type *declaration_specifier() // bool declaration)
                 else if ((identifier = consume_ident())) // struct name
                 {
                         src_name = format("%s %s", type_str, identifier->str);
+                        if (consume(";"))
+                        {
+                                type = get_hash(types, src_name);
+                                if (!type)
+                                {
+                                        add_hash(types, src_name, new_type(TY_STRUCT, NULL, 0, NULL));
+                                }
+                                return get_hash(types, src_name);
+                        }
                         if (consume("{"))
                         {
                                 type = new_type(TY_STRUCT, NULL, 0, NULL);
@@ -1570,42 +1581,71 @@ LVar *struct_declarator_list(LVar *lvar)
 
         return lvar;
 }
-void initilizer(bool top)
+int initilizer_list(bool top, Type *type)
 {
         consume("&");
         char *p = token->pos;
         consume_ident();
         consume("+");
         Token *tok;
+        if (!globals->init)
+        {
+                globals->init = new_list();
+        }
         if ((tok = consume_Token(TK_STR)))
         {
-                if (globals->type->kind == TY_ARRAY)
+                if (type->kind == TY_ARRAY)
                 {
-                        int n = tok->len;
-                        globals->init = calloc(n + 3, sizeof(char));
-                        snprintf(globals->init, n + 3, "\"%s\"", p);
+                        // int n = tok->len;
+                        add_list(globals->init, format("\"%s\"", tok->str));
+                        return tok->len;
+                        // globals->init = calloc(n + 3, sizeof(char));
+                        // snprintf(globals->init, n + 3, "\"%s\"", p);
                 }
                 else
                 {
                         // int n=token->pos-p;
-                        int n = 15;
-                        globals->init = calloc(n + 1, sizeof(char));
-                        snprintf(globals->init, n, ".LC%d", find_string(tok)->offset);
-                        // globals->init = format(".LC%d", find_string(tok)->offset);
-                        globals->type->array_size = MAX(globals->type->array_size, tok->len);                   // todo fix for escape charactors
-                        globals->type->size = MAX(globals->type->size, tok->len * globals->type->ptr_to->size); // todo fix for escape charactors
+                        // int n = 15;
+                        // globals->init = calloc(n + 1, sizeof(char));
+                        add_list(globals->init, format(".LC%d", find_string(tok)->offset));
+                        return tok->len; // todo:count without escape charactor
+                        // snprintf(globals->init, n, ".LC%d", find_string(tok)->offset);
+                        //  globals->init = format(".LC%d", find_string(tok)->offset);
                 }
         }
         else
         {
                 consume_Token(TK_NUM);
                 int n = token->pos - p;
-                globals->init = format("%.*s", n, p);
+                add_list(globals->init, format("%.*s", n, p));
+                return 1;
                 // globals->init = calloc(n, sizeof(char));
                 // snprintf(globals->init, n, p);
         }
 }
-
+void initilizer(bool top)
+{
+        Token *tok = NULL;
+        int cnt = 0;
+        if ((tok = consume("{")))
+        {
+                while (!consume("}"))
+                {
+                        initilizer_list(top, globals->type->ptr_to);
+                        consume(",");
+                        cnt++;
+                }
+        }
+        else
+        {
+                cnt = initilizer_list(top, globals->type);
+        }
+        if (globals->type->kind == TY_ARRAY)
+        {
+                globals->type->array_size = MAX(globals->type->array_size, cnt);                   // todo fix for escape charactors
+                globals->type->size = MAX(globals->type->size, cnt * globals->type->ptr_to->size); // todo fix for escape charactors
+        }
+}
 Type *parameter_type_list(Node *ans) // it should return LVar*?
 {
         /*Type *t = declaration_specifier();

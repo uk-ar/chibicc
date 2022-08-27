@@ -101,7 +101,7 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "default", (void *)TK_RESERVED);
         add_hash(keyword2token, "break", (void *)TK_RESERVED);
         add_hash(keyword2token, "continue", (void *)TK_RESERVED);
-        //add_hash(keyword2token, "...", (void *)TK_RESERVED);// conflict with .
+        // add_hash(keyword2token, "...", (void *)TK_RESERVED);// conflict with .
 
         add_hash(keyword2token, "sizeof", (void *)TK_SIZEOF);
         add_hash(keyword2token, "return", (void *)TK_RETURN);
@@ -142,20 +142,34 @@ int main(int argc, char **argv)
                 printf(".data\n");
                 printf(".global %s\n", var->name);
                 printf("%s:\n", var->name);
-                char *p = var->init;
+                list *p = var->init;
                 if (!p)
                 {
                         printf("  .zero %ld\n", var->type->size);
                 }
-                else
+                else if (p->size == 1)
                 {
                         if (var->type->kind == TY_ARRAY)
                         {
-                                printf("  .string %s\n", p);
+                                printf("  .string %s\n", p->head->value);
                         }
                         else
                         {
-                                printf("  %s %s\n", global_types[var->type->kind], p);
+                                printf("  %s %s\n", global_types[var->type->kind], p->head->value);
+                        }
+                }
+                else
+                {
+                        for (listnode *n = p->head; n; n = n->next)
+                        {
+                                if (var->type->ptr_to->kind == TY_ARRAY)
+                                {
+                                        printf("  .string %s\n", n->value);
+                                }
+                                else
+                                {
+                                        printf("  %s %s\n", global_types[var->type->ptr_to->kind], n->value);
+                                }
                         }
                 }
         }

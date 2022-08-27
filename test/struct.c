@@ -32,29 +32,6 @@ struct TNode
     node *next;
 };
 
-typedef struct list list;
-
-struct list
-{
-    node *head;
-    node *tail;
-};
-
-list *list_add(list *l, int var)
-{
-    /*node *n;
-    n = calloc(1, sizeof(node));
-    node *n = calloc(1, sizeof(node));
-    n->var = var;
-    if (!tail)
-    {
-        head = n;
-        tail = n;
-    }
-    tail->next = n;
-    tail = tail->next;*/
-}
-
 typedef struct tnode TNODE;
 struct tnode
 {
@@ -130,7 +107,7 @@ int main(int argc, char **argv)
     ASSERT(1, o1.f1);
 
     ASSERT(16, sizeof(node));
-    ASSERT(16, sizeof(list));
+    //ASSERT(16, sizeof(list));
     ASSERT(8, sizeof(o3));
     printf("c:%p\n", &(o1.f1));
     printf("i:%p\n", &(o3->f1));

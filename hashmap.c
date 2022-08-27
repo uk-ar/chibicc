@@ -9,6 +9,27 @@ extern int strcmp(const char *__s1, const char *__s2);
 #define NULL ((void *)0)
 #include "9cc.h"
 
+list *new_list()
+{
+        list *new_list = calloc(1, sizeof(list));
+        return new_list;
+}
+void add_list(list *l, void *value)
+{
+        listnode *new_node = calloc(1, sizeof(struct listnode));
+        new_node->value = value;
+        l->size++;
+        if (!l->head)
+        {
+                l->head = new_node;
+                l->tail = new_node;
+                return;
+        }
+        l->tail->next = new_node;
+        l->tail = l->tail->next;
+        return;
+}
+
 HashMap *new_hash(int size)
 {
         HashMap *h = calloc(1, sizeof(HashMap));

@@ -46,6 +46,6 @@ test_o: 9cc test/common.o
 	sh ./test.sh
 
 clean:
-	rm -f 9cc *.o *~ tmp* test/*.s test/*.e test/*.exe
+	rm -f 9cc *.o *~ tmp* *.e test/*.s test/*.e test/*.exe
 
 .PHONY: test clean

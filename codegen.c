@@ -1,17 +1,18 @@
 
+struct _IO_FILE;
+typedef struct _IO_FILE FILE;
+int fprintf(FILE *__restrict __stream, const char *__restrict __fmt, ...);
 
 //#include <stdlib.h>
 typedef long unsigned int size_t;
 extern void *calloc(size_t __nmemb, size_t __size);
 //#include <stdio.h>
 extern int printf(const char *__restrict __fmt, ...);
+// extern int printf(const char * __fmt, ...);
 //#include <string.h>
 extern int strcmp(const char *__s1, const char *__s2);
 //#include <stddef.h>
 #define NULL ((void *)0)
-struct _IO_FILE;
-typedef struct _IO_FILE FILE;
-int fprintf(FILE *__restrict __stream, const char *__restrict __fmt, ...);
 
 #include "9cc.h"
 /*#include <stdio.h>

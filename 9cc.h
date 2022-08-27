@@ -134,6 +134,25 @@ struct Node
        Token *token;
 };
 
+typedef struct listnode listnode;
+
+struct listnode
+{
+       listnode *next;
+       void *value;
+};
+
+typedef struct list list;
+
+struct list
+{
+       listnode *head;
+       listnode *tail;
+       int size;
+};
+list *new_list();
+void add_list(list *l, void *value);
+
 typedef struct LVar LVar;
 
 struct LVar
@@ -143,7 +162,8 @@ struct LVar
        Type *type;
        int len;
        int offset; // offset from RBP
-       char *init;
+       // char *init;
+       list *init;
 };
 
 Token *tokenize(char *p);
