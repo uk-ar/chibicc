@@ -24,6 +24,9 @@ int fprintf(FILE *__restrict __stream, const char *__restrict __fmt, ...);
 */
 FILE *tout2;
 char *nodeKind[] = {
+    "ND_CASE",
+    "ND_BREAK",
+    "ND_SWITCH",
     "ND_OR",
     "ND_AND",
     "ND_MOD",
@@ -99,7 +102,6 @@ Type *gen_lval(Node *node)
         else
         {
                 error_at(node->token->pos, "token is not lvalue\n", node->token->str);
-                abort();
         }
 }
 int count()
@@ -115,6 +117,7 @@ void dump()
         printf("  call printf\n");
 }
 extern LVar *find_string(Token *tok);
+char *break_label;
 // static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 Type *gen(Node *node)
@@ -266,11 +269,49 @@ Type *gen(Node *node)
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return NULL;
         }
+        else if (node->kind == ND_SWITCH)
+        {
+                // printf("  .loc 1 %d\n", node->token->loc);
+                int num = count();
+                gen(node->cond);
+                printf(pop("rax")); // move result to rax
+                for (HashNode *c = node->cases->begin; c; c = c->next)
+                {
+                        printf("  cmp rax, %d\n", c->value);
+                        printf("  je .Lcase%s\n", c->key);
+                }
+                if (node->els)
+                {
+                        printf("  jmp .Ldefault%d\n", node->els->val);
+                }
+                // todo:nest break_label
+                break_label = format(".Lend%d", num);
+                fprintf(tout2, "# <then>\n");
+                gen(node->then);
+                fprintf(tout2, "# </then>\n");
+
+                printf("%s:\n", break_label); // for break;
+                // fprintf(tout2, "# </%s>\n", nodeK);
+                return NULL;
+        }
+        else if (node->kind == ND_BREAK)
+        {
+                printf("  jmp %s\n", break_label);
+                return NULL;
+        }
+        else if (node->kind == ND_CASE)
+        {
+                if (node->lhs)
+                        printf(".Lcase%d:\n", node->val);
+                else
+                        printf(".Ldefault%d:\n", node->val);
+                return NULL;
+        }
         else if (node->kind == ND_AND)
         {
                 fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 gen(node->lhs);
-                printf(pop("rax")); // move result to rax                
+                printf(pop("rax")); // move result to rax
 
                 int num = count();
                 printf("  cmp rax, 0\n");
@@ -296,7 +337,7 @@ Type *gen(Node *node)
 
                 gen(node->rhs);     // result is in stack
                 printf(pop("rax")); // move result to rax
-                
+
                 printf(".Lend%d:\n", num);
                 printf(push("rax"));
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
@@ -353,7 +394,7 @@ Type *gen(Node *node)
                 for (Node *c = node->head; c; c = c->next2)
                 {
                         gen(c);
-                        if (c->kind != ND_IF && c->kind != ND_BLOCK)
+                        if (c->kind != ND_IF && c->kind != ND_BLOCK && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK)
                                 printf(pop("rax")); // move result to rax
                                                     // printf("  pop rax\n"); // move result to remove
                 }
@@ -367,7 +408,7 @@ Type *gen(Node *node)
                 for (Node *c = node->head; c; c = c->next2)
                 {
                         gen(c);
-                        if (c->next2 && c->kind != ND_BLOCK && c->kind != ND_IF)
+                        if (c->next2 && c->kind != ND_BLOCK && c->kind != ND_IF && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK)
                                 printf(pop("rax")); // move result to rax
                                                     // printf("  pop rax\n"); // move result to remove
                         /*if(c->kind!=ND_BLOCK && c->kind!=ND_ELSE && c->kind!=ND_FOR &&

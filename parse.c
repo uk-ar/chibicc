@@ -311,12 +311,6 @@ Token *tokenize(char *p)
                         p += 6;
                         continue;
                 }
-                if (!strncmp(p, "if", 2) && !isIdent(p[2]))
-                {
-                        cur = new_token(TK_IF, cur, p, 2, loc);
-                        p += 2;
-                        continue;
-                }
                 if (!strncmp(p, "else", 4) && !isIdent(p[4]))
                 {
                         cur = new_token(TK_ELSE, cur, p, 4, loc);
@@ -348,7 +342,7 @@ Token *tokenize(char *p)
                 }
                 if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' ||
                     *p == ')' || *p == '=' || *p == ';' || *p == '{' || *p == '}' || *p == ',' || *p == '&' ||
-                    *p == '[' || *p == ']' || *p == '.' || *p == '!' || *p == '%')
+                    *p == '[' || *p == ']' || *p == '.' || *p == '!' || *p == '%' || *p == ':')
                 {
                         cur = new_token(TK_RESERVED, cur, p++, 1, loc);
                         continue;
@@ -378,6 +372,11 @@ Token *tokenize(char *p)
                         if (t == TK_NOT_EXIST)
                         {
                                 cur = new_token(TK_IDENT, cur, pre, p - pre, loc);
+                        }
+                        else if (t == TK_ENUM)
+                        {
+                                cur = new_token(TK_NUM, cur, pre, p - pre, loc);
+                                cur->val = get_hash(enums, cur->str);
                         }
                         else
                         {
@@ -428,8 +427,10 @@ void add_node(Node *node, Node *new_node)
 LVar *locals = NULL;
 LVar *globals = NULL;
 LVar *functions = NULL;
+HashMap *cases = NULL;
 // HashMap *globals=NULL;
-LVar *lstack[100];
+LVar *lstack[100];    // local
+HashMap *cstack[100]; // case
 int lstack_i = 0;
 
 LVar *find_var(char *str, LVar *var0)
@@ -738,6 +739,7 @@ Node *primary()
                 {
                         fprintf(tout, " <%s>{\n", __func__);
                         Node *node = new_node(ND_EBLOCK, NULL, NULL, tok, NULL);
+
                         lstack[lstack_i++] = locals;
                         locals = calloc(1, sizeof(LVar));
 
@@ -764,8 +766,8 @@ Node *primary()
                 Node *ans = new_node(ND_STR, NULL, NULL, tok, NULL);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
-        } // tk_num
-        else if ((tok = consume_Token(TK_ENUM)))//constant
+        }                                        // tk_num
+        else if ((tok = consume_Token(TK_ENUM))) // constant
         {
                 fprintf(tout, "<%s>\"\n", __func__);
                 Node *ans = new_node_num((int)get_hash(enums, tok->str), tok, new_type(TY_INT, NULL, 4, "int"));
@@ -826,7 +828,7 @@ Node *primary()
                         return ans;
                 }
         }
-        Type *t = declaration_specifier();//constant
+        Type *t = declaration_specifier(); // constant
         if (t)
         {
                 Node *ans = new_node_num(0, token, t);
@@ -948,7 +950,7 @@ Type *parameter_type_list(Node *ans);
 Type *abstract_declarator(Type *t);
 Type *direct_abstract_declarator(Type *t)
 {
-        //not used?
+        // not used?
         if (consume("("))
         {
                 if ((t = abstract_declarator(t)))
@@ -1044,7 +1046,7 @@ Node *unary()
                 return ans;
                 fprintf(tout, " -\n</%s>\n", __func__);
         }
-        if ((tok = consume("*")))//TODO:move?
+        if ((tok = consume("*"))) // TODO:move?
         {
                 fprintf(tout, " deref\n<%s>\n", __func__);
                 Node *lhs = unary();
@@ -1246,7 +1248,7 @@ Node *assign()
 {
         Token *tok = NULL;
         Node *node = logical_expr();
-        if ((tok = consume("+=")))//右結合
+        if ((tok = consume("+="))) //右結合
         {
                 fprintf(tout, " ass\n<%s>\n", __func__);
                 node = new_node(ND_ASSIGN,
@@ -1316,8 +1318,10 @@ Node *expr()
 Node *compound_statement(Token *tok)
 {
         fprintf(tout, " {\n<%s>\n", __func__);
+
         lstack[lstack_i++] = locals;
         locals = calloc(1, sizeof(LVar));
+
         Node *node = new_node(ND_BLOCK, NULL, NULL, tok, NULL);
 
         while (!consume("}"))
@@ -1327,8 +1331,11 @@ Node *compound_statement(Token *tok)
 
         fprintf(tout, " }\n</%s>\n", __func__);
         locals = lstack[--lstack_i];
+
         return node;
 }
+extern int count();
+Node *default_node = NULL;
 Node *stmt()
 {
         /* stmt       = expr ";"
@@ -1417,7 +1424,7 @@ Node *stmt()
                 fprintf(tout, "ret \n</%s>\n", __func__);
                 return node;
         }
-        if ((tok = consume_Token(TK_IF))) // selection-statement
+        if ((tok = consume("if"))) // selection-statement
         {
                 fprintf(tout, " if\n<%s>\n", __func__);
                 expect("(");
@@ -1430,6 +1437,58 @@ Node *stmt()
                         node->els = stmt();
                 }
                 fprintf(tout, " if\n</%s>\n", __func__);
+                return node;
+        }
+        if ((tok = consume("switch"))) // selection-statement
+        {
+                fprintf(tout, " switch\n<%s>\n", __func__);
+                expect("(");
+                node = new_node(ND_SWITCH, NULL, NULL, tok, NULL);
+                node->cond = expr();
+                expect(")");
+
+                cstack[lstack_i++] = cases;
+                cases = new_hash(100);
+                default_node = NULL;
+                node->then = stmt();
+                node->cases = cases;
+                node->els = default_node;
+                cases = cstack[--lstack_i];
+
+                fprintf(tout, " switch\n</%s>\n", __func__);
+                return node;
+        }
+        if ((tok = consume("case"))) // labeled-statement
+        {
+                fprintf(tout, " case\n<%s>\n", __func__);
+                int n = expect_num();
+                node = new_node(ND_CASE,
+                                new_node_num(n, tok, new_type(TY_INT, NULL, 4, "int")),
+                                NULL, tok, NULL);
+                node->val = count();
+                add_hash(cases, format("%d", node->val), n);
+                expect(":");
+                fprintf(tout, " case\n</%s>\n", __func__);
+                return node;
+        }
+        if ((tok = consume("default"))) // labeled-statement
+        {
+                fprintf(tout, " default\n<%s>\n", __func__);
+                node = new_node(ND_CASE,
+                                NULL, NULL, tok, NULL);
+                node->val = count();
+                default_node = node;
+                // add_hash(cases, format("%d", node->val), n);
+                expect(":");
+                fprintf(tout, " default\n</%s>\n", __func__);
+                return node;
+        }
+        if ((tok = consume("break"))) // jump-statement
+        {
+                fprintf(tout, " break\n<%s>\n", __func__);
+                expect(";");
+                node = new_node(ND_BREAK, NULL, NULL, tok, NULL);
+                fprintf(tout, " break\n</%s>\n", __func__);
                 return node;
         }
         if ((tok = consume_Token(TK_WHILE))) // iteration-statement
@@ -1452,8 +1511,10 @@ Node *stmt()
                 fprintf(tout, " <for>\n");
                 expect("(");
                 node = new_node(ND_FOR, NULL, NULL, tok, NULL);
+
                 lstack[lstack_i++] = locals;
                 locals = calloc(1, sizeof(LVar));
+
                 fprintf(tout, " <init>\n");
                 if (!consume(";"))
                 {
@@ -1669,8 +1730,10 @@ Node *init_declarator(Type *base_t, bool top)
 
                 lstack[lstack_i++] = locals;
                 locals = calloc(1, sizeof(LVar));
+
                 parameter_type_list(ans);
-                if (consume(";")){
+                if (consume(";"))
+                {
                         locals = lstack[--lstack_i];
                         return declaration(top);
                 }

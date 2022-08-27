@@ -57,6 +57,9 @@ struct Token
 
 typedef enum
 {
+       ND_CASE,
+       ND_BREAK,
+       ND_SWITCH,
        ND_OR,
        ND_AND,
        ND_MOD,
@@ -89,6 +92,25 @@ typedef enum
        ND_GE
 } NodeKind;
 
+typedef struct HashNode HashNode;
+
+struct HashNode
+{
+       HashNode *next_bucket; // 8
+       HashNode *next;        // for iteration;//8
+       char *key;             // 1+(7)
+       void *value;           // 8
+};
+
+typedef struct HashMap HashMap;
+
+struct HashMap
+{
+       HashNode **nodes;
+       HashNode *begin; // for iteration;
+       int size;
+};
+
 typedef struct Node Node;
 
 struct Node
@@ -98,7 +120,7 @@ struct Node
        Node *rhs;    // right hand side;
        Node *cond;   // if,while,for cond
        Node *then;   // if,while,for then
-       Node *els;    // if else
+       Node *els;    // if else,switch default
        Node *init;   // for init
        Node *next;   // for next
        Node **stmts; // block
@@ -106,6 +128,7 @@ struct Node
        Node *head;
        Node *next2; // treat as list
        Type *type;
+       HashMap *cases;
        int val;    // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        Token *token;
@@ -129,25 +152,6 @@ Type *gen(Node *root);
 // extern FILE *tout;
 void program();
 void error_at(char *loc, char *fmt, ...);
-
-typedef struct HashNode HashNode;
-
-struct HashNode
-{
-       HashNode *next_bucket; // 8
-       HashNode *next;        // for iteration;//8
-       char *key;             // 1+(7)
-       void *value;           // 8
-};
-
-typedef struct HashMap HashMap;
-
-struct HashMap
-{
-       HashNode **nodes;
-       HashNode *begin; // for iteration;
-       int size;
-};
 
 HashMap *new_hash(int size);
 HashNode *add_hash(HashMap *h, char *key, void *value);

@@ -20,6 +20,11 @@ typedef enum
     TY_STRUCT
 } TypeKind;
 
+enum
+{
+    EA,
+    EB
+};
 int main(int argc, char **argv)
 {
     TypeKind t = TY_INT;

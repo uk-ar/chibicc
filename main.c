@@ -90,6 +90,14 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "unsigned", (void *)TK_NOT_SUPPORT);
         add_hash(keyword2token, "__restrict", (void *)TK_NOT_SUPPORT);
 
+        add_hash(keyword2token, "switch", (void *)TK_IF);
+        add_hash(keyword2token, "if", (void *)TK_IF);
+
+        add_hash(keyword2token, "case", (void *)TK_RESERVED);
+        add_hash(keyword2token, "default", (void *)TK_RESERVED);
+        add_hash(keyword2token, "break", (void *)TK_RESERVED);
+        add_hash(keyword2token, "continue", (void *)TK_RESERVED);
+
         enums = new_hash(100);
 
         filename = argv[1];
@@ -103,13 +111,13 @@ int main(int argc, char **argv)
 
         // header
         printf(".file \"%s\"\n", filename);
-        //printf(".file 1 \"%s\"\n", filename); unable to debug tms.s
+        // printf(".file 1 \"%s\"\n", filename); unable to debug tms.s
         printf(".intel_syntax noprefix\n");
 
         for (LVar *var = strings; var; var = var->next)
         {
                 printf("  .text \n");
-                //printf("  .section      .rodata \n");
+                // printf("  .section      .rodata \n");
                 printf(".LC%d:\n", var->offset);
                 printf("  .string \"%s\"\n", var->name);
         }

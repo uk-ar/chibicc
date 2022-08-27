@@ -36,11 +36,11 @@ HashNode *add_hash(HashMap *h, char *key, void *value)
         }
         // return add_hashI(h,c,value);
         hash = hash % (h->size); // 8
-        //printf("hash=%d\n", hash);
-        //printf("h->nodes[hash]=%p\n", h->nodes[hash]);
+        // printf("hash=%d\n", hash);
+        // printf("h->nodes[hash]=%p\n", h->nodes[hash]);
         for (HashNode *c = h->nodes[hash]; c; c = c->next_bucket)
         {
-                //printf("c=%p\n", c);
+                // printf("c=%p\n", c);
                 if (strcmp(c->key, key) == 0)
                 {
                         c->value = value;
@@ -48,7 +48,7 @@ HashNode *add_hash(HashMap *h, char *key, void *value)
                 }
         }
         h->nodes[hash] = new_hashnode(key, value, h->nodes[hash], h->begin);
-        //printf("h->nodes[hash]=%p\n", h->nodes[hash]);
+        // printf("h->nodes[hash]=%p\n", h->nodes[hash]);
         h->begin = h->nodes[hash];
         return h->nodes[hash];
 }
