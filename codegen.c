@@ -25,6 +25,7 @@ extern int strcmp(const char *__s1, const char *__s2);
 */
 FILE *tout2;
 char *nodeKind[] = {
+    "ND_CONTINUE",
     "ND_COND",
     "ND_EXPR",
     "ND_CASE",
@@ -120,7 +121,9 @@ void dump()
         printf("  call printf\n");
 }
 extern LVar *find_string(Token *tok);
-char *break_label;
+char *break_labels[100];
+char *continue_labels[100];
+int depth = 0;
 // static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 Type *gen(Node *node)
@@ -198,6 +201,7 @@ Type *gen(Node *node)
                 else if (t->kind == TY_INT)
                 {
                         printf("  mov eax, DWORD PTR [rbx]\n"); // get data from address
+                        printf("  cdqe\n"); 
                 }
                 else
                 {
@@ -213,21 +217,22 @@ Type *gen(Node *node)
                 // printf("  .loc 1 %d\n", node->token->loc);
                 Type *t = gen_lval(node->lhs);
                 gen(node->rhs);
-                printf(pop("rbx")); // rhs
-                printf(pop("rax")); // lhs
+                printf(pop("rax")); // rhs
+                printf(pop("rbx")); // lhs                
                 if (node->type->kind == TY_CHAR)
                 {
-                        printf("  mov [rax],bl\n");
+                        printf("  mov BYTE PTR [rbx],al\n");
                 } // TODO:Add short type
                 else if (node->type->kind == TY_INT)
                 {
-                        printf("  mov DWORD PTR [rax],ebx\n");
+                        printf("  mov DWORD PTR [rbx],eax\n");
+                        printf("  cdqe\n");
                 }
                 else
                 { // todo fix for struct
-                        printf("  mov [rax],rbx\n");
+                        printf("  mov [rbx],rax\n");
                 }
-                printf(push("[rax]"));
+                printf(push("rax"));
                 // printf("  push [rax]\n"); // save expression result(ex. a=b=c)
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
                 return t;
@@ -287,7 +292,7 @@ Type *gen(Node *node)
                 gen(node->then);
                 fprintf(tout2, "# </then>\n");
                 printf("  jmp .Lend%d\n", num);
-                
+
                 printf(".Lelse%d:\n", num);
                 gen(node->els);
 
@@ -311,19 +316,36 @@ Type *gen(Node *node)
                 {
                         printf("  jmp .Ldefault%d\n", node->els->val);
                 }
-                // todo:nest break_label
-                break_label = format(".Lend%d", num);
+
+                break_labels[depth] = format(".Lend%d", num);
                 fprintf(tout2, "# <then>\n");
+                depth++;
                 gen(node->then);
+                depth--;
                 fprintf(tout2, "# </then>\n");
 
-                printf("%s:\n", break_label); // for break;
+                printf("%s:\n", break_labels[depth]); // for break;
                 // fprintf(tout2, "# </%s>\n", nodeK);
                 return NULL;
         }
         else if (node->kind == ND_BREAK)
         {
-                printf("  jmp %s\n", break_label);
+                int d = depth;
+                while (d > 0 && !break_labels[d])
+                        d--;
+                if (!break_labels[d])
+                        error_at(node->token->pos, "no break point");
+                printf("  jmp %s\n", break_labels[d]);
+                return NULL;
+        }
+        else if (node->kind == ND_CONTINUE)
+        {
+                int d = depth;
+                while (d > 0 && !continue_labels[d])
+                        d--;
+                if (!continue_labels[d])
+                        error_at(node->token->pos, "no break point");
+                printf("  jmp %s\n", continue_labels[d]);
                 return NULL;
         }
         else if (node->kind == ND_CASE)
@@ -374,18 +396,23 @@ Type *gen(Node *node)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
-                printf(".Lbegin%d:\n", num);
+                continue_labels[depth] = format(".Lbegin%d", num);
+                break_labels[depth] = format(".Lend%d", num);
+                
+                printf("%s:\n", continue_labels[depth]);
                 fprintf(tout2, "# <cond>\n");
                 gen(node->cond);
                 fprintf(tout2, "# </cond>\n");
                 printf(pop("rax")); // move result to rax
                 printf("  cmp rax, 0\n");
-                printf("  je .Lend%d\n", num);
+                printf("  je %s\n", break_labels[depth]);
+
                 fprintf(tout2, "# <then>\n");
                 gen(node->then);
                 fprintf(tout2, "# </then>\n");
-                printf("  jmp .Lbegin%d\n", num);
-                printf(".Lend%d:\n", num);
+
+                printf("  jmp %s\n", continue_labels[depth]);
+                printf("%s:\n", break_labels[depth]);
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return NULL;
         }
@@ -393,26 +420,30 @@ Type *gen(Node *node)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
+                continue_labels[depth] = format(".Lnext%d", num);
+                break_labels[depth] = format(".Lend%d", num);
+                char *cond_label = format(".Lbegin%d", num);
+
                 if (node->init)
                 {
                         fprintf(tout2, "# <init>\n");
-                        gen(node->init);//block
-                        //printf(pop("rax")); // move result to rax
+                        gen(node->init); // block
+                        // printf(pop("rax")); // move result to rax
                         fprintf(tout2, "# <init>\n");
                 }
 
-                printf(".Lbegin%d:\n", num);
+                printf("%s:\n", cond_label);
                 if (node->cond)
                 {
                         fprintf(tout2, "# <cond>\n");
-                        gen(node->cond);                        
+                        gen(node->cond);
                         printf(pop("rax")); // move result to rax
                         fprintf(tout2, "# </cond>\n");
                 }
 
                 // printf("  pop rax\n"); // move result to rax
                 printf("  cmp rax, 0\n");
-                printf("  je .Lend%d\n", num);                
+                printf("  je %s\n", break_labels[depth]);
                 if (node->then)
                 {
                         fprintf(tout2, "# <then>\n");
@@ -421,16 +452,19 @@ Type *gen(Node *node)
                         fprintf(tout2, "# </then>\n");
                 }
 
+                printf("%s:\n", continue_labels[depth]);
                 if (node->next)
                 {
+                        depth++;
                         fprintf(tout2, "# <next>\n");
                         gen(node->next);
                         printf(pop("rax")); // move result to rax
                         fprintf(tout2, "# </next>\n");
-                }                
+                        depth--;
+                }
 
-                printf("  jmp .Lbegin%d\n", num);
-                printf(".Lend%d:\n", num);
+                printf("  jmp %s\n", cond_label);
+                printf("%s:\n", break_labels[depth]);
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return NULL;
         }
@@ -518,6 +552,7 @@ Type *gen(Node *node)
                 else if (node->type->kind == TY_INT)
                 {
                         printf("  mov eax, DWORD PTR [rdi]\n"); // get data from address
+                        printf("  cdqe\n");
                 }
                 else
                 {

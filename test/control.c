@@ -5,7 +5,15 @@ enum
     EB
 };
 int main(int argc, char **argv)
-{    
+{
+    ASSERT(4, ({int a=5,b=0;while(a--)
+        {
+            if (a == 2)
+                continue;
+            b++;
+        }
+        b; }));
+    /*
     int y;
 
     ASSERT(3, ({ int x; if (0) x=2; else x=3; x; })); // works!
@@ -24,9 +32,31 @@ int main(int argc, char **argv)
     ASSERT(5, ({int b=3;for(int a=2;a;a=a-1,b++){y=2;}b; }));
     ASSERT(2, ({int a=0;for(int a=1;a;a=a-1) y=2;y; }));
     ASSERT(5, ({int b=3;for(int a=2;a;a=a-1,b++){}b; }));
+    ASSERT(4, ({int b=3;for(int i=0;i<3;i++,b++){if(i==1)
+                break;
+        }
+        b; }));
+    ASSERT(5, ({int b=3;for(int i=0;i<3;i++){if(i==1)
+                continue;
+            b++;
+        }
+        b; }));
 
     ASSERT(2, ({int a;a=1;while(a)a=a-1; y=2;y; }));
     ASSERT(0, ({int a;a=1;while(a)a=a-1; y=0;a;y; }));
+    ASSERT(2, ({int a=0;while(1){if(a==2){
+                break;
+    }
+            a++;
+        }
+        a; }));
+    ASSERT(4, ({int a=5,b=0;while(a--)
+        {
+            if (a == 2)
+                continue;
+            b++;
+        }
+        b; }));
     ASSERT(2, (0 || 2));
     ASSERT(2, (0 || 2 || 3));
     ASSERT(1, (1 || 0));

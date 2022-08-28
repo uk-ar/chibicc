@@ -1466,6 +1466,14 @@ Node *stmt()
                 fprintf(tout, " break\n</%s>\n", __func__);
                 return node;
         }
+        if ((tok = consume("continue"))) // jump-statement
+        {
+                fprintf(tout, " break\n<%s>\n", __func__);
+                expect(";");
+                node = new_node(ND_CONTINUE, NULL, NULL, tok, NULL);
+                fprintf(tout, " break\n</%s>\n", __func__);
+                return node;
+        }
         if ((tok = consume_Token(TK_WHILE))) // iteration-statement
         {
                 fprintf(tout, " while\n<%s>\n", __func__);

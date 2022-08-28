@@ -57,6 +57,7 @@ struct Token
 
 typedef enum
 {
+       ND_CONTINUE,
        ND_COND,
        ND_EXPR,
        ND_CASE,
