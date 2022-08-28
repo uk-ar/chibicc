@@ -25,6 +25,7 @@ extern int strcmp(const char *__s1, const char *__s2);
 */
 FILE *tout2;
 char *nodeKind[] = {
+    "ND_EXPR",
     "ND_CASE",
     "ND_BREAK",
     "ND_SWITCH",
@@ -353,7 +354,6 @@ Type *gen(Node *node)
                 gen(node->cond);
                 fprintf(tout2, "# </cond>\n");
                 printf(pop("rax")); // move result to rax
-                // printf("  pop rax\n"); // move result to rax
                 printf("  cmp rax, 0\n");
                 printf("  je .Lend%d\n", num);
                 fprintf(tout2, "# <then>\n");
@@ -369,21 +369,41 @@ Type *gen(Node *node)
                 // printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
                 if (node->init)
-                        gen(node->init);
+                {
+                        fprintf(tout2, "# <init>\n");
+                        gen(node->init);//block
+                        //printf(pop("rax")); // move result to rax
+                        fprintf(tout2, "# <init>\n");
+                }
+
                 printf(".Lbegin%d:\n", num);
-                fprintf(tout2, "# <cond>\n");
                 if (node->cond)
-                        gen(node->cond);
-                fprintf(tout2, "# </cond>\n");
-                printf(pop("rax")); // move result to rax
+                {
+                        fprintf(tout2, "# <cond>\n");
+                        gen(node->cond);                        
+                        printf(pop("rax")); // move result to rax
+                        fprintf(tout2, "# </cond>\n");
+                }
+
                 // printf("  pop rax\n"); // move result to rax
                 printf("  cmp rax, 0\n");
-                printf("  je .Lend%d\n", num);
-                fprintf(tout2, "# <then>\n");
-                gen(node->then);
+                printf("  je .Lend%d\n", num);                
+                if (node->then)
+                {
+                        fprintf(tout2, "# <then>\n");
+                        gen(node->then);
+                        // block
+                        fprintf(tout2, "# </then>\n");
+                }
+
                 if (node->next)
+                {
+                        fprintf(tout2, "# <next>\n");
                         gen(node->next);
-                fprintf(tout2, "# </then>\n");
+                        printf(pop("rax")); // move result to rax
+                        fprintf(tout2, "# </next>\n");
+                }                
+
                 printf("  jmp .Lbegin%d\n", num);
                 printf(".Lend%d:\n", num);
                 fprintf(tout2, "# </%s>\n", nodeK);
@@ -395,7 +415,7 @@ Type *gen(Node *node)
                 for (Node *c = node->head; c; c = c->next2)
                 {
                         gen(c);
-                        if (c->kind != ND_IF && c->kind != ND_BLOCK && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK)
+                        if (c->kind != ND_IF && c->kind != ND_BLOCK && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK && c->kind != ND_FOR)
                                 printf(pop("rax")); // move result to rax
                                                     // printf("  pop rax\n"); // move result to remove
                 }
@@ -409,7 +429,7 @@ Type *gen(Node *node)
                 for (Node *c = node->head; c; c = c->next2)
                 {
                         gen(c);
-                        if (c->next2 && c->kind != ND_BLOCK && c->kind != ND_IF && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK)
+                        if (c->next2 && c->kind != ND_BLOCK && c->kind != ND_IF && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK && c->kind != ND_FOR)
                                 printf(pop("rax")); // move result to rax
                                                     // printf("  pop rax\n"); // move result to remove
                         /*if(c->kind!=ND_BLOCK && c->kind!=ND_ELSE && c->kind!=ND_FOR &&
@@ -488,6 +508,11 @@ Type *gen(Node *node)
         gen(node->rhs);
         printf(pop("rdi")); // move result to rax
         printf(pop("rax")); // move result to rax
+        if (node->kind == ND_EXPR)
+        {
+                printf(push("rdi"));
+                return node->type;
+        }
         // printf("  pop rdi\n"); // rhs
         // printf("  pop rax\n"); // lhs
         if (!t)

@@ -678,6 +678,7 @@ Type *declaration_specifier() // bool declaration)
 /* primary = ident.ident | ident->ident | num | ident | ident "(" exprs? ")" | primary "[" expr "]" | "(" expr ")" | TK_STR*/
 Node *expr();
 Node *stmt();
+Node *assign();
 /* primary = num | ident ("(" exprs? ")")? | "(" expr ")" */
 /* exprs      = expr ("," expr)* */
 Node *primary()
@@ -749,7 +750,7 @@ Node *primary()
                         }
                         for (int i = 0; i < 6 && !consume(")"); i++)
                         {
-                                add_node(ans, expr());
+                                add_node(ans, assign());
                                 consume(",");
                         }
                         fprintf(tout, "funcall</%s>\n", __func__);
@@ -1261,8 +1262,18 @@ Node *assign()
 extern Node *stmt();
 Node *expr()
 {
-        Node *node = NULL;
-        node = assign();
+        Node *node = assign();
+        Token *tok = NULL;
+
+        for (;;)
+        {
+                if ((tok = consume(",")))
+                {
+                        node = new_node(ND_EXPR, node, assign(), tok, node->type);
+                        continue;
+                }
+                return node;
+        }
         return node;
 }
 

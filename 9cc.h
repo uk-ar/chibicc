@@ -57,6 +57,7 @@ struct Token
 
 typedef enum
 {
+       ND_EXPR,
        ND_CASE,
        ND_BREAK,
        ND_SWITCH,
