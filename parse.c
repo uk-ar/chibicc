@@ -2,24 +2,20 @@
 //#include <stdio.h>
 struct _IO_FILE;
 typedef struct _IO_FILE FILE;
-typedef struct
-{
-        unsigned int gp_offset;
-        unsigned int fp_offset;
-        void *overflow_arg_area;
-        void *req_save_area;
-} va_list[1];
+
 extern FILE *stderr; /* Standard error output stream.  */
 typedef long unsigned int size_t;
-
-#define bool _Bool
+//#include <stdbool.h>
+// typedef char _Bool;
+#define bool char
+//#define bool _Bool
 #define true 1
 #define false 0
-#define NULL ((void *)0)
-int vfprintf(FILE *stream, const char *format, va_list arg);
+#define NULL (0)
+/*int vfprintf(FILE *stream, const char *format, va_list arg);
 #define va_start(v, l) __builtin_va_start(v, l)
 #define va_end(v) __builtin_va_end(v)
-#define va_arg(v, l) __builtin_va_arg(v, l)
+#define va_arg(v, l) __builtin_va_arg(v, l)*/
 void *calloc(size_t __nmemb, size_t __size);
 int fprintf(FILE *__restrict __stream, const char *__restrict __fmt, ...);
 
@@ -32,7 +28,7 @@ int fprintf(FILE *__restrict __stream, const char *__restrict __fmt, ...);
 void exit(int __status);
 extern int strcmp(const char *__s1, const char *__s2);
 extern size_t strlen(const char *__s);
-extern int vasprintf(char **ret, const char *format, va_list ap);
+// extern int vasprintf(char **ret, const char *format, va_list ap);
 //#define _ISbit(bit) ((bit) < 8 ? ((1 << (bit)) << 8) : ((1 << (bit)) >> 8))
 extern int strncmp(const char *__s1, const char *__s2, size_t __n);
 /*enum
@@ -65,50 +61,6 @@ Token *token; // current token
 char *filename;
 char *user_input;
 FILE *tout;
-
-char *format(char *fmt, ...)
-{
-        char *ptr;
-        // not working on x86_64 on arm
-        // FILE* out = open_memstream(&ptr, &size);
-
-        va_list ap;
-        va_start(ap, fmt);
-        // vfprintf(out, fmt, ap);
-        vasprintf(&ptr, fmt, ap);
-        va_end(ap);
-        // fclose(out);
-        return ptr;
-}
-
-void error_at(char *loc, char *fmt, ...)
-{
-        va_list ap;
-        char *start = loc;
-        while (user_input < start && start[-1] != '\n') //*(start-1)
-                start--;
-
-        char *end = loc;
-        while (*end && *end != '\n')
-                end++;
-
-        int line_num = 1;
-        for (char *p = user_input; p < loc; p++)
-        {
-                if (*p == '\n')
-                        line_num++;
-        }
-
-        int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
-        fprintf(stderr, "%.*s\n", (int)(end - start), start);
-
-        int pos = loc - start + indent;
-        fprintf(stderr, "%*s^ ", pos, " ");
-        va_start(ap, fmt);
-        vfprintf(stderr, fmt, ap);
-        fprintf(stderr, "\n");
-        exit(1);
-}
 
 HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str)
@@ -1685,8 +1637,15 @@ int initilizer_list(bool top, Type *type)
                         //  globals->init = format(".LC%d", find_string(tok)->offset);
                 }
         }
+        else if (consume("("))
+        {
+                consume_Token(TK_NUM); // TODO:recursive
+                expect(")");
+                return 1;
+        }
         else
         {
+
                 consume_Token(TK_NUM);
                 int n = token->pos - p;
                 add_list(globals->init, format("%.*s", n, p));
@@ -1844,7 +1803,10 @@ Node *declaration(bool top)
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
 
-        return init_declarator(base_t, top);
+        Node *node = NULL;
+        if (node = init_declarator(base_t, top))
+                return node;
+        return declaration(top);
 }
 
 Node *code[10000] = {0};

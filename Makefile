@@ -8,32 +8,32 @@ CC=gcc
 
 .PRECIOUS: test/common.s test/self.s
 
-test/%.exe: 9cc test/%.c test/common.s test/self.s codegen.s
+test/%.exe: stage1 test/%.c test/common.s test/self.s codegen.s main.s hashmap.s
 # parse.s
 # 
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)
 	$(CC) -o test/$*.e -E -P -C test/$*.c
 #コンパイル時エラー解析のため名前を統一
 	cp test/$*.e tmp.cx
-	./9cc test/$*.e > test/$*.s	
+	./stage1 test/$*.e > test/$*.s	
 #テストバイナリ作成
 	cp test/$*.s tmp.s
 	$(CC) -static -g -o $@ test/$*.s test/common.s test/self.s
 
 stage1: $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) -o $@ $(OBJS) $(CFLAGS)
 
 stage2: test stage1 $(ASMS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) -o $@ $(ASMS) $(CFLAGS)
 
 all: stage2
 
 $(OBJS):9cc.h
  
-%.s: %.c
+%.s: %.c stage1
 	$(CC) -o $*.e -E -P -C $*.c
 	cp $*.e tmp.cx
-	./9cc $*.e > $*.s	
+	./stage1 $*.e > $*.s	
 
 test: $(TESTS)
 #実行時エラー解析のため名前を統一
@@ -53,6 +53,6 @@ test_o: 9cc test/common.o
 	sh ./test.sh
 
 clean:
-	rm -f *.o *~ tmp* *.e test/*.s test/*.e test/*.exe
+	rm -f *.o *~ tmp* 9cc stage1 stage2 *.e *.s test/*.s test/*.e test/*.exe
 
 .PHONY: test clean

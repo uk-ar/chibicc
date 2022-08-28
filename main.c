@@ -98,6 +98,7 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "char", (void *)TK_TYPE_SPEC);
         add_hash(keyword2token, "long", (void *)TK_TYPE_SPEC);
         add_hash(keyword2token, "struct", (void *)TK_TYPE_SPEC);
+        //add_hash(keyword2token, "__builtin_va_list", (void *)TK_TYPE_SPEC);
 
         add_hash(keyword2token, "auto", (void *)TK_STORAGE);
         add_hash(keyword2token, "register", (void *)TK_STORAGE);

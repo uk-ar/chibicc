@@ -4,6 +4,7 @@
     "files.associations": {
         "9cc.h": "c",
         "test.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "stdbool.h": "c"
     }
 }

@@ -26,10 +26,10 @@
         ]
     },
         {
-            "name": "Launch Main",
+            "name": "stage1",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/9cc",
+            "program": "${workspaceFolder}/stage1",
             "args": ["tmp.cx"],            
             //"args": ["test/string.e"],            
             //"args": ["test/control.e"],            
@@ -46,7 +46,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build Main"
+            "preLaunchTask": "Build stage1"
         }
     ]
 }

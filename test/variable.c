@@ -1,11 +1,16 @@
 #include "test.h"
 
+
 int a = 4, *b = &a;
 char f = 'a', i[] = "qux", *g = "foo";
 char h[4] = "bar", *j = h;
-char *k[]={"ab","cd"};
+char *k[] = {"ab", "cd"};
+
+////int *l = ((void *)0);
+int *l = (0);
 int main(int argc, char **argv)
 {
+    //ASSERT(0, l);
     ASSERT(0, strcmp("ab", k[0]));
     ASSERT(0, strcmp("cd", k[1]));
     ASSERT('b', ({ j[0]; }));

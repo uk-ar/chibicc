@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Main",
+            "label": "Build stage1",
             "type": "shell",
-            "command": "make all",
+            "command": "make stage1",
             "group": {
                 "kind": "build",
                 "isDefault": true
