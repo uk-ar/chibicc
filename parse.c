@@ -1639,13 +1639,12 @@ int initilizer_list(bool top, Type *type)
         }
         else if (consume("("))
         {
-                consume_Token(TK_NUM); // TODO:recursive
+                add_list(globals->init, format("%d", expect_num()));
                 expect(")");
                 return 1;
         }
         else
         {
-
                 consume_Token(TK_NUM);
                 int n = token->pos - p;
                 add_list(globals->init, format("%.*s", n, p));
