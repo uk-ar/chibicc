@@ -25,7 +25,7 @@ extern FILE *fopen(const char *__restrict __filename,
                    const char *__restrict __modes);
 long int ftell(FILE *__stream);
 extern void *calloc(size_t __nmemb, size_t __size);
-fread(void *__restrict __ptr, size_t __size, size_t __n,
+extern int fread(void *__restrict __ptr, size_t __size, size_t __n,
       FILE *__restrict __stream);
 extern int fclose(FILE *__stream);
 

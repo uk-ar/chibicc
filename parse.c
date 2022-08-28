@@ -60,7 +60,7 @@ extern int memcmp(const void *__s1, const void *__s2, size_t __n);
 
 #include "9cc.h"
 
-    Token *token; // current token
+Token *token; // current token
 
 char *filename;
 char *user_input;
@@ -125,9 +125,10 @@ bool equal_Token(Token *tok, TokenKind kind)
 {
         if (!tok)
                 return false;
-        if ((tok->kind != kind) && ((get_hash(keyword2token, tok->str) != (void *)kind)))
-                return false;
-        return true;
+        if ((tok->kind == kind) ||
+            (tok->kind == TK_IDENT && (get_hash(keyword2token, tok->str) == (void *)kind)))
+                return true;
+        return false;
 }
 
 Token *consume_Token(TokenKind kind)
@@ -349,7 +350,7 @@ Token *tokenize(char *p)
                 }
                 if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' ||
                     *p == ')' || *p == '=' || *p == ';' || *p == '{' || *p == '}' || *p == ',' || *p == '&' ||
-                    *p == '[' || *p == ']' || *p == '.' || *p == '!' || *p == '%' || *p == ':')
+                    *p == '[' || *p == ']' || *p == '.' || *p == '!' || *p == '%' || *p == ':' || *p == '?')
                 {
                         cur = new_token(TK_RESERVED, cur, p++, 1, loc);
                         continue;
@@ -1243,17 +1244,23 @@ Node *constant_expr()
         {
                 if ((tok = consume("?")))
                 {
-                        // node = expr();
-                        // expect(":")
-                        // node = constant_expr();
+                        Node *then = expr();
+                        Node *cond = node;
+                        node = new_node(ND_COND, NULL, NULL, tok, then->type);
+
+                        node->cond = cond;
+                        node->then = then;
+
+                        expect(":");
+                        node->els = constant_expr();
                 }
+                return node;
         }
-        return node;
 }
 Node *assign()
 {
         Token *tok = NULL;
-        Node *node = logical_expr();
+        Node *node = constant_expr();
         if ((tok = consume("+="))) //右結合
         {
                 fprintf(tout, " ass\n<%s>\n", __func__);

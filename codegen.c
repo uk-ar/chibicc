@@ -25,6 +25,7 @@ extern int strcmp(const char *__s1, const char *__s2);
 */
 FILE *tout2;
 char *nodeKind[] = {
+    "ND_COND",
     "ND_EXPR",
     "ND_CASE",
     "ND_BREAK",
@@ -253,7 +254,7 @@ Type *gen(Node *node)
                 gen(node->cond);
                 fprintf(tout2, "# </cond>\n");
                 printf(pop("rax")); // move result to rax
-                // printf("  pop rax\n"); // move result to rax
+
                 printf("  cmp rax, 0\n");
                 int num = count();
                 printf("  je .Lelse%d\n", num);
@@ -266,6 +267,30 @@ Type *gen(Node *node)
                 {
                         gen(node->els);
                 }
+                printf(".Lend%d:\n", num);
+                // printf("  push 0\n", num);//
+                fprintf(tout2, "# </%s>\n", nodeK);
+                return NULL;
+        }
+        else if (node->kind == ND_COND)
+        {
+                // printf("  .loc 1 %d\n", node->token->loc);
+                fprintf(tout2, "# <cond>\n");
+                gen(node->cond);
+                fprintf(tout2, "# </cond>\n");
+                printf(pop("rax")); // move result to rax
+                printf("  cmp rax, 0\n");
+                int num = count();
+
+                printf("  je .Lelse%d\n", num);
+                fprintf(tout2, "# <then>\n");
+                gen(node->then);
+                fprintf(tout2, "# </then>\n");
+                printf("  jmp .Lend%d\n", num);
+                
+                printf(".Lelse%d:\n", num);
+                gen(node->els);
+
                 printf(".Lend%d:\n", num);
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
