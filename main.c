@@ -1,4 +1,4 @@
-#include <stdio.h>
+/*#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -6,7 +6,28 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <assert.h>
+*/
 #include "9cc.h"
+
+#define NULL ((void *)0)
+struct _IO_FILE;
+typedef struct _IO_FILE FILE;
+extern FILE *stderr; /* Standard error output stream.  */
+extern FILE *stdout; /* Standard error output stream.  */
+extern int *__errno_location(void);
+char *strerror(int __errnum);
+#define errno (*__errno_location())
+#define SEEK_SET 0 /* Seek from beginning of file.  */
+#define SEEK_CUR 1 /* Seek from current position.  */
+#define SEEK_END 2 /* Seek from end of file.  */
+typedef long unsigned int size_t;
+extern FILE *fopen(const char *__restrict __filename,
+                   const char *__restrict __modes);
+long int ftell(FILE *__stream);
+extern void *calloc(size_t __nmemb, size_t __size);
+fread(void *__restrict __ptr, size_t __size, size_t __n,
+      FILE *__restrict __stream);
+extern int fclose(FILE *__stream);
 
 extern FILE *tout;
 extern FILE *tout2;
@@ -117,7 +138,7 @@ int main(int argc, char **argv)
 
         token = tokenize(user_input);
         program();
-        assert(lstack_i == 0);
+        //assert(lstack_i == 0);
         fclose(tout);
 
         // header

@@ -279,7 +279,7 @@ Type *gen(Node *node)
                 printf(pop("rax")); // move result to rax
                 for (HashNode *c = node->cases->begin; c; c = c->next)
                 {
-                        printf("  cmp rax, %d\n", c->value);
+                        printf("  cmp rax, %d\n", (int)c->value);
                         printf("  je .Lcase%s\n", c->key);
                 }
                 if (node->els)

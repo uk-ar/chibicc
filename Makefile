@@ -1,14 +1,16 @@
 CFLAGS=-std=c99 -g -static -Wall
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
+ASMS=$(SRCS:.c=.s)
 TESTSRCS=$(filter-out test/common.c test/self.c,$(wildcard test/*.c))
 TESTS=$(TESTSRCS:.c=.exe)
 CC=gcc
 
 .PRECIOUS: test/common.s test/self.s
 
-test/%.exe: 9cc test/%.c test/common.s test/self.s
-# codegen.s
+test/%.exe: 9cc test/%.c test/common.s test/self.s codegen.s
+# parse.s
+# 
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)
 	$(CC) -o test/$*.e -E -P -C test/$*.c
 #コンパイル時エラー解析のため名前を統一
@@ -18,8 +20,13 @@ test/%.exe: 9cc test/%.c test/common.s test/self.s
 	cp test/$*.s tmp.s
 	$(CC) -static -g -o $@ test/$*.s test/common.s test/self.s
 
-9cc: $(OBJS)
-	$(CC) -o 9cc $(OBJS) $(LDFLAGS)
+stage1: $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+stage2: test stage1 $(ASMS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+all: stage2
 
 $(OBJS):9cc.h
  
@@ -46,6 +53,6 @@ test_o: 9cc test/common.o
 	sh ./test.sh
 
 clean:
-	rm -f 9cc *.o *~ tmp* *.e test/*.s test/*.e test/*.exe
+	rm -f *.o *~ tmp* *.e test/*.s test/*.e test/*.exe
 
 .PHONY: test clean
