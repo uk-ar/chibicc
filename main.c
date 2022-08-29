@@ -38,7 +38,7 @@ extern FILE *tout2;
 extern char *user_input;
 extern char *filename;
 extern Token *token;
-//extern Node *code[];
+// extern Node *code[];
 extern LVar *locals, *globals, *strings, *functions;
 extern int lstack_i;
 extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
@@ -200,9 +200,10 @@ int main(int argc, char **argv)
                 }
         }
 
-        for (Node *c = code->head; c;c=c->next2){
+        for (Node *c = code->head; c; c = c->next)
+        {
                 gen(c);
-        }       
+        }
         /*for (int i = 0; code[i]; i++)
         {
                 gen(code[i]);

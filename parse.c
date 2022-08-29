@@ -376,8 +376,8 @@ void add_node(Node *node, Node *new_node)
                 node->tail = new_node;
                 return;
         }
-        node->tail->next2 = new_node;
-        node->tail = node->tail->next2;
+        node->tail->next = new_node;
+        node->tail = node->tail->next;
         return;
 }
 LVar *locals = NULL;
@@ -1442,7 +1442,7 @@ Node *stmt()
                                 new_node_num(n, tok, new_type(TY_INT, NULL, 4, "int")),
                                 NULL, tok, NULL);
                 node->val = count();
-                add_hash(cases, format("%d", node->val), (void*)n);
+                add_hash(cases, format("%d", node->val), (void *)n);
                 expect(":");
                 fprintf(tout, " case\n</%s>\n", __func__);
                 return node;
@@ -1516,7 +1516,7 @@ Node *stmt()
                 fprintf(tout, " <next>\n");
                 if (!consume(")"))
                 {
-                        node->next = expr();
+                        node->inc = expr();
                         expect(")");
                 }
                 fprintf(tout, " </next>\n");
@@ -1817,21 +1817,21 @@ Node *declaration(bool top)
         return declaration(top);
 }
 
-//Node *code[10000] = {0};
-Node* program()
+// Node *code[10000] = {0};
+Node *program()
 {
         int i = 0;
         fprintf(tout, " \n<%s>\n", __func__);
         fprintf(tout, " %s\n", user_input);
-        Node *ans = new_node(ND_BLOCK, NULL, NULL, NULL, NULL);//dummy
+        Node *ans = new_node(ND_BLOCK, NULL, NULL, NULL, NULL); // dummy
         while (!at_eof())
         {
                 // fprintf(tout," c:%d:%s\n",i,token->pos);
                 // fprintf(tout," c:%d:%d\n",i,code[i]->kind);
-                //code[i++] = declaration(true);
+                // code[i++] = declaration(true);
                 add_node(ans, declaration(true));
         }
         fprintf(tout, " \n</%s>\n", __func__);
-        //code[i] = NULL;
+        // code[i] = NULL;
         return ans;
 }

@@ -125,11 +125,11 @@ struct Node
        Node *then;   // if,while,for then
        Node *els;    // if else,switch default
        Node *init;   // for init
-       Node *next;   // for next
+       Node *inc;    // for next
        Node **stmts; // block
        Node *tail;
        Node *head;
-       Node *next2; // treat as list
+       Node *next; // treat as list
        Type *type;
        HashMap *cases;
        int val;    // enable iff kind == ND_NUM
@@ -173,7 +173,7 @@ Token *tokenize(char *p);
 Node *expr();
 Type *gen(Node *root);
 // extern FILE *tout;
-Node* program();
+Node *program();
 void error_at(char *loc, char *fmt, ...);
 
 HashMap *new_hash(int size);
