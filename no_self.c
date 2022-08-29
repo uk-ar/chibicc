@@ -20,9 +20,9 @@ typedef long unsigned int size_t;
 #define false 0
 #define NULL ((void *)0)
 int vfprintf(FILE *stream, const char *format, va_list arg);
-#define va_start(v, l) __builtin_va_start(v, l)
+/*#define va_start(v, l) __builtin_va_start(v, l)
 #define va_end(v) __builtin_va_end(v)
-#define va_arg(v, l) __builtin_va_arg(v, l)
+#define va_arg(v, l) __builtin_va_arg(v, l)*/
 void *calloc(size_t __nmemb, size_t __size);
 int fprintf(FILE *__restrict __stream, const char *__restrict __fmt, ...);
 

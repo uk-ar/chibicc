@@ -125,7 +125,7 @@ int expect_num()
 { //
         if (equal_Token(token, TK_ENUM))
         {
-                int ans = get_hash(enums, token->str);
+                int ans = (int)get_hash(enums, token->str);
                 token = token->next;
                 return ans;
         }
@@ -136,6 +136,7 @@ int expect_num()
                 return ans;
         }
         error_at(token->pos, "token is not number");
+        return 0;
 }
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len, int loc)
@@ -1441,7 +1442,7 @@ Node *stmt()
                                 new_node_num(n, tok, new_type(TY_INT, NULL, 4, "int")),
                                 NULL, tok, NULL);
                 node->val = count();
-                add_hash(cases, format("%d", node->val), n);
+                add_hash(cases, format("%d", node->val), (void*)n);
                 expect(":");
                 fprintf(tout, " case\n</%s>\n", __func__);
                 return node;
@@ -1811,7 +1812,7 @@ Node *declaration(bool top)
                 error_at(token->pos, "declaration should start with \"type\"");
 
         Node *node = NULL;
-        if (node = init_declarator(base_t, top))
+        if ((node = init_declarator(base_t, top)))
                 return node;
         return declaration(top);
 }

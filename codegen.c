@@ -23,6 +23,7 @@ extern int strcmp(const char *__s1, const char *__s2);
 #include <stdarg.h>
 
 */
+#include <assert.h>
 FILE *tout2;
 char *nodeKind[] = {
     "ND_CONTINUE",
@@ -64,15 +65,15 @@ char *nodeKind[] = {
 };
 
 int align = 0;
-char *push(char *reg)
+int push(char *reg)
 {
         align++;
-        return format("  push %s\n", reg);
+        return printf("  push %s\n", reg);
 }
-char *pop(char *reg)
+int pop(char *reg)
 {
         align--;
-        return format("  pop %s\n", reg);
+        return printf("  pop %s\n", reg);
 }
 Type *gen_lval(Node *node)
 { // push address
@@ -83,7 +84,7 @@ Type *gen_lval(Node *node)
                 // printf("  lea rax, rip[%s]\n",strndup(node->token->pos,node->token->len));//base pointer
                 // printf("  mov rax, %s\n",strndup(node->token->pos,node->token->len));//base pointer
                 // printf("  push rax\n"); // save local variable address
-                printf(push("rax"));
+                push("rax");
                 /* fprintf(tout2,"#lvar </%s>\n",nodeKind[node->kind]); */
                 return node->type;
         }
@@ -92,8 +93,8 @@ Type *gen_lval(Node *node)
                 printf("  mov rax, rbp\n"); // base pointer
                 printf("  sub rax, %d\n", node->offset);
                 // printf("  push rax\n"); // save local variable address
-                printf(push("rax"));
-                // printf(push(format("[rax-%d]",node->offset)));
+                push("rax");
+                // push(format("[rax-%d]",node->offset));
                 fprintf(tout2, "#lvar </%s>\n", nodeKind[node->kind]);
                 return node->type;
         }
@@ -106,6 +107,7 @@ Type *gen_lval(Node *node)
         else
         {
                 error_at(node->token->pos, "token is not lvalue\n", node->token->str);
+                return NULL;
         }
 }
 int count()
@@ -135,7 +137,7 @@ Type *gen(Node *node)
                 LVar *var = find_string(node->token);
                 // printf("  .loc 1 %d\n", node->token->loc);
                 printf("  mov rax , OFFSET FLAT:.LC%d\n", var->offset);
-                printf(push("rax"));
+                push("rax");
                 // printf("  push rax\n");
                 return node->type;
         }
@@ -146,7 +148,6 @@ Type *gen(Node *node)
                 printf("  .type %s, @function\n", node->token->str);
                 printf("%s:\n", node->token->str);
                 // printf("  .loc 1 %d\n", node->token->loc);
-                align = 0;
                 // dump();
                 printf("  push rbp\n");                                   // save base pointer
                 printf("  mov rbp, rsp\n");                               // save stack pointer
@@ -180,7 +181,7 @@ Type *gen(Node *node)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
                 //  printf("  push %d\n", node->val);
-                printf(push(format("%d", node->val)));
+                push(format("%d", node->val));
                 fprintf(tout2, "# %d</%s>\n", node->val, nodeKind[node->kind]);
                 return node->type;
         }
@@ -192,7 +193,7 @@ Type *gen(Node *node)
                 {
                         return t;
                 }
-                printf(pop("rbx")); // get address
+                pop("rbx"); // get address
                 // printf("  pop rbx\n"); // get address
                 if (t->kind == TY_CHAR)
                 {
@@ -201,13 +202,13 @@ Type *gen(Node *node)
                 else if (t->kind == TY_INT)
                 {
                         printf("  mov eax, DWORD PTR [rbx]\n"); // get data from address
-                        printf("  cdqe\n"); 
+                        printf("  cdqe\n");
                 }
                 else
                 {
                         printf("  mov rax, QWORD PTR [rbx]\n"); // get data from address
                 }
-                printf(push("rax"));
+                push("rax");
                 // printf("  push rax\n"); // save local variable value
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return t;
@@ -217,8 +218,8 @@ Type *gen(Node *node)
                 // printf("  .loc 1 %d\n", node->token->loc);
                 Type *t = gen_lval(node->lhs);
                 gen(node->rhs);
-                printf(pop("rax")); // rhs
-                printf(pop("rbx")); // lhs                
+                pop("rax"); // rhs
+                pop("rbx"); // lhs
                 if (node->type->kind == TY_CHAR)
                 {
                         printf("  mov BYTE PTR [rbx],al\n");
@@ -232,7 +233,7 @@ Type *gen(Node *node)
                 { // todo fix for struct
                         printf("  mov [rbx],rax\n");
                 }
-                printf(push("rax"));
+                push("rax");
                 // printf("  push [rax]\n"); // save expression result(ex. a=b=c)
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
                 return t;
@@ -243,7 +244,7 @@ Type *gen(Node *node)
                 if (node->rhs)
                 {
                         gen(node->rhs);
-                        printf(pop("rax")); // move result to rax
+                        pop("rax"); // move result to rax
                 }
                 // printf("  pop rax\n");     //
                 printf("  mov rsp,rbp\n"); // restore stack pointer
@@ -254,11 +255,12 @@ Type *gen(Node *node)
         }
         else if (node->kind == ND_IF)
         {
-                // printf("  .loc 1 %d\n", node->token->loc);
+                //int pre = align;
+                //printf("  .loc 1 %d\n", node->token->loc);
                 fprintf(tout2, "# <cond>\n");
                 gen(node->cond);
                 fprintf(tout2, "# </cond>\n");
-                printf(pop("rax")); // move result to rax
+                pop("rax"); // move result to rax
 
                 printf("  cmp rax, 0\n");
                 int num = count();
@@ -275,6 +277,7 @@ Type *gen(Node *node)
                 printf(".Lend%d:\n", num);
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
+                //assert(align == pre);
                 return NULL;
         }
         else if (node->kind == ND_COND)
@@ -283,7 +286,7 @@ Type *gen(Node *node)
                 fprintf(tout2, "# <cond>\n");
                 gen(node->cond);
                 fprintf(tout2, "# </cond>\n");
-                printf(pop("rax")); // move result to rax
+                pop("rax"); // move result to rax
                 printf("  cmp rax, 0\n");
                 int num = count();
 
@@ -303,13 +306,14 @@ Type *gen(Node *node)
         }
         else if (node->kind == ND_SWITCH)
         {
+                //int pre = align;
                 // printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
                 gen(node->cond);
-                printf(pop("rax")); // move result to rax
+                pop("rax"); // move result to rax
                 for (HashNode *c = node->cases->begin; c; c = c->next)
                 {
-                        printf("  cmp rax, %d\n", (int)c->value);
+                        printf("  cmp rax, %ld\n", (long)c->value);
                         printf("  je .Lcase%s\n", c->key);
                 }
                 if (node->els)
@@ -326,6 +330,7 @@ Type *gen(Node *node)
 
                 printf("%s:\n", break_labels[depth]); // for break;
                 // fprintf(tout2, "# </%s>\n", nodeK);
+                //assert(pre == align);
                 return NULL;
         }
         else if (node->kind == ND_BREAK)
@@ -360,17 +365,17 @@ Type *gen(Node *node)
         {
                 fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 gen(node->lhs);
-                printf(pop("rax")); // move result to rax
+                pop("rax"); // move result to rax
 
                 int num = count();
                 printf("  cmp rax, 0\n");
                 printf("  je .Lend%d\n", num);
 
-                gen(node->rhs);     // result is in stack
-                printf(pop("rax")); // move result to rax
+                gen(node->rhs); // result is in stack
+                pop("rax");     // move result to rax
 
                 printf(".Lend%d:\n", num);
-                printf(push("rax"));
+                push("rax");
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
                 return NULL;
         }
@@ -378,32 +383,33 @@ Type *gen(Node *node)
         {
                 fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 gen(node->lhs);
-                printf(pop("rax")); // move result to rax
+                pop("rax"); // move result to rax
 
                 int num = count();
                 printf("  cmp rax, 0\n");
                 printf("  jne .Lend%d\n", num);
 
-                gen(node->rhs);     // result is in stack
-                printf(pop("rax")); // move result to rax
+                gen(node->rhs); // result is in stack
+                pop("rax");     // move result to rax
 
                 printf(".Lend%d:\n", num);
-                printf(push("rax"));
+                push("rax");
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
                 return NULL;
         }
         else if (node->kind == ND_WHILE)
         {
+                //int pre = align;
                 // printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
                 continue_labels[depth] = format(".Lbegin%d", num);
                 break_labels[depth] = format(".Lend%d", num);
-                
+
                 printf("%s:\n", continue_labels[depth]);
                 fprintf(tout2, "# <cond>\n");
                 gen(node->cond);
                 fprintf(tout2, "# </cond>\n");
-                printf(pop("rax")); // move result to rax
+                pop("rax"); // move result to rax
                 printf("  cmp rax, 0\n");
                 printf("  je %s\n", break_labels[depth]);
 
@@ -414,10 +420,12 @@ Type *gen(Node *node)
                 printf("  jmp %s\n", continue_labels[depth]);
                 printf("%s:\n", break_labels[depth]);
                 fprintf(tout2, "# </%s>\n", nodeK);
+                //assert(pre == align);
                 return NULL;
         }
         else if (node->kind == ND_FOR)
         {
+                //int pre = align;
                 // printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
                 continue_labels[depth] = format(".Lnext%d", num);
@@ -428,7 +436,7 @@ Type *gen(Node *node)
                 {
                         fprintf(tout2, "# <init>\n");
                         gen(node->init); // block
-                        // printf(pop("rax")); // move result to rax
+                        // pop("rax"); // move result to rax
                         fprintf(tout2, "# <init>\n");
                 }
 
@@ -437,7 +445,7 @@ Type *gen(Node *node)
                 {
                         fprintf(tout2, "# <cond>\n");
                         gen(node->cond);
-                        printf(pop("rax")); // move result to rax
+                        pop("rax"); // move result to rax
                         fprintf(tout2, "# </cond>\n");
                 }
 
@@ -458,7 +466,7 @@ Type *gen(Node *node)
                         depth++;
                         fprintf(tout2, "# <next>\n");
                         gen(node->next);
-                        printf(pop("rax")); // move result to rax
+                        pop("rax"); // move result to rax
                         fprintf(tout2, "# </next>\n");
                         depth--;
                 }
@@ -466,18 +474,21 @@ Type *gen(Node *node)
                 printf("  jmp %s\n", cond_label);
                 printf("%s:\n", break_labels[depth]);
                 fprintf(tout2, "# </%s>\n", nodeK);
+                //assert(pre == align);
                 return NULL;
         }
         else if (node->kind == ND_BLOCK)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
+                //int pre = align;
                 for (Node *c = node->head; c; c = c->next2)
                 {
                         gen(c);
                         if (c->kind != ND_IF && c->kind != ND_BLOCK && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK && c->kind != ND_FOR)
-                                printf(pop("rax")); // move result to rax
-                                                    // printf("  pop rax\n"); // move result to remove
+                                pop("rax"); // move result to rax
+                                            // printf("  pop rax\n"); // move result to remove
                 }
+                //assert(pre == align);
                 // printf("  push 0\n"); // same behavior as ({;})
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return NULL;
@@ -489,8 +500,8 @@ Type *gen(Node *node)
                 {
                         gen(c);
                         if (c->next2 && c->kind != ND_BLOCK && c->kind != ND_IF && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK && c->kind != ND_FOR)
-                                printf(pop("rax")); // move result to rax
-                                                    // printf("  pop rax\n"); // move result to remove
+                                pop("rax"); // move result to rax
+                                            // printf("  pop rax\n"); // move result to remove
                         /*if(c->kind!=ND_BLOCK && c->kind!=ND_ELSE && c->kind!=ND_FOR &&
                                 c->kind!=ND_FUNC && c->kind!=ND_IF && c->kind!=ND_RETURN && c->kind!=ND_WHILE)
                                 printf("  pop rax\n"); // move result to remove*/
@@ -513,7 +524,7 @@ Type *gen(Node *node)
                 i--;
                 for (; i >= 0; i--)
                 {
-                        printf(pop(argreg[i])); // arg
+                        pop(argreg[i]); // arg
                         // printf("  pop %s\n", argreg[i]);
                 }
                 printf("  mov eax, 0\n"); // set al to 0 for printf
@@ -526,7 +537,7 @@ Type *gen(Node *node)
                 printf("  call %s\n", node->token->str);
                 if (offset != 0)
                         printf("  add rsp, %d\n", offset);
-                printf(push("rax"));
+                push("rax");
                 // printf("  push rax\n"); // save result to sp
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return node->type;
@@ -542,8 +553,8 @@ Type *gen(Node *node)
         else if (node->kind == ND_DEREF)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
-                Type *t = gen(node->lhs); // address is in stack
-                printf(pop("rdi"));       // move result to rax
+                gen(node->lhs); // address is in stack
+                pop("rdi");               // move result to rax
                 // printf("  pop rdi\n");
                 if (node->type->kind == TY_CHAR)
                 {
@@ -558,7 +569,7 @@ Type *gen(Node *node)
                 {
                         printf("  mov rax,[rdi]\n"); // get data from address
                 }
-                printf(push("rax"));
+                push("rax");
                 // printf("  push rax\n"); // expression result */
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return node->type;
@@ -566,11 +577,11 @@ Type *gen(Node *node)
         // printf("  .loc 1 %d\n", node->token->loc);
         Type *t = gen(node->lhs);
         gen(node->rhs);
-        printf(pop("rdi")); // move result to rax
-        printf(pop("rax")); // move result to rax
+        pop("rdi"); // move result to rax
+        pop("rax"); // move result to rax
         if (node->kind == ND_EXPR)
         {
-                printf(push("rdi"));
+                push("rdi");
                 return node->type;
         }
         // printf("  pop rdi\n"); // rhs
@@ -638,7 +649,7 @@ Type *gen(Node *node)
                 break;
         }
         // printf("  push rax\n");
-        printf(push("rax"));
+        push("rax");
         fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         return node->type;
 }

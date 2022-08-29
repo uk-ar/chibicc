@@ -25,9 +25,13 @@ extern FILE *fopen(const char *__restrict __filename,
                    const char *__restrict __modes);
 long int ftell(FILE *__stream);
 extern void *calloc(size_t __nmemb, size_t __size);
-extern int fread(void *__restrict __ptr, size_t __size, size_t __n,
+extern size_t fread(void *__restrict __ptr, size_t __size, size_t __n,
       FILE *__restrict __stream);
 extern int fclose(FILE *__stream);
+extern int fprintf(FILE *__restrict __stream,
+                   const char *__restrict __format, ...);
+extern int fseek(FILE *__stream, long int __off, int __whence);
+extern int printf(const char *__restrict __format, ...);
 
 extern FILE *tout;
 extern FILE *tout2;
@@ -173,11 +177,11 @@ int main(int argc, char **argv)
                 {
                         if (var->type->kind == TY_ARRAY)
                         {
-                                printf("  .string %s\n", p->head->value);
+                                printf("  .string %s\n", (char*)p->head->value);
                         }
                         else
                         {
-                                printf("  %s %s\n", global_types[var->type->kind], p->head->value);
+                                printf("  %s %s\n", global_types[var->type->kind], (char*)p->head->value);
                         }
                 }
                 else
@@ -186,11 +190,11 @@ int main(int argc, char **argv)
                         {
                                 if (var->type->ptr_to->kind == TY_ARRAY)
                                 {
-                                        printf("  .string %s\n", n->value);
+                                        printf("  .string %s\n", (char*)n->value);
                                 }
                                 else
                                 {
-                                        printf("  %s %s\n", global_types[var->type->ptr_to->kind], n->value);
+                                        printf("  %s %s\n", global_types[var->type->ptr_to->kind], (char*)n->value);
                                 }
                         }
                 }
