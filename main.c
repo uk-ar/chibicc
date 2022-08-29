@@ -26,7 +26,7 @@ extern FILE *fopen(const char *__restrict __filename,
 long int ftell(FILE *__stream);
 extern void *calloc(size_t __nmemb, size_t __size);
 extern size_t fread(void *__restrict __ptr, size_t __size, size_t __n,
-      FILE *__restrict __stream);
+                    FILE *__restrict __stream);
 extern int fclose(FILE *__stream);
 extern int fprintf(FILE *__restrict __stream,
                    const char *__restrict __format, ...);
@@ -38,7 +38,7 @@ extern FILE *tout2;
 extern char *user_input;
 extern char *filename;
 extern Token *token;
-extern Node *code[];
+//extern Node *code[];
 extern LVar *locals, *globals, *strings, *functions;
 extern int lstack_i;
 extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "char", (void *)TK_TYPE_SPEC);
         add_hash(keyword2token, "long", (void *)TK_TYPE_SPEC);
         add_hash(keyword2token, "struct", (void *)TK_TYPE_SPEC);
-        //add_hash(keyword2token, "__builtin_va_list", (void *)TK_TYPE_SPEC);
+        // add_hash(keyword2token, "__builtin_va_list", (void *)TK_TYPE_SPEC);
 
         add_hash(keyword2token, "auto", (void *)TK_STORAGE);
         add_hash(keyword2token, "register", (void *)TK_STORAGE);
@@ -142,8 +142,8 @@ int main(int argc, char **argv)
         user_input = read_file(filename);
 
         token = tokenize(user_input);
-        program();
-        //assert(lstack_i == 0);
+        Node *code = program();
+        // assert(lstack_i == 0);
         fclose(tout);
 
         // header
@@ -177,11 +177,11 @@ int main(int argc, char **argv)
                 {
                         if (var->type->kind == TY_ARRAY)
                         {
-                                printf("  .string %s\n", (char*)p->head->value);
+                                printf("  .string %s\n", (char *)p->head->value);
                         }
                         else
                         {
-                                printf("  %s %s\n", global_types[var->type->kind], (char*)p->head->value);
+                                printf("  %s %s\n", global_types[var->type->kind], (char *)p->head->value);
                         }
                 }
                 else
@@ -190,22 +190,26 @@ int main(int argc, char **argv)
                         {
                                 if (var->type->ptr_to->kind == TY_ARRAY)
                                 {
-                                        printf("  .string %s\n", (char*)n->value);
+                                        printf("  .string %s\n", (char *)n->value);
                                 }
                                 else
                                 {
-                                        printf("  %s %s\n", global_types[var->type->ptr_to->kind], (char*)n->value);
+                                        printf("  %s %s\n", global_types[var->type->ptr_to->kind], (char *)n->value);
                                 }
                         }
                 }
         }
-        for (int i = 0; code[i]; i++)
+
+        for (Node *c = code->head; c;c=c->next2){
+                gen(c);
+        }       
+        /*for (int i = 0; code[i]; i++)
         {
                 gen(code[i]);
 
                 // pop each result in order not to over flow
                 printf("  pop rax\n");
-        }
+        }*/
 
         return 0;
 }

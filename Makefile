@@ -8,7 +8,7 @@ CC=gcc
 
 .PRECIOUS: test/common.s test/self.s
 
-test/%.exe: stage1 test/%.c test/common.s test/self.s #codegen.s main.s hashmap.s
+test/%.exe: stage1 test/%.c test/common.o test/self.o #codegen.s main.s hashmap.s
 # parse.s
 # 
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)
@@ -18,7 +18,7 @@ test/%.exe: stage1 test/%.c test/common.s test/self.s #codegen.s main.s hashmap.
 	./stage1 test/$*.e > test/$*.s	
 #テストバイナリ作成
 	cp test/$*.s tmp.s
-	$(CC) -static -g -o $@ test/$*.s test/common.s test/self.s
+	$(CC) -static -g -o $@ test/$*.s test/common.o test/self.o
 
 stage1: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(CFLAGS)

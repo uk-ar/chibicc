@@ -173,7 +173,7 @@ Token *tokenize(char *p);
 Node *expr();
 Type *gen(Node *root);
 // extern FILE *tout;
-void program();
+Node* program();
 void error_at(char *loc, char *fmt, ...);
 
 HashMap *new_hash(int size);

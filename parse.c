@@ -1817,18 +1817,21 @@ Node *declaration(bool top)
         return declaration(top);
 }
 
-Node *code[10000] = {0};
-void program()
+//Node *code[10000] = {0};
+Node* program()
 {
         int i = 0;
         fprintf(tout, " \n<%s>\n", __func__);
         fprintf(tout, " %s\n", user_input);
+        Node *ans = new_node(ND_BLOCK, NULL, NULL, NULL, NULL);//dummy
         while (!at_eof())
         {
                 // fprintf(tout," c:%d:%s\n",i,token->pos);
                 // fprintf(tout," c:%d:%d\n",i,code[i]->kind);
-                code[i++] = declaration(true);
+                //code[i++] = declaration(true);
+                add_node(ans, declaration(true));
         }
         fprintf(tout, " \n</%s>\n", __func__);
-        code[i] = NULL;
+        //code[i] = NULL;
+        return ans;
 }
