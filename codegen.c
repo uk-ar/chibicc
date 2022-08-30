@@ -241,9 +241,9 @@ Type *gen(Node *node)
         else if (node->kind == ND_RETURN)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
-                if (node->rhs)
+                if (node->lhs)
                 {
-                        gen(node->rhs);
+                        gen(node->lhs);
                         pop("rax"); // move result to rax
                 }
                 // printf("  pop rax\n");     //
