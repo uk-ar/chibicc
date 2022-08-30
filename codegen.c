@@ -135,6 +135,7 @@ static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 Type *gen_stmt(Node *node)
 {
         char *nodeK = nodeKind[node->kind];
+        int pre = align;
         if (node->kind == ND_FUNC)
         {
                 printf("  .text \n");
@@ -169,6 +170,7 @@ Type *gen_stmt(Node *node)
                 }
                 // dump();
                 gen_stmt(node->then);
+                //assert(align == 0);
                 return NULL;
         }
         else if (node->kind == ND_RETURN)
@@ -211,7 +213,7 @@ Type *gen_stmt(Node *node)
                 printf(".Lend%d:\n", num);
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
-                // assert(align == pre);
+                //assert(align == pre);
                 return NULL;
         }
         else if (node->kind == ND_SWITCH)
@@ -234,13 +236,13 @@ Type *gen_stmt(Node *node)
                 break_labels[depth] = format(".Lend%d", num);
                 fprintf(tout2, "# <then>\n");
                 depth++;
-                gen_stmt(node->then);//block
+                gen_stmt(node->then); // block
                 depth--;
                 fprintf(tout2, "# </then>\n");
 
                 printf("%s:\n", break_labels[depth]); // for break;
                 // fprintf(tout2, "# </%s>\n", nodeK);
-                // assert(pre == align);
+                //assert(align == pre);
                 return NULL;
         }
         else if (node->kind == ND_BREAK)
@@ -303,7 +305,7 @@ Type *gen_stmt(Node *node)
                 if (node->then)
                 {
                         fprintf(tout2, "# <then>\n");
-                        gen_stmt(node->then);//block
+                        gen_stmt(node->then); // block
                         fprintf(tout2, "# </then>\n");
                 }
 
@@ -321,21 +323,23 @@ Type *gen_stmt(Node *node)
                 printf("  jmp %s\n", cond_label);
                 printf("%s:\n", break_labels[depth]);
                 fprintf(tout2, "# </%s>\n", nodeK);
-                // assert(pre == align);
+                //assert(align == pre);
                 return NULL;
         }
         else if (node->kind == ND_BLOCK)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
-                // int pre = align;
+                int pre = align;
                 for (Node *c = node->head; c; c = c->next)
-                {
+                {                        
                         gen_stmt(c);
-                        if (c->kind != ND_IF && c->kind != ND_BLOCK && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK && c->kind != ND_FOR)
-                                pop("rax"); // move result to rax
+                        //if (c->kind != ND_IF && c->kind != ND_BLOCK && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK && c->kind != ND_FOR)
+                        //        pop("rax"); // move result to rax
                                             // printf("  pop rax\n"); // move result to remove
+                        if(align!=pre)
+                                error_at(c->token->pos, "stack position is wrong");
                 }
-                // assert(pre == align);
+                //assert(align == pre);
                 //  printf("  push 0\n"); // same behavior as ({;})
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return NULL;
@@ -357,16 +361,21 @@ Type *gen_stmt(Node *node)
                 printf("  je %s\n", break_labels[depth]);
 
                 fprintf(tout2, "# <then>\n");
-                gen_stmt(node->then);//block
+                gen_stmt(node->then); // block
                 fprintf(tout2, "# </then>\n");
 
                 printf("  jmp %s\n", continue_labels[depth]);
                 printf("%s:\n", break_labels[depth]);
                 fprintf(tout2, "# </%s>\n", nodeK);
-                // assert(pre == align);
+                //assert(align == pre);
                 return NULL;
         }
-        return gen_expr(node);// not need?
+        else
+        {
+                Type *t=gen_expr(node);
+                pop("rax");
+                return t;
+        }
 }
 Type *gen_expr(Node *node)
 {
@@ -509,13 +518,14 @@ Type *gen_expr(Node *node)
                 for (Node *c = node->head; c; c = c->next)
                 {
                         t = gen_stmt(c);
-                        if (c->next && c->kind != ND_BLOCK && c->kind != ND_IF && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK && c->kind != ND_FOR)
-                                pop("rax"); // move result to rax
+                        //if (c->next && c->kind != ND_BLOCK && c->kind != ND_IF && c->kind != ND_SWITCH && c->kind != ND_CASE && c->kind != ND_BREAK && c->kind != ND_FOR)
+                        //        pop("rax"); // move result to rax
                                             // printf("  pop rax\n"); // move result to remove
                         /*if(c->kind!=ND_BLOCK && c->kind!=ND_ELSE && c->kind!=ND_FOR &&
                                 c->kind!=ND_FUNC && c->kind!=ND_IF && c->kind!=ND_RETURN && c->kind!=ND_WHILE)
                                 printf("  pop rax\n"); // move result to remove*/
                 }
+                push("rax");
                 // printf("  push 0\n"); // same behavior as ({;})
                 fprintf(tout2, "# </%s>\n", nodeK);
                 return t;

@@ -10,6 +10,7 @@ char *k[] = {"ab", "cd"};
 int *l = (0);
 int main(int argc, char **argv)
 {
+    //ASSERT(1, ({int a;a=3;{a=1;}a; }));
     ASSERT(0, l);
     ASSERT(0, strcmp("ab", k[0]));
     ASSERT(0, strcmp("cd", k[1]));
