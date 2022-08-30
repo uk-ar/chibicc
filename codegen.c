@@ -464,15 +464,18 @@ Type *gen_expr(Node *node)
                 printf("  je .Lelse%d\n", num);
                 fprintf(tout2, "# <then>\n");
                 gen_expr(node->then);
+                pop("rax"); // move result to rax
                 fprintf(tout2, "# </then>\n");
                 printf("  jmp .Lend%d\n", num);
 
                 printf(".Lelse%d:\n", num);
                 Type *t = gen_expr(node->els);
-
+                pop("rax"); // move result to rax
+                
                 printf(".Lend%d:\n", num);
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
+                push("rax"); // push result
                 return t;
         }
         else if (node->kind == ND_AND)
