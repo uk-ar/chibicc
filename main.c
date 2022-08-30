@@ -202,15 +202,8 @@ int main(int argc, char **argv)
 
         for (Node *c = code->head; c; c = c->next)
         {
-                gen(c);
+                gen_stmt(c);
         }
-        /*for (int i = 0; code[i]; i++)
-        {
-                gen(code[i]);
-
-                // pop each result in order not to over flow
-                printf("  pop rax\n");
-        }*/
 
         return 0;
 }

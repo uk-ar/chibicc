@@ -171,7 +171,7 @@ struct LVar
 
 Token *tokenize(char *p);
 Node *expr();
-Type *gen(Node *root);
+Type *gen_expr(Node *root);
 // extern FILE *tout;
 Node *program();
 void error_at(char *loc, char *fmt, ...);
