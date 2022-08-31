@@ -23,9 +23,13 @@ int main(int argc, char **argv)
     ASSERT(2, 5 % 3);
     ASSERT(1, 4 % 3);
     ASSERT(0, 3 % 3);
-    int i = 0;
-    ASSERT(1, i++);
-    ASSERT(0, i--);
+    int i = 0, j = 0;
+    ASSERT(1, ++i);
+    ASSERT(-1, --j);
+    i = 0, j = 0;
+    ASSERT(0, i++);
+    ASSERT(0, j--);
+    i = 0;
     ASSERT(2, i += 2);
     ASSERT(1, i -= 1);
     ASSERT(6, i *= 6);

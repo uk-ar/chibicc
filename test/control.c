@@ -5,15 +5,7 @@ enum
     EB
 };
 int main(int argc, char **argv)
-{
-    /*ASSERT(4, ({int a=5,b=0;while(a--)
-        {
-            if (a == 2)
-                continue;
-            b++;
-        }
-        b; }));
-    */
+{   
     int y;
 
     ASSERT(3, ({ int x; if (0) x=2; else x=3; x; })); // works!
@@ -50,7 +42,7 @@ int main(int argc, char **argv)
             a++;
         }
         a; }));
-    //ASSERT(4, ({int a=5,b=0;while(a--){if (a == 2)continue;b++;}b; }));
+    ASSERT(4, ({int a=5,b=0;while(a--){if (a == 2)continue;b++;}b; }));
     ASSERT(2, (0 || 2));
     ASSERT(2, (0 || 2 || 3));
     ASSERT(1, (1 || 0));

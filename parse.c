@@ -708,7 +708,7 @@ Node *primary()
                 if ((tok = consume("{")))
                 {
                         fprintf(tout, " <%s>{\n", __func__);
-                        Node *node = new_node(ND_EBLOCK,  tok, NULL);
+                        Node *node = new_node(ND_EBLOCK, tok, NULL);
 
                         lstack[lstack_i++] = locals;
                         locals = calloc(1, sizeof(LVar));
@@ -733,7 +733,7 @@ Node *primary()
         else if ((tok = consume_Token(TK_STR)))
         {
                 fprintf(tout, "<%s>\"\n", __func__);
-                Node *ans = new_node(ND_STR,  tok, NULL);
+                Node *ans = new_node(ND_STR, tok, NULL);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
         }                                        // tk_num
@@ -760,7 +760,7 @@ Node *primary()
                         {
                                 t = new_type(TY_INT, NULL, 4, "int");
                         }
-                        Node *ans = new_node(ND_FUNCALL,  tok, t);
+                        Node *ans = new_node(ND_FUNCALL, tok, t);
                         if (consume(")"))
                         {
                                 fprintf(tout, " funcall</%s>\n", __func__);
@@ -781,11 +781,11 @@ Node *primary()
                         Node *ans = NULL;
                         if ((var = find_lvar_all(tok)))
                         {
-                                ans = new_node(ND_LVAR,  tok, var->type);
+                                ans = new_node(ND_LVAR, tok, var->type);
                         }
                         else if ((var = find_gvar(tok)))
                         {
-                                ans = new_node(ND_GVAR,  tok, var->type);
+                                ans = new_node(ND_GVAR, tok, var->type);
                         }
                         else
                         {
@@ -830,8 +830,8 @@ Node *postfix()
                         {
                                 Type *type = ans->type->ptr_to;
                                 ans = new_node_unary(ND_DEREF,
-                                                      new_node_binary(ND_ADD, ans, expr(), tok, ans->type),
-                                                      tok, type);
+                                                     new_node_binary(ND_ADD, ans, expr(), tok, ans->type),
+                                                     tok, type);
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
                                 continue;
@@ -840,10 +840,10 @@ Node *postfix()
                         {
                                 Type *type = ans->type->ptr_to;
                                 ans = new_node_unary(ND_DEREF,
-                                                      new_node_binary(ND_ADD,
-                                                                      new_node_unary(ND_ADDR, ans, ans->token, ans->type),
-                                                                      expr(), tok, new_type(TY_PTR, ans->type, 8, "from array")),
-                                                      tok, type);
+                                                     new_node_binary(ND_ADD,
+                                                                     new_node_unary(ND_ADDR, ans, ans->token, ans->type),
+                                                                     expr(), tok, new_type(TY_PTR, ans->type, 8, "from array")),
+                                                     tok, type);
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
                                 continue;
@@ -886,29 +886,39 @@ Node *postfix()
                                 error_at(token->pos, "no field defined %s", right->str);
                         Node *lhs = new_node_num(field->offset, tok, new_type(TY_CHAR, NULL, 1, "char"));
                         ans = new_node_unary(ND_DEREF,
-                                              new_node_binary(ND_ADD,
-                                                              lhs, // ans
-                                                              ans, // lhs
-                                                              tok, lhs->type),
-                                              tok, field->type);
+                                             new_node_binary(ND_ADD,
+                                                             lhs, // ans
+                                                             ans, // lhs
+                                                             tok, lhs->type),
+                                             tok, field->type);
                         continue;
                 }
                 if ((tok = consume("++")))
                 {
+                        // TODO:return non assign value
                         Type *type = ans->type;
-                        ans = new_node_binary(ND_ASSIGN,
+                        ans = new_node_binary(ND_EXPR,
                                               ans,
-                                              new_node_binary(ND_ADD, ans, new_node_num(1, tok, type), tok, type),
-                                              tok, type);
+                                              new_node_binary(ND_ASSIGN,
+                                                              ans,
+                                                              new_node_binary(ND_ADD, ans, new_node_num(1, tok, type), tok, type),
+                                                              tok, type),
+                                              tok,
+                                              type);
+
                         continue;
                 }
                 if ((tok = consume("--")))
                 {
                         Type *type = ans->type;
-                        ans = new_node_binary(ND_ASSIGN,
+                        ans = new_node_binary(ND_EXPR,
                                               ans,
-                                              new_node_binary(ND_SUB, ans, new_node_num(1, tok, type), tok, type),
-                                              tok, type);
+                                              new_node_binary(ND_ASSIGN,
+                                                              ans,
+                                                              new_node_binary(ND_SUB, ans, new_node_num(1, tok, type), tok, type),
+                                                              tok, type),
+                                              tok,
+                                              type);
                         continue;
                 }
                 // else
@@ -996,8 +1006,24 @@ Node *unary()
                 fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
                 return new_node_num(t->size, token, t);
         }
-        // TODO:++ unary
-        // TODO:-- unary
+        if ((tok = consume("++")))
+        {
+                ans = unary();
+                Type *type = ans->type;
+                return new_node_binary(ND_ASSIGN,
+                                       ans,
+                                       new_node_binary(ND_ADD, new_node_num(1, tok, type), ans, tok, type),
+                                       tok, type);
+        }
+        if ((tok = consume("--")))
+        {
+                ans = unary();
+                Type *type = ans->type;
+                return new_node_binary(ND_ASSIGN,
+                                       ans,
+                                       new_node_binary(ND_SUB, ans, new_node_num(1, tok, type), tok, type),
+                                       tok, type);
+        }
         if ((tok = consume("+")))
         {
                 fprintf(tout, " <%s>+\"\n", __func__);
@@ -1209,7 +1235,7 @@ Node *constant_expr()
                 {
                         Node *then = expr();
                         Node *cond = node;
-                        node = new_node(ND_COND,  tok, then->type);
+                        node = new_node(ND_COND, tok, then->type);
 
                         node->cond = cond;
                         node->then = then;
@@ -1308,7 +1334,7 @@ Node *compound_statement(Token *tok)
         lstack[lstack_i++] = locals;
         locals = calloc(1, sizeof(LVar));
 
-        Node *node = new_node(ND_BLOCK,  tok, NULL);
+        Node *node = new_node(ND_BLOCK, tok, NULL);
 
         while (!consume("}"))
         {
@@ -1383,10 +1409,10 @@ Node *stmt()
                 {
                         if (!node)
                         {
-                                node = new_node(ND_BLOCK,  tok, NULL);
+                                node = new_node(ND_BLOCK, tok, NULL);
                                 // node->type = t;
                         }
-                        Node *lnode = new_node(ND_LVAR,  tok, t);
+                        Node *lnode = new_node(ND_LVAR, tok, t);
                         lnode->offset = locals->offset;
                         add_node(node, new_node_binary(ND_ASSIGN, lnode, assign(), tok, lnode->type));
                 }
@@ -1404,7 +1430,7 @@ Node *stmt()
         {
                 fprintf(tout, "ret \n<%s>\n", __func__);
                 if (consume(";"))
-                        return new_node_unary(ND_RETURN,NULL,  tok, NULL);
+                        return new_node_unary(ND_RETURN, NULL, tok, NULL);
                 node = new_node_unary(ND_RETURN, expr(), tok, NULL);
                 expect(";");
                 fprintf(tout, "ret \n</%s>\n", __func__);
@@ -1414,7 +1440,7 @@ Node *stmt()
         {
                 fprintf(tout, " if\n<%s>\n", __func__);
                 expect("(");
-                node = new_node(ND_IF,  tok, NULL);
+                node = new_node(ND_IF, tok, NULL);
                 node->cond = expr();
                 expect(")");
                 node->then = stmt();
@@ -1429,7 +1455,7 @@ Node *stmt()
         {
                 fprintf(tout, " switch\n<%s>\n", __func__);
                 expect("(");
-                node = new_node(ND_SWITCH,  tok, NULL);
+                node = new_node(ND_SWITCH, tok, NULL);
                 node->cond = expr();
                 expect(")");
 
@@ -1449,8 +1475,8 @@ Node *stmt()
                 fprintf(tout, " case\n<%s>\n", __func__);
                 int n = expect_num();
                 node = new_node_unary(ND_CASE,
-                                       new_node_num(n, tok, new_type(TY_INT, NULL, 4, "int")),
-                                       tok, NULL);
+                                      new_node_num(n, tok, new_type(TY_INT, NULL, 4, "int")),
+                                      tok, NULL);
                 node->val = count();
                 add_hash(cases, format("%d", node->val), (void *)n);
                 expect(":");
@@ -1461,7 +1487,7 @@ Node *stmt()
         {
                 fprintf(tout, " default\n<%s>\n", __func__);
                 node = new_node(ND_CASE,
-                                        tok, NULL);
+                                tok, NULL);
                 node->val = count();
                 default_node = node;
                 // add_hash(cases, format("%d", node->val), n);
@@ -1473,7 +1499,7 @@ Node *stmt()
         {
                 fprintf(tout, " break\n<%s>\n", __func__);
                 expect(";");
-                node = new_node(ND_BREAK,  tok, NULL);
+                node = new_node(ND_BREAK, tok, NULL);
                 fprintf(tout, " break\n</%s>\n", __func__);
                 return node;
         }
@@ -1481,7 +1507,7 @@ Node *stmt()
         {
                 fprintf(tout, " break\n<%s>\n", __func__);
                 expect(";");
-                node = new_node(ND_CONTINUE,  tok, NULL);
+                node = new_node(ND_CONTINUE, tok, NULL);
                 fprintf(tout, " break\n</%s>\n", __func__);
                 return node;
         }
@@ -1489,7 +1515,7 @@ Node *stmt()
         {
                 fprintf(tout, " while\n<%s>\n", __func__);
                 expect("(");
-                node = new_node(ND_WHILE,  tok, NULL);
+                node = new_node(ND_WHILE, tok, NULL);
                 node->cond = expr();
                 expect(")");
                 node->then = stmt();
@@ -1504,7 +1530,7 @@ Node *stmt()
                 /* Node *then;//if,while,for then */
                 fprintf(tout, " <for>\n");
                 expect("(");
-                node = new_node(ND_FOR,  tok, NULL);
+                node = new_node(ND_FOR, tok, NULL);
 
                 lstack[lstack_i++] = locals;
                 locals = calloc(1, sizeof(LVar));
@@ -1557,7 +1583,7 @@ Node *parameter_declaration()
                 t = new_type(TY_PTR, t, 8,"ptr");*/
         Type *t = abstract_declarator(base_t);
         Token *tok = consume_ident();
-        Node *ans = new_node(ND_LVAR,  tok, t);
+        Node *ans = new_node(ND_LVAR, tok, t);
         if (!tok) // type only
                 return ans;
         LVar *var = find_lvar(tok);
@@ -1755,7 +1781,7 @@ Node *init_declarator(Type *base_t, bool top)
         { // function declaration
                 functions = new_var(tok, functions, t);
 
-                Node *ans = new_node(ND_FUNC,  tok, t);
+                Node *ans = new_node(ND_FUNC, tok, t);
 
                 lstack[lstack_i++] = locals;
                 locals = calloc(1, sizeof(LVar));
@@ -1773,7 +1799,7 @@ Node *init_declarator(Type *base_t, bool top)
                 ans->then = compound_statement(tok); // block
                 locals = lstack[--lstack_i];
                 // force insert return
-                add_node(ans->then, new_node(ND_RETURN,  tok, NULL));
+                add_node(ans->then, new_node(ND_RETURN, tok, NULL));
 
                 ans->offset = loffset;
                 loffset = 0;
@@ -1833,7 +1859,7 @@ Node *program()
         int i = 0;
         fprintf(tout, " \n<%s>\n", __func__);
         fprintf(tout, " %s\n", user_input);
-        Node *ans = new_node(ND_BLOCK,  NULL, NULL); // dummy
+        Node *ans = new_node(ND_BLOCK, NULL, NULL); // dummy
         while (!at_eof())
         {
                 // fprintf(tout," c:%d:%s\n",i,token->pos);

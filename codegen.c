@@ -577,9 +577,9 @@ Type *gen_expr(Node *node)
         gen_expr(node->rhs);
         pop("rdi"); // move result to rax
         pop("rax"); // move result to rax
-        if (node->kind == ND_EXPR)
+        if (node->kind == ND_EXPR)//comma
         {
-                push("rdi");
+                push("rax");//return left
                 return node->type;
         }
         if (!t)
