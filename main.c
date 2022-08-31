@@ -156,7 +156,7 @@ int main(int argc, char **argv)
                 printf("  .text \n");
                 // printf("  .section      .rodata \n");
                 printf(".LC%d:\n", var->offset);
-                printf("  .string \"%s\"\n", var->name);
+                printf("  .string %s\n", var->name);
         }
         // for debug
         printf(".LCdebug:\n");

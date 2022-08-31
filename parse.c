@@ -170,8 +170,8 @@ Token *tokenize(char *p)
                 // fprintf(tout," t:%c\n",*p);
                 if (*p == '"')
                 {
-                        p++;
                         char *s = p;
+                        p++;
                         while (*p)
                         {
                                 if (*p == '"' && *(p - 1) != '\\')
@@ -180,7 +180,7 @@ Token *tokenize(char *p)
                         }
                         if (!(*p))
                                 error_at(p, "'\"' is not closing");
-                        cur = new_token(TK_STR, cur, s, p - s, loc); // skip "
+                        cur = new_token(TK_STR, cur, s, p - s + 1, loc); // include " in order not to match consume
                         LVar *var = find_string(cur);
                         if (var)
                         {
@@ -673,11 +673,13 @@ Type *declaration_specifier() // bool declaration)
         Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
         return struct_declaration(type);*/
 }
-void enter_scope(){
+void enter_scope()
+{
         lstack[lstack_i++] = locals;
         locals = calloc(1, sizeof(LVar));
 }
-void leave_scope(){
+void leave_scope()
+{
         lstack[lstack_i] = NULL;
         locals = lstack[--lstack_i];
 }
@@ -1059,13 +1061,13 @@ Node *unary()
                 fprintf(tout, " deref\n</%s>\n", __func__);
                 return node;
         }
-        if ((tok = consume("&"))) // TODO:move?
+        if ((tok = consume("&")))
         {
                 fprintf(tout, " ref\n<%s>\n", __func__);
                 Node *lhs = unary();
                 return new_node_unary(ND_ADDR, lhs, tok, lhs->type);
         }
-        if ((tok = consume("!"))) // TODO:move?
+        if ((tok = consume("!"))) // TODO:~
         {
                 fprintf(tout, " <%s>\n", __func__);
                 Node *lhs = new_node_num(0, tok, new_type(TY_INT, NULL, 4, "int"));
@@ -1350,7 +1352,7 @@ Node *compound_statement(Token *tok)
         }
 
         fprintf(tout, " }\n</%s>\n", __func__);
-        
+
         leave_scope();
 
         return node;
@@ -1674,7 +1676,7 @@ int initilizer_list(bool top, Type *type)
                 if (type->kind == TY_ARRAY)
                 {
                         // int n = tok->len;
-                        add_list(globals->init, format("\"%s\"", tok->str));
+                        add_list(globals->init, format("%s", tok->str));
                         return tok->len;
                         // globals->init = calloc(n + 3, sizeof(char));
                         // snprintf(globals->init, n + 3, "\"%s\"", p);
