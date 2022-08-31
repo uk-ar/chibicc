@@ -1,17 +1,22 @@
 #include "test.h"
 
-
 int a = 4, *b = &a;
 char f = 'a', i[] = "qux", *g = "foo";
 char h[4] = "bar", *j = h;
 char *k[] = {"ab", "cd"};
 
-//int *l = ((void *)0);
+// int *l = ((void *)0);
 int *l = (0);
 
 int main(int argc, char **argv)
 {
-    //ASSERT(1, ({int a;a=3;{a=1;}a; }));//TODO:FIX
+    ASSERT(1, ({int a;a=3;{a=1;}a; }));//TODO:FIX
+    ASSERT(4, ({ a; }));//dont reuse name scope
+    ASSERT(a, 4);
+    /*printf("%p\n", &a);
+    ({int a;printf("%p\n",&a); });
+    ({int a;{printf("%p\n",&a);} });*/
+
     ASSERT(10, 0xa);//hexa
     ASSERT(9, 011);//octa
     ASSERT(-1<0, 1);
@@ -59,10 +64,11 @@ int main(int argc, char **argv)
     ASSERT(3, ({int a;a=3;{int a;a=1;}a; }));
 
     // comment*/
+    //#if 0
     ASSERT(3, ({ // hello
                3;
            }));
     ASSERT(2, ({ /*hello\n commnent*/2; }));
-
+    //#endif
     return 0;
 }

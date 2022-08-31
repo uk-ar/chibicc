@@ -673,6 +673,14 @@ Type *declaration_specifier() // bool declaration)
         Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
         return struct_declaration(type);*/
 }
+void enter_scope(){
+        lstack[lstack_i++] = locals;
+        locals = calloc(1, sizeof(LVar));
+}
+void leave_scope(){
+        lstack[lstack_i] = NULL;
+        locals = lstack[--lstack_i];
+}
 // https://cs.wmich.edu/~gupta/teaching/cs4850/sumII06/The%20syntax%20of%20C%20in%20Backus-Naur%20form.htm
 /* program    = stmt* */
 /* stmt       = expr ";"
@@ -710,8 +718,7 @@ Node *primary()
                         fprintf(tout, " <%s>{\n", __func__);
                         Node *node = new_node(ND_EBLOCK, tok, NULL);
 
-                        lstack[lstack_i++] = locals;
-                        locals = calloc(1, sizeof(LVar));
+                        enter_scope();
 
                         while (!consume("}"))
                         {
@@ -719,7 +726,9 @@ Node *primary()
                         }
 
                         fprintf(tout, " }</%s>\n", __func__);
-                        locals = lstack[--lstack_i];
+
+                        leave_scope();
+
                         expect(")"); // important
                         return node;
                 }
@@ -1331,8 +1340,7 @@ Node *compound_statement(Token *tok)
 {
         fprintf(tout, " {\n<%s>\n", __func__);
 
-        lstack[lstack_i++] = locals;
-        locals = calloc(1, sizeof(LVar));
+        enter_scope();
 
         Node *node = new_node(ND_BLOCK, tok, NULL);
 
@@ -1342,7 +1350,8 @@ Node *compound_statement(Token *tok)
         }
 
         fprintf(tout, " }\n</%s>\n", __func__);
-        locals = lstack[--lstack_i];
+        
+        leave_scope();
 
         return node;
 }
@@ -1532,8 +1541,7 @@ Node *stmt()
                 expect("(");
                 node = new_node(ND_FOR, tok, NULL);
 
-                lstack[lstack_i++] = locals;
-                locals = calloc(1, sizeof(LVar));
+                enter_scope();
 
                 fprintf(tout, " <init>\n");
                 if (!consume(";"))
@@ -1558,7 +1566,7 @@ Node *stmt()
                 fprintf(tout, " </next>\n");
                 node->then = stmt(); // composed statement
                 fprintf(tout, " </for>\n");
-                locals = lstack[--lstack_i];
+                leave_scope();
                 return node;
         }
         if ((tok = consume("{"))) // compound-statement
@@ -1783,13 +1791,12 @@ Node *init_declarator(Type *base_t, bool top)
 
                 Node *ans = new_node(ND_FUNC, tok, t);
 
-                lstack[lstack_i++] = locals;
-                locals = calloc(1, sizeof(LVar));
+                enter_scope();
 
                 parameter_type_list(ans);
                 if (consume(";"))
                 {
-                        locals = lstack[--lstack_i];
+                        leave_scope();
                         return declaration(top);
                 }
                 Token *tok = consume("{");
@@ -1797,7 +1804,7 @@ Node *init_declarator(Type *base_t, bool top)
                         error_at(token->pos, "need block\n");
                 // TODO:check mismatch
                 ans->then = compound_statement(tok); // block
-                locals = lstack[--lstack_i];
+                leave_scope();
                 // force insert return
                 add_node(ans->then, new_node(ND_RETURN, tok, NULL));
 

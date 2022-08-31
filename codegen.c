@@ -23,7 +23,7 @@ extern int strcmp(const char *__s1, const char *__s2);
 #include <stdarg.h>
 
 */
-#include <assert.h>
+//#include <assert.h>
 FILE *tout2;
 char *nodeKind[] = {
     "ND_CONTINUE",
