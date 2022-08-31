@@ -8,9 +8,13 @@ char *k[] = {"ab", "cd"};
 
 //int *l = ((void *)0);
 int *l = (0);
+
 int main(int argc, char **argv)
 {
-    //ASSERT(1, ({int a;a=3;{a=1;}a; }));
+    //ASSERT(1, ({int a;a=3;{a=1;}a; }));//TODO:FIX
+    ASSERT(10, 0xa);//hexa
+    ASSERT(9, 011);//octa
+    ASSERT(-1<0, 1);
     ASSERT(0, l);
     ASSERT(0, strcmp("ab", k[0]));
     ASSERT(0, strcmp("cd", k[1]));

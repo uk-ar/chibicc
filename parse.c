@@ -312,7 +312,7 @@ Token *tokenize(char *p)
                 {
                         char *pre = p;
                         cur = new_token(TK_NUM, cur, p, 0, loc);
-                        cur->val = strtol(p, &p, 10);
+                        cur->val = strtol(p, &p, 0);
                         cur->len = p - pre;
                         // printf("%d",p-pre);
                         continue;

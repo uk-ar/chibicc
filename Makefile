@@ -1,7 +1,7 @@
 CFLAGS=-std=c99 -g -static -Wall
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
-ASMS=$(SRCS:.c=.s)
+ASMS=$(filter-out no_self.s ,$(SRCS:.c=.s))
 TESTSRCS=$(filter-out test/common.c test/self.c,$(wildcard test/*.c))
 TESTS=$(TESTSRCS:.c=.exe)
 CC=gcc
