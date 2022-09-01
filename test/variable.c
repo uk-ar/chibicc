@@ -10,7 +10,7 @@ int *l = (0);
 
 int main(int argc, char **argv)
 {
-    ASSERT(1, ({int a;a=3;{a=1;}a; }));//TODO:FIX
+    ASSERT(1, ({int a;a=3;{a=1;}a; }));
     ASSERT(4, ({ a; }));//dont reuse name scope
     ASSERT(a, 4);
     /*printf("%p\n", &a);
@@ -23,6 +23,7 @@ int main(int argc, char **argv)
     ASSERT(0, l);
     ASSERT(0, strcmp("ab", k[0]));
     ASSERT(0, strcmp("cd", k[1]));
+   // ASSERT(0, strcmp("main", __func__));
     ASSERT('b', ({ j[0]; }));
     ASSERT('b', ({ h[0]; })); // ok
     ASSERT('b', ({ *j; }));   // ok

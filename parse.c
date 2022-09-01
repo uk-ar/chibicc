@@ -390,7 +390,7 @@ void add_node(Node *node, Node *new_node)
         node->tail = node->tail->next;
         return;
 }
-LVar *locals = NULL;
+LVar *locals = &(LVar){};
 LVar *globals = NULL;
 LVar *functions = NULL;
 HashMap *cases = NULL;
@@ -451,9 +451,15 @@ LVar *new_var(Token *tok, LVar *next, Type *t)
         var->type = t;
         return var;
 }
+int loffset = 0;
+LVar *new_local(Token *tok, LVar *next, Type *t)
+{
+        LVar *ans=new_var(tok,next,t);
+        ans->offset=align_to(loffset,t->size);
+        return ans;
+}
 LVar *struct_declarator_list(LVar *lvar);
 // in order to reset offset
-int loffset = 0;
 int align_to(int offset, int size)
 {
         offset = (offset + size - 1) / size * size;
@@ -475,7 +481,7 @@ LVar *struct_declaration(Type *type)
         }
         // add_hash(structs, str1, st_vars);
         type->size = align_to(loffset, max_offset);
-        loffset = 0;
+        //loffset = 0;
         return st_vars;
 }
 
@@ -1389,26 +1395,14 @@ Node *stmt()
                 else if (consume("["))
                 {
                         int n = expect_num();
-                        locals = new_var(tok, locals, new_type(TY_ARRAY, t, n * t->size, "array"));
-                        locals->type->array_size = n;
-                        int size = locals->type->size;
-                        locals->offset = (loffset + size - 1) / size * size; // ajust
+                        locals = new_local(tok, locals, new_type(TY_ARRAY, t, n * t->size, "array"));
                         locals->offset += locals->type->size * n;
                         // locals->offset = loffset + locals->type->size * n; // TODO:fix it
                         expect("]");
                 }
                 else
                 {
-                        locals = new_var(tok, locals, t);
-                        int size = locals->type->size;
-                        if (size <= 8)
-                        {
-                                locals->offset = (loffset + size - 1) / size * size; // ajust
-                        }
-                        else
-                        {
-                                locals->offset = (loffset + 8 - 1) / 8 * 8; // ajust
-                        }
+                        locals = new_local(tok, locals, t);
                         locals->offset += locals->type->size;
 
                         // locals->offset = loffset + locals->type->size; // TODO:fix it
@@ -1597,16 +1591,14 @@ Node *parameter_declaration()
         if (!tok) // type only
                 return ans;
         LVar *var = find_lvar(tok);
-        if (!var)
-        {
-                locals = new_var(tok, locals, t);
-                // locals->offset = loffset + t->size; // last offset+1;
-                int size = t->size;
-                locals->offset = (loffset + size - 1) / size * size; // ajust
-                locals->offset += size;
-
-                var = locals;
+        if (var){
+                error_at(tok->pos,"dumpicate param name '%s'",tok->str);
         }
+        locals = new_local(tok, locals, t);
+        locals->offset += t->size;
+
+        var = locals;
+
         // init_declarator側でクリアされる
         loffset = locals->offset;
         ans->offset = var->offset; // TODO: shadow
@@ -1639,7 +1631,6 @@ LVar *struct_declarator_list(LVar *lvar)
                 {
                         int n = expect_num();
                         lvar = new_var(tok, lvar, new_type(TY_ARRAY, t, n * t->size, "array"));
-                        lvar->type->array_size = n;
                         expect("]");
                 }
                 else
@@ -1727,7 +1718,6 @@ void initilizer(bool top)
         }
         if (globals->type->kind == TY_ARRAY)
         {
-                globals->type->array_size = MAX(globals->type->array_size, cnt);                   // todo fix for escape charactors
                 globals->type->size = MAX(globals->type->size, cnt * globals->type->ptr_to->size); // todo fix for escape charactors
         }
 }
@@ -1787,7 +1777,7 @@ Node *init_declarator(Type *base_t, bool top)
         {
                 error_at(tok->pos, "token '%s' is already defined", tok->str);
         }
-        if (consume("("))
+        if (consume("("))//postfix?
         { // function declaration
                 functions = new_var(tok, functions, t);
 
@@ -1806,12 +1796,12 @@ Node *init_declarator(Type *base_t, bool top)
                         error_at(token->pos, "need block\n");
                 // TODO:check mismatch
                 ans->then = compound_statement(tok); // block
+                // insert __func__
                 leave_scope();
                 // force insert return
                 add_node(ans->then, new_node(ND_RETURN, tok, NULL));
 
                 ans->offset = loffset;
-                loffset = 0;
 
                 fprintf(tout, " \n</%s>\n", __func__);
                 return ans;
@@ -1826,7 +1816,6 @@ Node *init_declarator(Type *base_t, bool top)
                 {
                         int n = expect_num();
                         globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size, "array"));
-                        globals->type->array_size = n;
                         expect("]");
                 }
         }

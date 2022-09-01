@@ -16,7 +16,6 @@ struct Type
 {
        TypeKind kind;
        struct Type *ptr_to;
-       long array_size;
        char *str;
        long size;
 };
@@ -162,11 +161,16 @@ struct LVar
 {
        LVar *next;
        char *name; // null terminated string
+       int len;    //string length of name
        Type *type;
-       int len;
+
+       // for locals
        int offset; // offset from RBP
-       // char *init;
+       // for globals
        list *init;
+       // for functions
+       int stacksize;
+       LVar *params;
 };
 
 Token *tokenize(char *p);
