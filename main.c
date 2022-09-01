@@ -67,7 +67,6 @@ char *read_file(char *path)
         return buf;
 }
 
-char *global_types[] = {".byte", ".long", ".quad", ".quad"};
 extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str);
 extern HashNode *add_hash(HashMap *h, char *key, void *value);
 
@@ -147,66 +146,7 @@ int main(int argc, char **argv)
         // assert(lstack_i == 0);
         fclose(tout);
 
-        // header
-        printf(".file \"%s\"\n", filename);
-        // printf(".file 1 \"%s\"\n", filename); unable to debug tms.s
-        printf(".intel_syntax noprefix\n");
-
-        for (Obj *var = strings; var; var = var->next)
-        {
-                printf("  .text \n");
-                // printf("  .section      .rodata \n");
-                printf(".LC%d:\n", var->offset);
-                printf("  .string %s\n", var->name);
-        }
-        // for debug
-        printf(".LCdebug:\n");
-        printf("  .string \"%s\"\n", "rsp:%p\\n");
-
-        for (Obj *var = globals; var; var = var->next)
-        { // gvar
-                if(var->is_function)
-                        continue;
-                // https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
-                printf(".data\n");
-                printf(".global %s\n", var->name);
-                printf("%s:\n", var->name);
-                list *p = var->init;
-                if (!p)
-                {
-                        printf("  .zero %ld\n", var->type->size);
-                }
-                else if (p->size == 1)
-                {
-                        if (var->type->kind == TY_ARRAY)
-                        {
-                                printf("  .string %s\n", (char *)p->head->value);
-                        }
-                        else
-                        {
-                                printf("  %s %s\n", global_types[var->type->kind], (char *)p->head->value);
-                        }
-                }
-                else
-                {
-                        for (listnode *n = p->head; n; n = n->next)
-                        {
-                                if (var->type->ptr_to->kind == TY_ARRAY)
-                                {
-                                        printf("  .string %s\n", (char *)n->value);
-                                }
-                                else
-                                {
-                                        printf("  %s %s\n", global_types[var->type->ptr_to->kind], (char *)n->value);
-                                }
-                        }
-                }
-        }
-
-        for (Node *c = code->head; c; c = c->next)
-        {
-                gen_stmt(c);
-        }
+        codegen(code,filename);
 
         return 0;
 }

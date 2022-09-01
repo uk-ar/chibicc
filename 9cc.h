@@ -179,7 +179,7 @@ struct Obj
 
 Token *tokenize(char *p);
 Node *expr();
-Type *gen_expr(Node *root);
+Type *gen_stmt(Node *root);
 // extern FILE *tout;
 Node *program();
 void error_at(char *loc, char *fmt, ...);

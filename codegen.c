@@ -24,6 +24,8 @@ extern int strcmp(const char *__s1, const char *__s2);
 
 */
 //#include <assert.h>
+
+Type *gen_expr(Node *node);
 FILE *tout2;
 char *nodeKind[] = {
     "ND_CONTINUE",
@@ -63,7 +65,7 @@ char *nodeKind[] = {
     "ND_LE",
     "ND_GE",
 };
-
+extern Obj *locals, *globals, *strings;
 int align = 0;
 int lines[100];
 int _push(char *reg, int loc)
@@ -651,4 +653,67 @@ Type *gen_expr(Node *node)
         push("rax");
         fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         return node->type;
+}
+char *global_types[] = {".byte", ".long", ".quad", ".quad"};
+int codegen(Node* code,char*filename){
+        // header
+        printf(".file \"%s\"\n", filename);
+        // printf(".file 1 \"%s\"\n", filename); unable to debug tms.s
+        printf(".intel_syntax noprefix\n");
+
+        for (Obj *var = strings; var; var = var->next)
+        {
+                printf("  .text \n");
+                // printf("  .section      .rodata \n");
+                printf(".LC%d:\n", var->offset);
+                printf("  .string %s\n", var->name);
+        }
+        // for debug
+        printf(".LCdebug:\n");
+        printf("  .string \"%s\"\n", "rsp:%p\\n");
+
+        for (Obj *var = globals; var; var = var->next)
+        { // gvar
+                if (var->is_function)
+                        continue;
+                // https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
+                printf(".data\n");
+                printf(".global %s\n", var->name);
+                printf("%s:\n", var->name);
+                list *p = var->init;
+                if (!p)
+                {
+                        printf("  .zero %ld\n", var->type->size);
+                }
+                else if (p->size == 1)
+                {
+                        if (var->type->kind == TY_ARRAY)
+                        {
+                                printf("  .string %s\n", (char *)p->head->value);
+                        }
+                        else
+                        {
+                                printf("  %s %s\n", global_types[var->type->kind], (char *)p->head->value);
+                        }
+                }
+                else
+                {
+                        for (listnode *n = p->head; n; n = n->next)
+                        {
+                                if (var->type->ptr_to->kind == TY_ARRAY)
+                                {
+                                        printf("  .string %s\n", (char *)n->value);
+                                }
+                                else
+                                {
+                                        printf("  %s %s\n", global_types[var->type->ptr_to->kind], (char *)n->value);
+                                }
+                        }
+                }
+        }
+
+        for (Node *c = code->head; c; c = c->next)
+        {
+                gen_stmt(c);
+        }
 }
