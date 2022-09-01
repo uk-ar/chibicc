@@ -136,9 +136,10 @@ int depth = 0;
 static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 Type *gen_stmt(Node *node)
 {
-        char *nodeK = nodeKind[node->kind];
+        //char *nodeK = nodeKind[node->kind];
         int pre = align;
         Type *t = NULL;
+        /*
         if (node->kind == ND_FUNC)
         {
                 printf("  .text \n");
@@ -174,7 +175,8 @@ Type *gen_stmt(Node *node)
                 // dump();
                 gen_stmt(node->then);
         }
-        else if (node->kind == ND_RETURN)
+        else */
+        if (node->kind == ND_RETURN)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
                 if (node->lhs)
@@ -186,7 +188,7 @@ Type *gen_stmt(Node *node)
                 printf("  mov rsp,rbp\n"); // restore stack pointer
                 printf("  pop rbp\n");     // restore base pointer
                 printf("  ret\n");
-                fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
+                //fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         }
         else if (node->kind == ND_IF)
         {
@@ -212,7 +214,7 @@ Type *gen_stmt(Node *node)
                 }
                 printf(".Lend%d:\n", num);
                 // printf("  push 0\n", num);//
-                fprintf(tout2, "# </%s>\n", nodeK);
+                //fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_SWITCH)
         {
@@ -315,7 +317,7 @@ Type *gen_stmt(Node *node)
 
                 printf("  jmp %s\n", cond_label);
                 printf("%s:\n", break_labels[depth]);
-                fprintf(tout2, "# </%s>\n", nodeK);
+                //fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_BLOCK)
         {
@@ -325,7 +327,7 @@ Type *gen_stmt(Node *node)
                         gen_stmt(c);
                 }
                 //  printf("  push 0\n"); // same behavior as ({;})
-                fprintf(tout2, "# </%s>\n", nodeK);
+                //fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_WHILE)
         {
@@ -349,7 +351,7 @@ Type *gen_stmt(Node *node)
 
                 printf("  jmp %s\n", continue_labels[depth]);
                 printf("%s:\n", break_labels[depth]);
-                fprintf(tout2, "# </%s>\n", nodeK);
+                //fprintf(tout2, "# </%s>\n", nodeK);
         }
         else
         {
@@ -654,8 +656,44 @@ Type *gen_expr(Node *node)
         fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         return node->type;
 }
+
+int function(Obj*func){
+        printf("  .text \n");
+        printf("  .global %s\n", func->name);
+        printf("  .type %s, @function\n", func->name);
+        printf("%s:\n", func->name);
+        // printf("  .loc 1 %d\n", node->token->loc);
+        // dump();
+        Obj *n = func->locals;
+        printf("  push rbp\n");                                   // save base pointer
+        printf("  mov rbp, rsp\n");                               // save stack pointer
+        printf("  sub rsp, %d\n", (n->offset + 15) / 16 * 16); // num of vals*8byte
+        for (int i = 0; i < 6 && n && n->type; i++, n = n->next)
+        {
+                // printf("  mov rax, %s\n", argreg[i]); // args to local
+                // printf("  push rax\n");               // args to local
+                printf("  mov rbx, %s\n", argreg[i]); // args to local
+                if (n->type->kind == TY_CHAR)
+                {
+                        printf("  mov BYTE PTR [rbp-%d], bl\n", n->offset); // get data from address
+                }
+                else if (n->type->kind == TY_INT)
+                {
+                        printf("  mov DWORD PTR [rbp-%d], ebx\n", n->offset); // get data from address
+                }
+                else
+                {
+                        printf("  mov QWORD PTR [rbp-%d], rbx\n", n->offset); // get data from address
+                        // printf("  mov rax, rbx\n"); // get data from address
+                }
+                // printf("  push rax\n"); // args to local
+        }
+        // dump();
+        gen_stmt(func->body);
+}
 char *global_types[] = {".byte", ".long", ".quad", ".quad"};
-int codegen(Node* code,char*filename){
+int codegen(Node *code, char *filename)
+{
         // header
         printf(".file \"%s\"\n", filename);
         // printf(".file 1 \"%s\"\n", filename); unable to debug tms.s
@@ -711,9 +749,14 @@ int codegen(Node* code,char*filename){
                         }
                 }
         }
-
-        for (Node *c = code->head; c; c = c->next)
+        for (Obj *var = globals; var; var = var->next)
+        { // gvar
+                if (!var->is_function)
+                        continue;
+                function(var);
+        }
+        /*for (Node *c = code->head; c; c = c->next)
         {
                 gen_stmt(c);
-        }
+        }*/
 }
