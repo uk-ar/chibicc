@@ -39,7 +39,7 @@ extern char *user_input;
 extern char *filename;
 extern Token *token;
 // extern Node *code[];
-extern LVar *locals, *globals, *strings, *functions;
+extern Obj *locals, *globals, *strings, *functions;
 extern int lstack_i;
 extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 // struct name->LVars,type name->Type,,defname->(char*)type name,(char*)enum id->int
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
                 return 1;
         }
         tout = fopen("tmp.xml", "w");
-        locals = calloc(1, sizeof(LVar));
+        locals = calloc(1, sizeof(Obj));
         // lstack[lstack_i]=locals;
         structs = new_hash(100);
 
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
         // printf(".file 1 \"%s\"\n", filename); unable to debug tms.s
         printf(".intel_syntax noprefix\n");
 
-        for (LVar *var = strings; var; var = var->next)
+        for (Obj *var = strings; var; var = var->next)
         {
                 printf("  .text \n");
                 // printf("  .section      .rodata \n");
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
         printf(".LCdebug:\n");
         printf("  .string \"%s\"\n", "rsp:%p\\n");
 
-        for (LVar *var = globals; var; var = var->next)
+        for (Obj *var = globals; var; var = var->next)
         { // gvar
                 // https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
                 printf(".data\n");

@@ -155,13 +155,13 @@ struct list
 list *new_list();
 void add_list(list *l, void *value);
 
-typedef struct LVar LVar;
+typedef struct Obj Obj;
 
-struct LVar
+struct Obj
 {
-       LVar *next;
+       Obj *next;
        char *name; // null terminated string
-       int len;    //string length of name
+       int len;    // string length of name
        Type *type;
 
        // for locals
@@ -170,7 +170,7 @@ struct LVar
        list *init;
        // for functions
        int stacksize;
-       LVar *params;
+       Obj *params;
 };
 
 Token *tokenize(char *p);

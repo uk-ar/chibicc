@@ -126,7 +126,7 @@ void dump()
         printf("  mov eax, 0\n");
         printf("  call printf\n");
 }
-extern LVar *find_string(Token *tok);
+extern Obj *find_string(Token *tok);
 char *break_labels[100];
 char *continue_labels[100];
 int depth = 0;
@@ -319,7 +319,7 @@ Type *gen_stmt(Node *node)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
                 for (Node *c = node->head; c; c = c->next)
-                {                        
+                {
                         gen_stmt(c);
                 }
                 //  printf("  push 0\n"); // same behavior as ({;})
@@ -351,7 +351,7 @@ Type *gen_stmt(Node *node)
         }
         else
         {
-                t=gen_expr(node);
+                t = gen_expr(node);
                 pop("rax");
         }
         if (align != pre)
@@ -364,7 +364,7 @@ Type *gen_expr(Node *node)
         fprintf(tout2, "# <%s>\n", nodeK);
         if (node->kind == ND_STR)
         {
-                LVar *var = find_string(node->token);
+                Obj *var = find_string(node->token);
                 // printf("  .loc 1 %d\n", node->token->loc);
                 printf("  mov rax , OFFSET FLAT:.LC%d\n", var->offset);
                 push("rax");
@@ -452,7 +452,7 @@ Type *gen_expr(Node *node)
                 printf(".Lelse%d:\n", num);
                 Type *t = gen_expr(node->els);
                 pop("rax"); // move result to rax
-                
+
                 printf(".Lend%d:\n", num);
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
@@ -575,11 +575,11 @@ Type *gen_expr(Node *node)
         // printf("  .loc 1 %d\n", node->token->loc);
         Type *t = gen_expr(node->lhs);
         gen_expr(node->rhs);
-        pop("rdi"); // move result to rax
-        pop("rax"); // move result to rax
-        if (node->kind == ND_EXPR)//comma
+        pop("rdi");                // move result to rax
+        pop("rax");                // move result to rax
+        if (node->kind == ND_EXPR) // comma
         {
-                push("rax");//return left
+                push("rax"); // return left
                 return node->type;
         }
         if (!t)

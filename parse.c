@@ -158,9 +158,9 @@ bool isIdent(char c)
 {
         return isdigit(c) || isalpha(c);
 }
-LVar *strings = NULL;
-extern LVar *find_string(Token *tok);
-extern LVar *new_var(Token *tok, LVar *next, Type *t);
+Obj *strings = NULL;
+extern Obj *find_string(Token *tok);
+extern Obj *new_var(Token *tok, Obj *next, Type *t);
 int loc = 1;
 Token *tokenize(char *p)
 {
@@ -181,7 +181,7 @@ Token *tokenize(char *p)
                         if (!(*p))
                                 error_at(p, "'\"' is not closing");
                         cur = new_token(TK_STR, cur, s, p - s + 1, loc); // include " in order not to match consume
-                        LVar *var = find_string(cur);
+                        Obj *var = find_string(cur);
                         if (var)
                         {
                                 p++;
@@ -390,19 +390,19 @@ void add_node(Node *node, Node *new_node)
         node->tail = node->tail->next;
         return;
 }
-LVar *locals = &(LVar){};
-LVar *globals = NULL;
-LVar *functions = NULL;
+Obj *locals = &(Obj){};
+Obj *globals = NULL;
+Obj *functions = NULL;
 HashMap *cases = NULL;
 // HashMap *globals=NULL;
-LVar *lstack[100];    // local
+Obj *lstack[100];     // local
 HashMap *cstack[100]; // case
 int lstack_i = 0;
 
-LVar *find_var(char *str, LVar *var0)
+Obj *find_var(char *str, Obj *var0)
 {
         int n = strlen(str);
-        for (LVar *var = var0; var; var = var->next)
+        for (Obj *var = var0; var; var = var->next)
         {
                 if ((n == var->len) && !memcmp(str, var->name, n))
                 {
@@ -411,18 +411,18 @@ LVar *find_var(char *str, LVar *var0)
         }
         return NULL;
 }
-LVar *find_lvar(Token *tok)
+Obj *find_lvar(Token *tok)
 {
         return find_var(tok->str, locals);
 }
-LVar *find_lvar_all(Token *tok)
+Obj *find_lvar_all(Token *tok)
 {
-        LVar *ans = find_lvar(tok);
+        Obj *ans = find_lvar(tok);
         if (ans)
                 return ans;
         for (int i = lstack_i; i >= 0; i--)
         {
-                LVar *ans = find_var(tok->str, lstack[i]);
+                Obj *ans = find_var(tok->str, lstack[i]);
                 if (ans)
                 {
                         return ans;
@@ -430,21 +430,21 @@ LVar *find_lvar_all(Token *tok)
         }
         return NULL;
 }
-LVar *find_gvar(Token *tok)
+Obj *find_gvar(Token *tok)
 {
         // char *s=calloc(tok->len+1,sizeof(char));
         // snprintf(s,tok->len,tok->pos);
         // return get_hash(globals,s);
         return find_var(tok->str, globals);
 }
-LVar *find_string(Token *tok)
+Obj *find_string(Token *tok)
 {
         return find_var(tok->str, strings);
 }
-LVar *new_var(Token *tok, LVar *next, Type *t)
+Obj *new_var(Token *tok, Obj *next, Type *t)
 {
-        LVar *var;
-        var = calloc(1, sizeof(LVar));
+        Obj *var;
+        var = calloc(1, sizeof(Obj));
         var->next = next;
         var->name = tok->str;
         var->len = tok->len;
@@ -452,13 +452,13 @@ LVar *new_var(Token *tok, LVar *next, Type *t)
         return var;
 }
 int loffset = 0;
-LVar *new_local(Token *tok, LVar *next, Type *t)
+Obj *new_local(Token *tok, Obj *next, Type *t)
 {
-        LVar *ans=new_var(tok,next,t);
-        ans->offset=align_to(loffset,t->size);
+        Obj *ans = new_var(tok, next, t);
+        ans->offset = align_to(loffset, t->size);
         return ans;
 }
-LVar *struct_declarator_list(LVar *lvar);
+Obj *struct_declarator_list(Obj *lvar);
 // in order to reset offset
 int align_to(int offset, int size)
 {
@@ -466,9 +466,9 @@ int align_to(int offset, int size)
         return offset;
 }
 
-LVar *struct_declaration(Type *type)
+Obj *struct_declaration(Type *type)
 {
-        LVar *st_vars = calloc(1, sizeof(LVar));
+        Obj *st_vars = calloc(1, sizeof(Obj));
         // Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
         // type->str = str1;
         // add_hash(types, format("%s %s", type_str, str1), type);
@@ -481,13 +481,13 @@ LVar *struct_declaration(Type *type)
         }
         // add_hash(structs, str1, st_vars);
         type->size = align_to(loffset, max_offset);
-        //loffset = 0;
+        // loffset = 0;
         return st_vars;
 }
 
-LVar *enumerator_list()
+Obj *enumerator_list()
 {
-        LVar *st_vars = calloc(1, sizeof(LVar));
+        Obj *st_vars = calloc(1, sizeof(Obj));
         st_vars->offset = -1;
         while (!consume("}"))
         {
@@ -522,7 +522,7 @@ Type *declaration_specifier() // bool declaration)
         // if (type_spec->kind == TY_STRUCT)
         {
                 Type *type = NULL;
-                LVar *st_vars = NULL;
+                Obj *st_vars = NULL;
                 if (consume("{"))
                 { // anonymous
                         type = new_type(TY_STRUCT, NULL, 0, NULL);
@@ -585,7 +585,7 @@ Type *declaration_specifier() // bool declaration)
         if (strcmp(type_str, "enum") == 0)
         {
                 Type *type = NULL;
-                LVar *st_vars = NULL;
+                Obj *st_vars = NULL;
                 if (consume("{"))
                 { // anonymous
                         // type = new_type(TY_STRUCT, NULL, 0,NULL);
@@ -682,7 +682,7 @@ Type *declaration_specifier() // bool declaration)
 void enter_scope()
 {
         lstack[lstack_i++] = locals;
-        locals = calloc(1, sizeof(LVar));
+        locals = calloc(1, sizeof(Obj));
 }
 void leave_scope()
 {
@@ -768,7 +768,7 @@ Node *primary()
                         fprintf(tout, "<%s>funcall\n", __func__);
 
                         Type *t = NULL;
-                        LVar *var = find_var(tok->str, functions);
+                        Obj *var = find_var(tok->str, functions);
                         if (var)
                         {
                                 t = var->type;
@@ -794,7 +794,7 @@ Node *primary()
                 else
                 { // var ref
                         fprintf(tout, "<%s>var\n", __func__);
-                        LVar *var = NULL;
+                        Obj *var = NULL;
                         Node *ans = NULL;
                         if ((var = find_lvar_all(tok)))
                         {
@@ -877,10 +877,10 @@ Node *postfix()
                         tok = consume_ident();
                         if (!tok)
                                 error_at(token->pos, "no ident defined in struct %s", ans->type->str);
-                        LVar *var = get_hash(structs, format("struct %s", ans->type->str));
+                        Obj *var = get_hash(structs, format("struct %s", ans->type->str));
                         if (!var)
                                 error_at(token->pos, "no struct %s defined", ans->type->str);
-                        LVar *field = find_var(tok->str, var);
+                        Obj *field = find_var(tok->str, var);
                         if (!field)
                                 error_at(token->pos, "no %s field defined in %s struct", tok->str, ans->type->str);
                         ans->type = field->type;
@@ -892,13 +892,13 @@ Node *postfix()
                         //(ans->(right))
                         if (ans->type->kind != TY_PTR || ans->type->ptr_to->kind != TY_STRUCT)
                                 error_at(token->pos, "%s is not pointer to struct", ans->token->str);
-                        LVar *st_vars = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
+                        Obj *st_vars = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
                         if (!st_vars)
                                 error_at(token->pos, "no struct %s defined", ans->type->str);
                         Token *right = consume_ident();
                         if (!right)
                                 error_at(token->pos, "no ident defined in struct %s", ans->type->str);
-                        LVar *field = find_var(right->str, st_vars);
+                        Obj *field = find_var(right->str, st_vars);
                         if (!field)
                                 error_at(token->pos, "no field defined %s", right->str);
                         Node *lhs = new_node_num(field->offset, tok, new_type(TY_CHAR, NULL, 1, "char"));
@@ -1387,7 +1387,7 @@ Node *stmt()
                 {
                         error_at(token->pos, "need identifier");
                 }
-                LVar *var = find_lvar(tok); //
+                Obj *var = find_lvar(tok); //
                 if (var)
                 {
                         error_at(tok->pos, "token '%s' is already defined", tok->str);
@@ -1590,9 +1590,10 @@ Node *parameter_declaration()
         Node *ans = new_node(ND_LVAR, tok, t);
         if (!tok) // type only
                 return ans;
-        LVar *var = find_lvar(tok);
-        if (var){
-                error_at(tok->pos,"dumpicate param name '%s'",tok->str);
+        Obj *var = find_lvar(tok);
+        if (var)
+        {
+                error_at(tok->pos, "dumpicate param name '%s'", tok->str);
         }
         locals = new_local(tok, locals, t);
         locals->offset += t->size;
@@ -1605,7 +1606,7 @@ Node *parameter_declaration()
         fprintf(tout, " \n</%s>\n", __func__);
         return ans;
 }
-LVar *struct_declarator_list(LVar *lvar)
+Obj *struct_declarator_list(Obj *lvar)
 {
         Type *base_t = declaration_specifier();
         if (!base_t)
@@ -1621,7 +1622,7 @@ LVar *struct_declarator_list(LVar *lvar)
                         break;
                 }
                 fprintf(tout, " \n<%s>\n", __func__);
-                LVar *var = find_lvar(tok); //
+                Obj *var = find_lvar(tok); //
 
                 if (var)
                 {
@@ -1772,13 +1773,13 @@ Node *init_declarator(Type *base_t, bool top)
         if (!tok)
                 return NULL;
         fprintf(tout, " \n<%s>\n", __func__);
-        LVar *var = find_gvar(tok); //
+        Obj *var = find_gvar(tok); //
         if (var)
         {
                 error_at(tok->pos, "token '%s' is already defined", tok->str);
         }
-        if (consume("("))//postfix?
-        { // function declaration
+        if (consume("(")) // postfix?
+        {                 // function declaration
                 functions = new_var(tok, functions, t);
 
                 Node *ans = new_node(ND_FUNC, tok, t);
