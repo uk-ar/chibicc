@@ -173,7 +173,8 @@ struct Obj
        list *init;
        // for functions
        int stacksize;
-       Obj *params;
+       Obj *locals;
+       Node *body;
 };
 
 Token *tokenize(char *p);

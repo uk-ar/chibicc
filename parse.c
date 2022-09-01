@@ -943,7 +943,7 @@ Node *postfix()
                 return ans;
         }
 }
-Type *parameter_type_list(Node *ans);
+Obj *parameter_type_list(Node *ans);
 Type *abstract_declarator(Type *t);
 Type *direct_abstract_declarator(Type *t)
 {
@@ -956,7 +956,7 @@ Type *direct_abstract_declarator(Type *t)
                 }
                 else
                 {
-                        t = parameter_type_list(NULL);
+                        t = parameter_type_list(NULL)->type;
                 }
                 return t;
         }
@@ -1722,7 +1722,7 @@ void initilizer(bool top)
                 globals->type->size = MAX(globals->type->size, cnt * globals->type->ptr_to->size); // todo fix for escape charactors
         }
 }
-Type *parameter_type_list(Node *ans) // it should return LVar*?
+Obj *parameter_type_list(Node *ans) // it should return LVar*?
 {
         /*Type *t = declaration_specifier();
 
@@ -1731,14 +1731,15 @@ Type *parameter_type_list(Node *ans) // it should return LVar*?
         return t;*/
 
         // int off=locals->offset;
-        Type *t = NULL;
+        
         if (equal(token, "void") && equal(token->next, ")"))
         {
                 consume("void");
                 consume(")");
-                return t;
+                return NULL;
         }
 
+        //Obj *ans = NULL;
         for (int i = 0; i < 6 && !consume(")"); i++)
         {
                 if (consume("..."))
@@ -1752,13 +1753,11 @@ Type *parameter_type_list(Node *ans) // it should return LVar*?
                         add_node(ans, parameter_declaration());
                 else
                 {
-                        Node *n = parameter_declaration();
-                        if (n)
-                                t = n->type;
+                        parameter_declaration();
                 }
                 consume(",");
         }
-        return t;
+        return locals;
 }
 
 Node *declaration(bool top);
@@ -1794,12 +1793,15 @@ Node *init_declarator(Type *base_t, bool top)
                 // function declaration
                 globals = new_var(tok, globals, t);
                 globals->is_function = true;
-                
+
                 Token *tok = consume("{");
                 if (!tok)
                         error_at(token->pos, "need block\n");
                 // TODO:check mismatch
                 ans->then = compound_statement(tok); // block
+                globals->body = ans->then;
+                globals->locals = locals;
+
                 // insert __func__
                 leave_scope();
                 // force insert return
@@ -1858,7 +1860,6 @@ Node *declaration(bool top)
 // Node *code[10000] = {0};
 Node *program()
 {
-        int i = 0;
         fprintf(tout, " \n<%s>\n", __func__);
         fprintf(tout, " %s\n", user_input);
         Node *ans = new_node(ND_BLOCK, NULL, NULL); // dummy
