@@ -39,7 +39,8 @@ extern char *user_input;
 extern char *filename;
 extern Token *token;
 // extern Node *code[];
-extern Obj *locals, *globals, *strings, *functions;
+extern Obj *locals, *globals, *strings;
+//, *functions;
 extern int lstack_i;
 extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 // struct name->LVars,type name->Type,,defname->(char*)type name,(char*)enum id->int
@@ -164,6 +165,8 @@ int main(int argc, char **argv)
 
         for (Obj *var = globals; var; var = var->next)
         { // gvar
+                if(var->is_function)
+                        continue;
                 // https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
                 printf(".data\n");
                 printf(".global %s\n", var->name);

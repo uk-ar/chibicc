@@ -155,6 +155,8 @@ struct list
 list *new_list();
 void add_list(list *l, void *value);
 
+#define bool char
+
 typedef struct Obj Obj;
 
 struct Obj
@@ -163,6 +165,7 @@ struct Obj
        char *name; // null terminated string
        int len;    // string length of name
        Type *type;
+       bool is_function;
 
        // for locals
        int offset; // offset from RBP

@@ -392,7 +392,7 @@ void add_node(Node *node, Node *new_node)
 }
 Obj *locals = &(Obj){};
 Obj *globals = NULL;
-Obj *functions = NULL;
+// Obj *functions = NULL;
 HashMap *cases = NULL;
 // HashMap *globals=NULL;
 Obj *lstack[100];     // local
@@ -768,7 +768,7 @@ Node *primary()
                         fprintf(tout, "<%s>funcall\n", __func__);
 
                         Type *t = NULL;
-                        Obj *var = find_var(tok->str, functions);
+                        Obj *var = find_var(tok->str, globals);
                         if (var)
                         {
                                 t = var->type;
@@ -1779,8 +1779,7 @@ Node *init_declarator(Type *base_t, bool top)
                 error_at(tok->pos, "token '%s' is already defined", tok->str);
         }
         if (consume("(")) // postfix?
-        {                 // function declaration
-                functions = new_var(tok, functions, t);
+        {                 
 
                 Node *ans = new_node(ND_FUNC, tok, t);
 
@@ -1792,6 +1791,10 @@ Node *init_declarator(Type *base_t, bool top)
                         leave_scope();
                         return declaration(top);
                 }
+                // function declaration
+                globals = new_var(tok, globals, t);
+                globals->is_function = true;
+                
                 Token *tok = consume("{");
                 if (!tok)
                         error_at(token->pos, "need block\n");
