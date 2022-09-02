@@ -166,7 +166,7 @@ bool isIdent(char c)
         return isdigit(c) || isalpha(c);
 }
 HashMap *strings;
-extern Obj *new_var(Token *tok, Obj *next, Type *t);
+extern Obj *new_obj(Token *tok, Obj *next, Type *t);
 int loc = 1;
 
 Token *tokenize(char *p)
@@ -372,14 +372,14 @@ Node *new_node_num(long val, Token *token, Type *type)
         ans->val = val;
         return ans;
 }
-int get_string_offset(char *s)
+long get_string_offset(char *s)
 {
-        int var = get_hash(strings, s);//
-        //get_hash should return HashNode
+        long var = (long)get_hash(strings, s); //
+        // get_hash should return HashNode
         if (!var)
         {
                 var = count();
-                add_hash(strings, s, var);
+                add_hash(strings, s, (void *)var);
         }
         return var;
 }
@@ -451,11 +451,12 @@ Obj *find_gvar(Token *tok)
         // return get_hash(globals,s);
         return find_var(tok->str, globals);
 }
-Obj *new_var(Token *tok, Obj *next, Type *t)
+Obj *new_obj(Token *tok, Obj *next, Type *t)
 {
         Obj *var;
         var = calloc(1, sizeof(Obj));
         var->next = next;
+        var->token = token;
         var->name = tok->str;
         var->len = tok->len;
         var->type = t;
@@ -464,7 +465,7 @@ Obj *new_var(Token *tok, Obj *next, Type *t)
 int loffset = 0;
 Obj *new_local(Token *tok, Obj *next, Type *t)
 {
-        Obj *ans = new_var(tok, next, t);
+        Obj *ans = new_obj(tok, next, t);
         ans->offset = align_to(loffset, t->size);
         return ans;
 }
@@ -502,7 +503,7 @@ Obj *enumerator_list()
         while (!consume("}"))
         {
                 Token *tok = consume_ident();
-                st_vars = new_var(tok, st_vars, ty_int);
+                st_vars = new_obj(tok, st_vars, ty_int);
                 st_vars->offset = st_vars->next->offset + 1;
                 add_hash(keyword2token, tok->str, (void *)TK_ENUM);
                 add_hash(enums, tok->str, (void *)st_vars->offset);
@@ -541,9 +542,9 @@ Type *declaration_specifier() // bool declaration)
                 else if ((identifier = consume_ident())) // struct name
                 {
                         src_name = format("%s %s", type_str, identifier->str);
-                        if (equal(token,";"))
+                        if (equal(token, ";"))
                         {
-                                //incomplete type
+                                // incomplete type
                                 type = get_hash(types, src_name);
                                 if (!type)
                                 {
@@ -1625,12 +1626,12 @@ Obj *struct_declarator_list(Obj *lvar)
                 else if (consume("["))
                 {
                         int n = expect_num();
-                        lvar = new_var(tok, lvar, new_type(TY_ARRAY, t, n * t->size, "array"));
+                        lvar = new_obj(tok, lvar, new_type(TY_ARRAY, t, n * t->size, "array"));
                         expect("]");
                 }
                 else
                 {
-                        lvar = new_var(tok, lvar, t);
+                        lvar = new_obj(tok, lvar, t);
                 }
                 loffset = align_to(loffset, lvar->type->size);
                 lvar->offset = loffset;
@@ -1746,99 +1747,118 @@ Obj *parameter_type_list() // it should return LVar*?
         }
         return locals;
 }
-
-Obj *init_declarator(Type *base_t)
+Obj *declarator(Type *base_t)
 {
-        // LVar *vars = globals;
+        // declarator
         Type *t = base_t;
-
         while (consume("*"))
                 t = new_type(TY_PTR, t, 8, "ptr");
         Token *tok = consume_ident();
         if (!tok)
                 return NULL;
-        fprintf(tout, " \n<%s>\n", __func__);
+        /*
         Obj *var = find_gvar(tok); //
         if (var)
         {
                 error_at(tok->pos, "token '%s' is already defined", tok->str);
         }
-        if (consume("(")) // postfix?
-        {
-
-                enter_scope(); // locals initialized
-
-                parameter_type_list(); // locals updated
-                if (consume(";"))
-                {
-                        leave_scope();
-                        return globals;
-                }
-                // function declaration
-                globals = new_var(tok, globals, t);
-                globals->is_function = true;
-
-                Token *tok = consume("{");
-                if (!tok)
-                        error_at(token->pos, "need block\n");
-                // TODO:check mismatch
-                Node *node = new_node(ND_BLOCK, tok, NULL);
-
-                /*Type *t = new_type(TY_PTR, ty_char, 8, "char *");
-                locals = new_local(tok, locals, t);
-                locals->name = "__func__";
-
-                Node *func_name = new_node(ND_LVAR, tok, t);
-                func_name->offset = locals->offset;*/
-
-                /*add_node(node,
-                         new_node_binary(ND_ASSIGN, func_name,
-                         );*/
-
-                add_node(node, compound_statement(tok));
-
-                globals->body = node;
-                globals->locals = locals;
-
-                // insert __func__
-                leave_scope();
-                // force insert return
-                add_node(globals->body, new_node(ND_RETURN, tok, NULL));
-
-                // ans->offset = loffset;
-                globals->stacksize = loffset;
-
-                fprintf(tout, " \n</%s>\n", __func__);
-                return globals;
-        }
-        else if (consume("["))
+        globals = new_var(tok, globals, t);
+        return globals;
+        */
+        return new_obj(tok, NULL, t);
+}
+Obj *init_declarator(Type *base_t, Obj *obj)
+{
+        // LVar *vars = globals;
+        fprintf(tout, " \n<%s>\n", __func__);
+        if (consume("["))
         {
                 if (consume("]"))
                 {
-                        globals = new_var(tok, globals, new_type(TY_ARRAY, t, 0, "array"));
+                        // globals = new_var(tok, globals, new_type(TY_ARRAY, t, 0, "array"));
+                        obj->type = new_type(TY_ARRAY, obj->type, 0, "array");
                 }
                 else
                 {
                         int n = expect_num();
-                        globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size, "array"));
+                        // globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size, "array"));
+                        obj->type = new_type(TY_ARRAY, obj->type, n * obj->type->size, "array");
                         expect("]");
                 }
         }
         else
         {
-                globals = new_var(tok, globals, t);
+                //already created
+                // globals = new_var(tok, globals, t);
         }
+        obj->next = globals;
+        globals = obj;
         if (consume("="))
         {
                 initializer();
         }
-        if (consume(","))
+        /*if (consume(","))
         {
-                return init_declarator(base_t);
+                globals = declarator(base_t);
+                return globals = init_declarator(base_t, globals);
         }
-        expect(";");
+        expect(";");*/
         fprintf(tout, " \n</%s>\n", __func__);
         return globals;
+}
+Obj *function_definition(Obj *obj)
+{
+        expect("(");
+        enter_scope(); // locals initialized
+
+        parameter_type_list(); // locals updated
+        if (consume(";"))
+        { // prototype only
+                leave_scope();
+                // TODO:save obj to validate
+                return globals;
+        }
+        Obj *var = find_gvar(obj->token); //
+        if (var)
+        {
+                error_at(obj->token->pos, "token '%s' is already defined", obj->token->str);
+        }
+        // function declaration
+        obj->is_function = true;
+
+        Token *tok = consume("{");
+        if (!tok)
+                error_at(token->pos, "need block\n");
+        // TODO:check mismatch
+        Node *node = new_node(ND_BLOCK, tok, NULL);
+
+        /*Type *t = new_type(TY_PTR, ty_char, 8, "char *");
+        locals = new_local(tok, locals, t);
+        locals->name = "__func__";
+
+        Node *func_name = new_node(ND_LVAR, tok, t);
+        func_name->offset = locals->offset;*/
+
+        /*add_node(node,
+                        new_node_binary(ND_ASSIGN, func_name,
+                        );*/
+
+        add_node(node, compound_statement(tok));
+
+        obj->body = node;
+        obj->locals = locals;
+
+        // insert __func__
+        leave_scope();
+        // force insert return
+        add_node(obj->body, new_node(ND_RETURN, tok, NULL));
+
+        // ans->offset = loffset;
+        obj->stacksize = loffset;
+
+        fprintf(tout, " \n</%s>\n", __func__);
+        obj->next = globals;
+        return globals = obj;
 }
 /*
 <external-declaration> ::= <function-definition>
@@ -1848,6 +1868,7 @@ Obj *init_declarator(Type *base_t)
 <declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
 <init-declarator> ::= <declarator>
                     | <declarator> = <initializer>
+<declarator> ::= {<pointer>}? <direct-declarator>
 */
 Obj *external_declaration()
 {
@@ -1858,10 +1879,18 @@ Obj *external_declaration()
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
 
-        Obj *node = NULL;
-        if ((node = init_declarator(base_t)))
-                return node;
-        return NULL;
+        Obj *obj = declarator(base_t);
+        if (equal(token, "("))
+                return globals = function_definition(obj);
+
+        globals = init_declarator(base_t, obj);
+        while (!consume(";"))
+        {
+                expect(",");
+                obj = declarator(base_t);
+                globals = init_declarator(base_t, obj);
+        }
+        return globals;
 }
 
 // Node *code[10000] = {0};

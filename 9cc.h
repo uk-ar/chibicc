@@ -162,10 +162,12 @@ typedef struct Obj Obj;
 struct Obj
 {
        Obj *next;
+       Type *type;
+       bool is_function;     
+       Token *token;
+       // deprecated
        char *name; // null terminated string
        int len;    // string length of name
-       Type *type;
-       bool is_function;
 
        // for locals
        long offset; // offset from RBP
@@ -190,7 +192,7 @@ void *get_hash(HashMap *h, char *key);
 void *get_node_value(HashNode *n);
 char *format(char *fmt, ...);
 void codegen(Obj *code, char *filename);
-int get_string_offset(char *s);
+long get_string_offset(char *s);
 extern int count();
 Type *ty_int;
 Type *ty_char;
