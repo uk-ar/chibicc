@@ -65,7 +65,6 @@ char *nodeKind[] = {
     "ND_LE",
     "ND_GE",
 };
-extern Obj *locals, *globals;
 extern HashMap *strings;
 int align = 0;
 int lines[100];
@@ -712,7 +711,7 @@ void codegen(Obj *code, char *filename)
         printf(".LCdebug:\n");
         printf("  .string \"%s\"\n", "rsp:%p\\n");
 
-        for (Obj *var = globals; var; var = var->next)
+        for (Obj *var = code; var; var = var->next)
         { // gvar
                 if (var->is_function)
                         continue;
@@ -751,14 +750,10 @@ void codegen(Obj *code, char *filename)
                         }
                 }
         }
-        for (Obj *var = globals; var; var = var->next)
+        for (Obj *var = code; var; var = var->next)
         { // gvar
                 if (!var->is_function)
                         continue;
                 function(var);
         }
-        /*for (Node *c = code->head; c; c = c->next)
-        {
-                gen_stmt(c);
-        }*/
 }

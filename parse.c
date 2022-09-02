@@ -408,7 +408,6 @@ Obj *locals = &(Obj){};
 Obj *globals = NULL;
 // Obj *functions = NULL;
 HashMap *cases = NULL;
-// HashMap *globals=NULL;
 Obj *lstack[100];     // local
 HashMap *cstack[100]; // case
 int lstack_i = 0;
@@ -1747,7 +1746,7 @@ Obj *declarator(Type *base_t)
                 return NULL;
         return new_obj(tok, NULL, t);
 }
-Obj* init_declarator(Obj *obj)
+Obj* init_declarator(Obj *obj,Obj*next)
 {
         fprintf(tout, " \n<%s>\n", __func__);
         if (consume("["))
@@ -1766,10 +1765,8 @@ Obj* init_declarator(Obj *obj)
         else
         {
                 // already created
-                //  globals = new_var(tok, globals, t);
         }
-        // obj->next = globals;
-        // globals = obj;
+        obj->next = next;
         if (consume("="))
         {
                 initializer(obj);
@@ -1777,7 +1774,7 @@ Obj* init_declarator(Obj *obj)
         fprintf(tout, " \n</%s>\n", __func__);
         return obj;
 }
-Obj *function_definition(Obj *obj)
+Obj *function_definition(Obj *obj,Obj*next)
 {
         expect("(");
         enter_scope(); // locals initialized
@@ -1787,9 +1784,8 @@ Obj *function_definition(Obj *obj)
         { // prototype only
                 leave_scope();
                 // TODO:save obj to validate
-                return NULL;
+                return next;
         }
-
 
         Token *tok = consume("{");
         if (!tok)
@@ -1802,6 +1798,7 @@ Obj *function_definition(Obj *obj)
         }
         // function declaration
         obj->is_function = true;
+        obj->next = next;
         Node *node = new_node(ND_BLOCK, tok, NULL);
 
         /*Type *t = new_type(TY_PTR, ty_char, 8, "char *");
@@ -1809,10 +1806,10 @@ Obj *function_definition(Obj *obj)
         locals->name = "__func__";
 
         Node *func_name = new_node(ND_LVAR, tok, t);
-        func_name->offset = locals->offset;*/
+        func_name->offset = locals->offset;
 
         /*add_node(node,
-                        new_node_binary(ND_ASSIGN, func_name,
+                new_node_binary(ND_ASSIGN, var,
                         );*/
 
         add_node(node, compound_statement(tok));
@@ -1841,37 +1838,30 @@ Obj *function_definition(Obj *obj)
                     | <declarator> = <initializer>
 <declarator> ::= {<pointer>}? <direct-declarator>
 */
-Obj *external_declaration(Obj *gl)
+void external_declaration()
 {
         loffset = 0;
         Type *base_t = declaration_specifier();
         if (consume(";"))
-                return NULL;
+                return;
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
 
         Obj *obj = declarator(base_t);
         if (equal(token, "("))
         {
-                obj = function_definition(obj);
-                if (obj)
-                {
-                        obj->next = globals;
-                        globals = obj;
-                }
-                return globals;
+                globals = function_definition(obj,globals);                
+                return;
         }
 
-        init_declarator(obj)->next = globals;
-        globals = obj;
+        globals = init_declarator(obj, globals);        
         while (!consume(";"))
         {
                 expect(",");
                 obj = declarator(base_t);
-                init_declarator(obj)->next = globals;
-                globals = obj;
+                globals = init_declarator(obj, globals);
         }
-        return globals;
+        return;
 }
 
 // Node *code[10000] = {0};
@@ -1881,7 +1871,7 @@ Obj *program()
         fprintf(tout, " %s\n", user_input);
         while (!at_eof())
         {
-                external_declaration(globals);
+                external_declaration();
         }
         fprintf(tout, " \n</%s>\n", __func__);
 

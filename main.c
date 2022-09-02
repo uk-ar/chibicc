@@ -39,7 +39,6 @@ extern char *user_input;
 extern char *filename;
 extern Token *token;
 // extern Node *code[];
-extern Obj *locals, *globals;
 extern HashMap *strings;
 //, *functions;
 extern int lstack_i;

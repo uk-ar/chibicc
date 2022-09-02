@@ -178,6 +178,7 @@ struct Obj
        Obj *locals;
        Node *body;
 };
+extern Obj *locals, *globals;
 
 Token *tokenize(char *p);
 Node *expr();
