@@ -541,8 +541,9 @@ Type *declaration_specifier() // bool declaration)
                 else if ((identifier = consume_ident())) // struct name
                 {
                         src_name = format("%s %s", type_str, identifier->str);
-                        if (consume(";"))
+                        if (equal(token,";"))
                         {
+                                //incomplete type
                                 type = get_hash(types, src_name);
                                 if (!type)
                                 {
@@ -1771,7 +1772,6 @@ Obj *init_declarator(Type *base_t)
                 if (consume(";"))
                 {
                         leave_scope();
-                        declaration();
                         return globals;
                 }
                 // function declaration
@@ -1838,23 +1838,30 @@ Obj *init_declarator(Type *base_t)
         }
         expect(";");
         fprintf(tout, " \n</%s>\n", __func__);
-        declaration();
         return globals;
 }
+/*
+<external-declaration> ::= <function-definition>
+                         | <declaration>
 
-Obj *declaration()
+<function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
+<declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
+<init-declarator> ::= <declarator>
+                    | <declarator> = <initializer>
+*/
+Obj *external_declaration()
 {
         loffset = 0;
         Type *base_t = declaration_specifier();
         if (consume(";"))
-                return declaration();
+                return NULL;
         if (!base_t)
                 error_at(token->pos, "declaration should start with \"type\"");
 
         Obj *node = NULL;
         if ((node = init_declarator(base_t)))
                 return node;
-        return declaration();
+        return NULL;
 }
 
 // Node *code[10000] = {0};
@@ -1864,7 +1871,7 @@ Obj *program()
         fprintf(tout, " %s\n", user_input);
         while (!at_eof())
         {
-                declaration();
+                external_declaration();
         }
         fprintf(tout, " \n</%s>\n", __func__);
 
