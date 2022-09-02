@@ -65,7 +65,8 @@ char *nodeKind[] = {
     "ND_LE",
     "ND_GE",
 };
-extern Obj *locals, *globals, *strings;
+extern Obj *locals, *globals;
+extern HashMap *strings;
 int align = 0;
 int lines[100];
 int _push(char *reg, int loc)
@@ -128,7 +129,6 @@ void dump()
         printf("  mov eax, 0\n");
         printf("  call printf\n");
 }
-extern Obj *find_string(Token *tok);
 char *break_labels[100];
 char *continue_labels[100];
 int depth = 0;
@@ -136,7 +136,7 @@ int depth = 0;
 static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 Type *gen_stmt(Node *node)
 {
-        //char *nodeK = nodeKind[node->kind];
+        // char *nodeK = nodeKind[node->kind];
         int pre = align;
         Type *t = NULL;
         /*
@@ -188,7 +188,7 @@ Type *gen_stmt(Node *node)
                 printf("  mov rsp,rbp\n"); // restore stack pointer
                 printf("  pop rbp\n");     // restore base pointer
                 printf("  ret\n");
-                //fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
+                // fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         }
         else if (node->kind == ND_IF)
         {
@@ -214,7 +214,7 @@ Type *gen_stmt(Node *node)
                 }
                 printf(".Lend%d:\n", num);
                 // printf("  push 0\n", num);//
-                //fprintf(tout2, "# </%s>\n", nodeK);
+                // fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_SWITCH)
         {
@@ -317,7 +317,7 @@ Type *gen_stmt(Node *node)
 
                 printf("  jmp %s\n", cond_label);
                 printf("%s:\n", break_labels[depth]);
-                //fprintf(tout2, "# </%s>\n", nodeK);
+                // fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_BLOCK)
         {
@@ -327,7 +327,7 @@ Type *gen_stmt(Node *node)
                         gen_stmt(c);
                 }
                 //  printf("  push 0\n"); // same behavior as ({;})
-                //fprintf(tout2, "# </%s>\n", nodeK);
+                // fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_WHILE)
         {
@@ -351,7 +351,7 @@ Type *gen_stmt(Node *node)
 
                 printf("  jmp %s\n", continue_labels[depth]);
                 printf("%s:\n", break_labels[depth]);
-                //fprintf(tout2, "# </%s>\n", nodeK);
+                // fprintf(tout2, "# </%s>\n", nodeK);
         }
         else
         {
@@ -368,9 +368,9 @@ Type *gen_expr(Node *node)
         fprintf(tout2, "# <%s>\n", nodeK);
         if (node->kind == ND_STR)
         {
-                Obj *var = find_string(node->token);
+                int offset = get_hash(strings, node->token->str);
                 // printf("  .loc 1 %d\n", node->token->loc);
-                printf("  mov rax , OFFSET FLAT:.LC%ld\n", var->offset);
+                printf("  mov rax , OFFSET FLAT:.LC%ld\n", offset);
                 push("rax");
                 // printf("  push rax\n");
                 return node->type;
@@ -657,7 +657,8 @@ Type *gen_expr(Node *node)
         return node->type;
 }
 
-void function(Obj*func){
+void function(Obj *func)
+{
         printf("  .text \n");
         printf("  .global %s\n", func->name);
         printf("  .type %s, @function\n", func->name);
@@ -665,8 +666,8 @@ void function(Obj*func){
         // printf("  .loc 1 %d\n", node->token->loc);
         // dump();
 
-        printf("  push rbp\n");                                   // save base pointer
-        printf("  mov rbp, rsp\n");                               // save stack pointer
+        printf("  push rbp\n");                                      // save base pointer
+        printf("  mov rbp, rsp\n");                                  // save stack pointer
         printf("  sub rsp, %d\n", (func->stacksize + 15) / 16 * 16); // num of vals*8byte
         Obj *n = func->locals;
         for (int i = 0; i < 6 && n && n->type; i++, n = n->next)
@@ -700,12 +701,12 @@ void codegen(Obj *code, char *filename)
         // printf(".file 1 \"%s\"\n", filename); unable to debug tms.s
         printf(".intel_syntax noprefix\n");
 
-        for (Obj *var = strings; var; var = var->next)
+        for (HashNode *var = strings->begin; var; var = var->next)
         {
                 printf("  .text \n");
                 // printf("  .section      .rodata \n");
-                printf(".LC%ld:\n", var->offset);
-                printf("  .string %s\n", var->name);
+                printf(".LC%ld:\n", var->value);
+                printf("  .string %s\n", var->key);
         }
         // for debug
         printf(".LCdebug:\n");

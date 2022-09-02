@@ -64,7 +64,7 @@ FILE *tout;
 
 HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 
-//function prototypes
+// function prototypes
 Obj *parameter_type_list();
 Type *abstract_declarator(Type *t);
 Obj *declaration();
@@ -165,10 +165,14 @@ bool isIdent(char c)
 {
         return isdigit(c) || isalpha(c);
 }
-Obj *strings = NULL;
-extern Obj *find_string(Token *tok);
+HashMap *strings;
 extern Obj *new_var(Token *tok, Obj *next, Type *t);
 int loc = 1;
+
+int string_literal_offset()
+{
+}
+
 Token *tokenize(char *p)
 {
         Token head, *cur = &head;
@@ -188,17 +192,15 @@ Token *tokenize(char *p)
                         if (!(*p))
                                 error_at(p, "'\"' is not closing");
                         cur = new_token(TK_STR, cur, s, p - s + 1, loc); // include " in order not to match consume
-                        Obj *var = find_string(cur);
+
+                        HashNode *var = get_hash(strings, cur->str);
                         if (var)
                         {
                                 p++;
                                 continue;
-                        }
-                        int i = 0;
-                        if (strings)
-                                i = strings->offset + 1;
-                        strings = new_var(cur, strings, NULL);
-                        strings->offset = i;
+                        }                        
+                        add_hash(strings, cur->str, count());
+
                         p++;
                         continue;
                 }
@@ -383,6 +385,13 @@ Node *new_node_num(long val, Token *token, Type *type)
         ans->val = val;
         return ans;
 }
+Node *new_node_string(char *s, Token *token)
+{
+        // token not required
+        Node *ans = new_node(ND_STR, token, NULL);
+        // ans-> = val;
+        return ans;
+}
 void add_node(Node *node, Node *new_node)
 {
         if (!new_node)
@@ -443,10 +452,6 @@ Obj *find_gvar(Token *tok)
         // snprintf(s,tok->len,tok->pos);
         // return get_hash(globals,s);
         return find_var(tok->str, globals);
-}
-Obj *find_string(Token *tok)
-{
-        return find_var(tok->str, strings);
 }
 Obj *new_var(Token *tok, Obj *next, Type *t)
 {
@@ -1684,10 +1689,8 @@ int initilizer_list(Type *type)
                         // int n=token->pos-p;
                         // int n = 15;
                         // globals->init = calloc(n + 1, sizeof(char));
-                        add_list(globals->init, format(".LC%d", find_string(tok)->offset));
+                        add_list(globals->init, format(".LC%d", get_hash(strings,tok->str)));
                         return tok->len; // todo:count without escape charactor
-                        // snprintf(globals->init, n, ".LC%d", find_string(tok)->offset);
-                        //  globals->init = format(".LC%d", find_string(tok)->offset);
                 }
         }
         else if (consume("("))
@@ -1737,7 +1740,7 @@ Obj *parameter_type_list() // it should return LVar*?
         return t;*/
 
         // int off=locals->offset;
-        
+
         if (equal(token, "void") && equal(token->next, ")"))
         {
                 consume("void");
@@ -1745,7 +1748,7 @@ Obj *parameter_type_list() // it should return LVar*?
                 return NULL;
         }
 
-        //Obj *ans = NULL;
+        // Obj *ans = NULL;
         for (int i = 0; i < 6 && !consume(")"); i++)
         {
                 if (consume("..."))
@@ -1778,12 +1781,11 @@ Obj *init_declarator(Type *base_t)
                 error_at(tok->pos, "token '%s' is already defined", tok->str);
         }
         if (consume("(")) // postfix?
-        {                 
+        {
 
+                enter_scope(); // locals initialized
 
-                enter_scope();//locals initialized
-
-                parameter_type_list();//locals updated
+                parameter_type_list(); // locals updated
                 if (consume(";"))
                 {
                         leave_scope();
@@ -1794,13 +1796,23 @@ Obj *init_declarator(Type *base_t)
                 globals = new_var(tok, globals, t);
                 globals->is_function = true;
 
-
                 Token *tok = consume("{");
                 if (!tok)
                         error_at(token->pos, "need block\n");
                 // TODO:check mismatch
                 Node *node = new_node(ND_BLOCK, tok, NULL);
-                //add_node(node,new_node(ND_LVAR,tok,))
+
+                /*Type *t = new_type(TY_PTR, ty_char, 8, "char *");
+                locals = new_local(tok, locals, t);
+                locals->name = "__func__";
+
+                Node *func_name = new_node(ND_LVAR, tok, t);
+                func_name->offset = locals->offset;*/
+
+                /*add_node(node,
+                         new_node_binary(ND_ASSIGN, func_name,
+                         );*/
+
                 add_node(node, compound_statement(tok));
 
                 globals->body = node;
@@ -1811,8 +1823,8 @@ Obj *init_declarator(Type *base_t)
                 // force insert return
                 add_node(globals->body, new_node(ND_RETURN, tok, NULL));
 
-                //ans->offset = loffset;
-                globals->stacksize=loffset;
+                // ans->offset = loffset;
+                globals->stacksize = loffset;
 
                 fprintf(tout, " \n</%s>\n", __func__);
                 return globals;
@@ -1843,7 +1855,7 @@ Obj *init_declarator(Type *base_t)
                 return init_declarator(base_t);
         }
         expect(";");
-        fprintf(tout, " \n</%s>\n", __func__);        
+        fprintf(tout, " \n</%s>\n", __func__);
         declaration();
         return globals;
 }
@@ -1867,11 +1879,12 @@ Obj *declaration()
 Obj *program()
 {
         fprintf(tout, " \n<%s>\n", __func__);
-        fprintf(tout, " %s\n", user_input);        
+        fprintf(tout, " %s\n", user_input);
         while (!at_eof())
         {
                 declaration();
         }
         fprintf(tout, " \n</%s>\n", __func__);
+
         return globals;
 }

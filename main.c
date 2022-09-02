@@ -39,7 +39,8 @@ extern char *user_input;
 extern char *filename;
 extern Token *token;
 // extern Node *code[];
-extern Obj *locals, *globals, *strings;
+extern Obj *locals, *globals;
+extern HashMap *strings;
 //, *functions;
 extern int lstack_i;
 extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
@@ -70,9 +71,9 @@ char *read_file(char *path)
 extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str);
 extern HashNode *add_hash(HashMap *h, char *key, void *value);
 
-Type* ty_int=&(Type){TY_INT, NULL, 4, "int"};
-Type* ty_char=&(Type){TY_CHAR, NULL, 1, "char"};
-Type* ty_long=&(Type){TY_LONG, NULL, 8, "long"};
+Type *ty_int = &(Type){TY_INT, NULL, 4, "int"};
+Type *ty_char = &(Type){TY_CHAR, NULL, 1, "char"};
+Type *ty_long = &(Type){TY_LONG, NULL, 8, "long"};
 
 int main(int argc, char **argv)
 {
@@ -87,6 +88,7 @@ int main(int argc, char **argv)
         tout = fopen("tmp.xml", "w");
         locals = calloc(1, sizeof(Obj));
         // lstack[lstack_i]=locals;
+        strings = new_hash(1000);
         structs = new_hash(100);
 
         types = new_hash(100);
@@ -151,7 +153,7 @@ int main(int argc, char **argv)
         // assert(lstack_i == 0);
         fclose(tout);
 
-        codegen(code,filename);
+        codegen(code, filename);
 
         return 0;
 }

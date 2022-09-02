@@ -190,5 +190,8 @@ void *get_hash(HashMap *h, char *key);
 void *get_node_value(HashNode *n);
 char *format(char *fmt, ...);
 void codegen(Obj *code, char *filename);
+
 Type *ty_int;
+Type *ty_char;
+
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
