@@ -10,12 +10,13 @@ int *l = (0);
 
 int main(int argc, char **argv)
 {
+    ASSERT(0, strcmp("main", __func__));
     ASSERT(1, ({int a;a=3;{a=1;}a; }));
     ASSERT(4, ({ a; }));//dont reuse name scope
     ASSERT(a, 4);
-    /*printf("%p\n", &a);
-    ({int a;printf("%p\n",&a); });
-    ({int a;{printf("%p\n",&a);} });*/
+    //printf("%p\n", &a);
+    //({int a;printf("%p\n",&a); });
+    //({int a;{printf("%p\n",&a);} });
 
     ASSERT(10, 0xa);//hexa
     ASSERT(9, 011);//octa

@@ -138,43 +138,6 @@ Type *gen_stmt(Node *node)
         // char *nodeK = nodeKind[node->kind];
         int pre = align;
         Type *t = NULL;
-        /*
-        if (node->kind == ND_FUNC)
-        {
-                printf("  .text \n");
-                printf("  .global %s\n", node->token->str);
-                printf("  .type %s, @function\n", node->token->str);
-                printf("%s:\n", node->token->str);
-                // printf("  .loc 1 %d\n", node->token->loc);
-                // dump();
-                printf("  push rbp\n");                                   // save base pointer
-                printf("  mov rbp, rsp\n");                               // save stack pointer
-                printf("  sub rsp, %d\n", (node->offset + 15) / 16 * 16); // num of vals*8byte
-                Node *n = node->head;
-                for (int i = 0; i < 6 && n; i++, n = n->next)
-                {
-                        // printf("  mov rax, %s\n", argreg[i]); // args to local
-                        // printf("  push rax\n");               // args to local
-                        printf("  mov rbx, %s\n", argreg[i]); // args to local
-                        if (n->type->kind == TY_CHAR)
-                        {
-                                printf("  mov BYTE PTR [rbp-%d], bl\n", n->offset); // get data from address
-                        }
-                        else if (n->type->kind == TY_INT)
-                        {
-                                printf("  mov DWORD PTR [rbp-%d], ebx\n", n->offset); // get data from address
-                        }
-                        else
-                        {
-                                printf("  mov QWORD PTR [rbp-%d], rbx\n", n->offset); // get data from address
-                                // printf("  mov rax, rbx\n"); // get data from address
-                        }
-                        // printf("  push rax\n"); // args to local
-                }
-                // dump();
-                gen_stmt(node->then);
-        }
-        else */
         if (node->kind == ND_RETURN)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
@@ -367,9 +330,8 @@ Type *gen_expr(Node *node)
         fprintf(tout2, "# <%s>\n", nodeK);
         if (node->kind == ND_STR)
         {
-                long offset = get_string_offset(node->token->str);
                 // printf("  .loc 1 %d\n", node->token->loc);
-                printf("  mov rax , OFFSET FLAT:.LC%ld\n", offset);
+                printf("  mov rax , OFFSET FLAT:.LC%ld\n", node->offset);
                 push("rax");
                 // printf("  push rax\n");
                 return node->type;

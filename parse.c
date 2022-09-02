@@ -668,10 +668,11 @@ Type *declaration_specifier() // bool declaration)
                 return get_hash(types, src_name);
         }
 }
-void enter_scope()
+Obj *enter_scope()
 {
         lstack[lstack_i++] = locals;
         locals = calloc(1, sizeof(Obj));
+        return locals;
 }
 void leave_scope() // return loffset?
 {
@@ -1333,11 +1334,12 @@ Node *expr()
         return node;
 }
 
-Node *compound_statement(Token *tok)
+Node *compound_statement(Token *tok, Obj *scope)
 {
         fprintf(tout, " {\n<%s>\n", __func__);
 
-        enter_scope();
+        if (!scope)
+                enter_scope();
 
         Node *node = new_node(ND_BLOCK, tok, NULL);
 
@@ -1348,7 +1350,8 @@ Node *compound_statement(Token *tok)
 
         fprintf(tout, " }\n</%s>\n", __func__);
 
-        leave_scope();
+        if (!scope)
+                leave_scope();
 
         return node;
 }
@@ -1549,7 +1552,7 @@ Node *stmt()
                 return node;
         }
         if ((tok = consume("{"))) // compound-statement
-                return compound_statement(tok);
+                return compound_statement(tok, NULL);
         fprintf(tout, " <%s>\n", __func__);
         node = expr(); // expression-statement
         expect(";");
@@ -1764,7 +1767,7 @@ Obj *init_declarator(Obj *obj, Obj *next)
 Obj *function_definition(Obj *obj, Obj *next)
 {
         expect("(");
-        enter_scope(); // scope for function
+        Obj *scope = enter_scope(); // scope for function
         parameter_type_list();
         if (consume(";"))
         { // prototype only
@@ -1794,20 +1797,20 @@ Obj *function_definition(Obj *obj, Obj *next)
         lnode->offset = locals->offset;
         add_node(node, new_node_binary(ND_ASSIGN, lnode, assign(), tok, lnode->type));
         */
-        /*Type *t = new_type(TY_PTR, ty_char, 8, "char *");
+        Type *t = new_type(TY_PTR, ty_char, 8, "char *");
         locals = new_local(tok, locals, t);
         locals->name = "__func__";
-        //loffset = locals->offset;
-        /*
+        locals->len = strlen(locals->name);
+        
         Node *func_name = new_node(ND_LVAR, tok, t);
         func_name->offset = locals->offset;
-        /*
         add_node(node,
-                new_node_binary(ND_ASSIGN, var,
-                        );*/
-
-        add_node(node, compound_statement(tok));
-
+                         new_node_binary(ND_ASSIGN, func_name,
+                                 new_node_string(format("\"%s\"", obj->name), obj->token),
+                                 tok, t));
+        //loffset = locals->offset; //????
+        add_node(node, compound_statement(tok, scope));
+        //loffset = locals->offset;//????
         leave_scope();
         obj->body = node;
         // force insert return
