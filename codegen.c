@@ -119,7 +119,7 @@ Type *gen_lval(Node *node)
 }
 int count()
 {
-        static int cnt = 0;
+        static int cnt = 1;
         return cnt++;
 }
 void dump()
@@ -368,7 +368,7 @@ Type *gen_expr(Node *node)
         fprintf(tout2, "# <%s>\n", nodeK);
         if (node->kind == ND_STR)
         {
-                int offset = get_hash(strings, node->token->str);
+                long offset = get_string_offset(node->token->str);
                 // printf("  .loc 1 %d\n", node->token->loc);
                 printf("  mov rax , OFFSET FLAT:.LC%ld\n", offset);
                 push("rax");

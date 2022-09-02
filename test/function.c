@@ -5,7 +5,6 @@ void f11(void);
 
 HashMap *new_hash(int size);
 void add_hash(HashMap *h, char *key, void *value);
-void *get_hash(HashMap *h, char *key);
 
 void error_at(char *loc, char *fmt, ...);
 void program();

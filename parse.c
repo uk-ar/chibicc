@@ -169,10 +169,6 @@ HashMap *strings;
 extern Obj *new_var(Token *tok, Obj *next, Type *t);
 int loc = 1;
 
-int string_literal_offset()
-{
-}
-
 Token *tokenize(char *p)
 {
         Token head, *cur = &head;
@@ -192,15 +188,6 @@ Token *tokenize(char *p)
                         if (!(*p))
                                 error_at(p, "'\"' is not closing");
                         cur = new_token(TK_STR, cur, s, p - s + 1, loc); // include " in order not to match consume
-
-                        HashNode *var = get_hash(strings, cur->str);
-                        if (var)
-                        {
-                                p++;
-                                continue;
-                        }                        
-                        add_hash(strings, cur->str, count());
-
                         p++;
                         continue;
                 }
@@ -385,11 +372,22 @@ Node *new_node_num(long val, Token *token, Type *type)
         ans->val = val;
         return ans;
 }
+int get_string_offset(char *s)
+{
+        int var = get_hash(strings, s);//
+        //get_hash should return HashNode
+        if (!var)
+        {
+                var = count();
+                add_hash(strings, s, var);
+        }
+        return var;
+}
 Node *new_node_string(char *s, Token *token)
 {
         // token not required
         Node *ans = new_node(ND_STR, token, NULL);
-        // ans-> = val;
+        ans->offset = get_string_offset(s);
         return ans;
 }
 void add_node(Node *node, Node *new_node)
@@ -673,23 +671,6 @@ Type *declaration_specifier() // bool declaration)
                 }
                 return get_hash(types, src_name);
         }
-        /*return get_hash(types, type_str); // support typedef
-                                          // TODO:union typedef
-
-        Token *identifier = consume_ident();
-        if (!identifier)
-        { // anonymouse
-                Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
-                return struct_declaration(type);
-                error_at(token->pos, "need identifier for struct\n");
-        }
-        char *str1 = identifier->str;
-
-        if (!consume("{"))
-                // struct reference
-                return get_hash(types, format("%s %s", type_str, str1));
-        Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
-        return struct_declaration(type);*/
 }
 void enter_scope()
 {
@@ -762,7 +743,8 @@ Node *primary()
         else if ((tok = consume_Token(TK_STR)))
         {
                 fprintf(tout, "<%s>\"\n", __func__);
-                Node *ans = new_node(ND_STR, tok, NULL);
+                // Node *ans = new_node(ND_STR, tok, NULL);
+                Node *ans = new_node_string(tok->str, tok);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
         }                                        // tk_num
@@ -1374,7 +1356,7 @@ Node *compound_statement(Token *tok)
 
         return node;
 }
-extern int count();
+
 Node *default_node = NULL;
 Node *stmt()
 {
@@ -1663,7 +1645,7 @@ Obj *struct_declarator_list(Obj *lvar)
 
         return lvar;
 }
-int initilizer_list(Type *type)
+int initializer_list(Type *type)
 {
         consume("&");
         char *p = token->pos;
@@ -1689,7 +1671,7 @@ int initilizer_list(Type *type)
                         // int n=token->pos-p;
                         // int n = 15;
                         // globals->init = calloc(n + 1, sizeof(char));
-                        add_list(globals->init, format(".LC%d", get_hash(strings,tok->str)));
+                        add_list(globals->init, format(".LC%d", get_string_offset(tok->str)));
                         return tok->len; // todo:count without escape charactor
                 }
         }
@@ -1709,7 +1691,7 @@ int initilizer_list(Type *type)
                 // snprintf(globals->init, n, p);
         }
 }
-void initilizer()
+void initializer()
 {
         Token *tok = NULL;
         int cnt = 0;
@@ -1717,14 +1699,14 @@ void initilizer()
         {
                 while (!consume("}"))
                 {
-                        initilizer_list(globals->type->ptr_to);
+                        initializer_list(globals->type->ptr_to);
                         consume(",");
                         cnt++;
                 }
         }
         else
         {
-                cnt = initilizer_list(globals->type);
+                cnt = initializer_list(globals->type);
         }
         if (globals->type->kind == TY_ARRAY)
         {
@@ -1848,7 +1830,7 @@ Obj *init_declarator(Type *base_t)
         }
         if (consume("="))
         {
-                initilizer();
+                initializer();
         }
         if (consume(","))
         {
