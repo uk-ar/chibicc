@@ -11,8 +11,8 @@ extern int strcmp(const char *__s1, const char *__s2);
 
 list *new_list()
 {
-        list *new_list = calloc(1, sizeof(list));
-        return new_list;
+        list *l = calloc(1, sizeof(list));
+        return l;
 }
 void add_list(list *l, void *value)
 {

@@ -446,9 +446,6 @@ Obj *find_lvar_all(Token *tok)
 }
 Obj *find_gvar(Token *tok)
 {
-        // char *s=calloc(tok->len+1,sizeof(char));
-        // snprintf(s,tok->len,tok->pos);
-        // return get_hash(globals,s);
         return find_var(tok->str, globals);
 }
 Obj *new_obj(Token *tok, Obj *next, Type *t)
@@ -764,7 +761,7 @@ Node *primary()
                         fprintf(tout, "<%s>funcall\n", __func__);
 
                         Type *t = NULL;
-                        Obj *var = find_var(tok->str, globals);
+                        Obj *var = find_gvar(tok);
                         if (var)
                         {
                                 t = var->type;
@@ -1647,39 +1644,33 @@ Obj *struct_declarator_list(Obj *lvar)
 
         return lvar;
 }
-int initializer_list(Type *type)
+int initializer_list(Type *type, Obj *obj)
 {
         consume("&");
         char *p = token->pos;
         consume_ident();
         consume("+");
         Token *tok;
-        if (!globals->init)
+        if (!obj->init)
         {
-                globals->init = new_list();
+                obj->init = new_list();
         }
         if ((tok = consume_Token(TK_STR)))
         {
                 if (type->kind == TY_ARRAY)
                 {
-                        // int n = tok->len;
-                        add_list(globals->init, format("%s", tok->str));
+                        add_list(obj->init, format("%s", tok->str));
                         return tok->len;
-                        // globals->init = calloc(n + 3, sizeof(char));
-                        // snprintf(globals->init, n + 3, "\"%s\"", p);
                 }
                 else
                 {
-                        // int n=token->pos-p;
-                        // int n = 15;
-                        // globals->init = calloc(n + 1, sizeof(char));
-                        add_list(globals->init, format(".LC%d", get_string_offset(tok->str)));
+                        add_list(obj->init, format(".LC%d", get_string_offset(tok->str)));
                         return tok->len; // todo:count without escape charactor
                 }
         }
         else if (consume("("))
         {
-                add_list(globals->init, format("%d", expect_num()));
+                add_list(obj->init, format("%d", expect_num()));
                 expect(")");
                 return 1;
         }
@@ -1687,13 +1678,11 @@ int initializer_list(Type *type)
         {
                 consume_Token(TK_NUM);
                 int n = token->pos - p;
-                add_list(globals->init, format("%.*s", n, p));
+                add_list(obj->init, format("%.*s", n, p));
                 return 1;
-                // globals->init = calloc(n, sizeof(char));
-                // snprintf(globals->init, n, p);
         }
 }
-void initializer()
+void initializer(Obj *obj)
 {
         Token *tok = NULL;
         int cnt = 0;
@@ -1701,18 +1690,18 @@ void initializer()
         {
                 while (!consume("}"))
                 {
-                        initializer_list(globals->type->ptr_to);
+                        initializer_list(obj->type->ptr_to, obj);
                         consume(",");
                         cnt++;
                 }
         }
         else
         {
-                cnt = initializer_list(globals->type);
+                cnt = initializer_list(obj->type, obj);
         }
-        if (globals->type->kind == TY_ARRAY)
+        if (obj->type->kind == TY_ARRAY)
         {
-                globals->type->size = MAX(globals->type->size, cnt * globals->type->ptr_to->size); // todo fix for escape charactors
+                obj->type->size = MAX(obj->type->size, cnt * obj->type->ptr_to->size); // todo fix for escape charactors
         }
 }
 Obj *parameter_type_list() // it should return LVar*?
@@ -1756,55 +1745,37 @@ Obj *declarator(Type *base_t)
         Token *tok = consume_ident();
         if (!tok)
                 return NULL;
-        /*
-        Obj *var = find_gvar(tok); //
-        if (var)
-        {
-                error_at(tok->pos, "token '%s' is already defined", tok->str);
-        }
-        globals = new_var(tok, globals, t);
-        return globals;
-        */
         return new_obj(tok, NULL, t);
 }
-Obj *init_declarator(Type *base_t, Obj *obj)
+Obj* init_declarator(Obj *obj)
 {
-        // LVar *vars = globals;
         fprintf(tout, " \n<%s>\n", __func__);
         if (consume("["))
         {
                 if (consume("]"))
                 {
-                        // globals = new_var(tok, globals, new_type(TY_ARRAY, t, 0, "array"));
                         obj->type = new_type(TY_ARRAY, obj->type, 0, "array");
                 }
                 else
                 {
                         int n = expect_num();
-                        // globals = new_var(tok, globals, new_type(TY_ARRAY, t, n * t->size, "array"));
                         obj->type = new_type(TY_ARRAY, obj->type, n * obj->type->size, "array");
                         expect("]");
                 }
         }
         else
         {
-                //already created
-                // globals = new_var(tok, globals, t);
+                // already created
+                //  globals = new_var(tok, globals, t);
         }
-        obj->next = globals;
-        globals = obj;
+        // obj->next = globals;
+        // globals = obj;
         if (consume("="))
         {
-                initializer();
+                initializer(obj);
         }
-        /*if (consume(","))
-        {
-                globals = declarator(base_t);
-                return globals = init_declarator(base_t, globals);
-        }
-        expect(";");*/
         fprintf(tout, " \n</%s>\n", __func__);
-        return globals;
+        return obj;
 }
 Obj *function_definition(Obj *obj)
 {
@@ -1816,8 +1787,14 @@ Obj *function_definition(Obj *obj)
         { // prototype only
                 leave_scope();
                 // TODO:save obj to validate
-                return globals;
+                return NULL;
         }
+
+
+        Token *tok = consume("{");
+        if (!tok)
+                error_at(token->pos, "need block\n");
+        // TODO:check mismatch
         Obj *var = find_gvar(obj->token); //
         if (var)
         {
@@ -1825,11 +1802,6 @@ Obj *function_definition(Obj *obj)
         }
         // function declaration
         obj->is_function = true;
-
-        Token *tok = consume("{");
-        if (!tok)
-                error_at(token->pos, "need block\n");
-        // TODO:check mismatch
         Node *node = new_node(ND_BLOCK, tok, NULL);
 
         /*Type *t = new_type(TY_PTR, ty_char, 8, "char *");
@@ -1857,8 +1829,7 @@ Obj *function_definition(Obj *obj)
         obj->stacksize = loffset;
 
         fprintf(tout, " \n</%s>\n", __func__);
-        obj->next = globals;
-        return globals = obj;
+        return obj;
 }
 /*
 <external-declaration> ::= <function-definition>
@@ -1870,7 +1841,7 @@ Obj *function_definition(Obj *obj)
                     | <declarator> = <initializer>
 <declarator> ::= {<pointer>}? <direct-declarator>
 */
-Obj *external_declaration()
+Obj *external_declaration(Obj *gl)
 {
         loffset = 0;
         Type *base_t = declaration_specifier();
@@ -1881,14 +1852,24 @@ Obj *external_declaration()
 
         Obj *obj = declarator(base_t);
         if (equal(token, "("))
-                return globals = function_definition(obj);
+        {
+                obj = function_definition(obj);
+                if (obj)
+                {
+                        obj->next = globals;
+                        globals = obj;
+                }
+                return globals;
+        }
 
-        globals = init_declarator(base_t, obj);
+        init_declarator(obj)->next = globals;
+        globals = obj;
         while (!consume(";"))
         {
                 expect(",");
                 obj = declarator(base_t);
-                globals = init_declarator(base_t, obj);
+                init_declarator(obj)->next = globals;
+                globals = obj;
         }
         return globals;
 }
@@ -1900,7 +1881,7 @@ Obj *program()
         fprintf(tout, " %s\n", user_input);
         while (!at_eof())
         {
-                external_declaration();
+                external_declaration(globals);
         }
         fprintf(tout, " \n</%s>\n", __func__);
 

@@ -152,8 +152,8 @@ struct list
        listnode *tail;
        int size;
 };
-list *new_list();
-void add_list(list *l, void *value);
+extern list *new_list();
+extern void add_list(list *l, void *value);
 
 #define bool char
 
