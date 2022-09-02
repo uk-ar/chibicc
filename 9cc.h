@@ -131,7 +131,7 @@ struct Node
        Node *next; // treat as list
        Type *type;
        HashMap *cases;
-       long val;    // enable iff kind == ND_NUM
+       long val;   // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        Token *token;
 };
@@ -163,7 +163,7 @@ struct Obj
 {
        Obj *next;
        Type *type;
-       bool is_function;     
+       bool is_function;
        Token *token;
        // deprecated
        char *name; // null terminated string
@@ -175,6 +175,7 @@ struct Obj
        list *init;
        // for functions
        int stacksize;
+       Obj *params;
        Obj *locals;
        Node *body;
 };

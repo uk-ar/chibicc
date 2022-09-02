@@ -668,7 +668,7 @@ void function(Obj *func)
         printf("  push rbp\n");                                      // save base pointer
         printf("  mov rbp, rsp\n");                                  // save stack pointer
         printf("  sub rsp, %d\n", (func->stacksize + 15) / 16 * 16); // num of vals*8byte
-        Obj *n = func->locals;
+        Obj *n = func->params;
         for (int i = 0; i < 6 && n && n->type; i++, n = n->next)
         {
                 // printf("  mov rax, %s\n", argreg[i]); // args to local
