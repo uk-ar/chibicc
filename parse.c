@@ -376,7 +376,7 @@ Node *new_node_unary(NodeKind kind, Node *lhs, Token *token, Type *type)
         ans->lhs = lhs;
         return ans;
 }
-Node *new_node_num(int val, Token *token, Type *type)
+Node *new_node_num(long val, Token *token, Type *type)
 {
         // leaf node
         Node *ans = new_node(ND_NUM, token, type);
@@ -499,7 +499,7 @@ Obj *enumerator_list()
         while (!consume("}"))
         {
                 Token *tok = consume_ident();
-                st_vars = new_var(tok, st_vars, new_type(TY_INT, NULL, 4, "int"));
+                st_vars = new_var(tok, st_vars, ty_int);
                 st_vars->offset = st_vars->next->offset + 1;
                 add_hash(keyword2token, tok->str, (void *)TK_ENUM);
                 add_hash(enums, tok->str, (void *)st_vars->offset);
@@ -611,7 +611,7 @@ Type *declaration_specifier() // bool declaration)
                                 add_hash(structs, src_name, st_vars);*/
                                 // type = new_type(TY_STRUCT, NULL, 0,NULL);
                                 st_vars = enumerator_list();
-                                add_hash(types, src_name, new_type(TY_INT, NULL, 4, "int"));
+                                add_hash(types, src_name, ty_int);
                                 add_hash(structs, src_name, st_vars);
                         }
                         else
@@ -633,7 +633,7 @@ Type *declaration_specifier() // bool declaration)
                         {
                                 add_hash(type_alias, declarator->str, src_name);
                         }
-                        add_hash(types, declarator->str, new_type(TY_INT, NULL, 4, "int"));
+                        add_hash(types, declarator->str, ty_int);
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                 }
                 return type;
@@ -764,7 +764,7 @@ Node *primary()
         else if ((tok = consume_Token(TK_ENUM))) // constant
         {
                 fprintf(tout, "<%s>\"\n", __func__);
-                Node *ans = new_node_num((int)get_hash(enums, tok->str), tok, new_type(TY_INT, NULL, 4, "int"));
+                Node *ans = new_node_num((long)get_hash(enums, tok->str), tok, ty_int);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
         } // tk_num
@@ -782,7 +782,7 @@ Node *primary()
                         }
                         else
                         {
-                                t = new_type(TY_INT, NULL, 4, "int");
+                                t = ty_int;
                         }
                         Node *ans = new_node(ND_FUNCALL, tok, t);
                         if (consume(")"))
@@ -830,7 +830,7 @@ Node *primary()
         }
         fprintf(tout, "<%s>num\n", __func__);
         // TODO:add enum
-        Node *ans = new_node_num(expect_num(), token, new_type(TY_INT, NULL, 4, "int"));
+        Node *ans = new_node_num(expect_num(), token, ty_int);
         fprintf(tout, "num\n</%s>\n", __func__);
         return ans;
 }
@@ -1058,7 +1058,7 @@ Node *unary()
         {
                 // important
                 fprintf(tout, " <%s>-\"\n", __func__);
-                Type *type = new_type(TY_INT, NULL, 4, "int");
+                Type *type = ty_int;
                 ans = new_node_binary(ND_SUB,
                                       new_node_num(0, tok, type),
                                       unary(), tok, type); // 0-primary()
@@ -1082,7 +1082,7 @@ Node *unary()
         if ((tok = consume("!"))) // TODO:~
         {
                 fprintf(tout, " <%s>\n", __func__);
-                Node *lhs = new_node_num(0, tok, new_type(TY_INT, NULL, 4, "int"));
+                Node *lhs = new_node_num(0, tok, ty_int);
                 ans = new_node_binary(ND_EQ, unary(), lhs, tok, lhs->type);
                 return ans;
         }
@@ -1484,9 +1484,9 @@ Node *stmt()
         if ((tok = consume("case"))) // labeled-statement
         {
                 fprintf(tout, " case\n<%s>\n", __func__);
-                int n = expect_num();
+                long n = expect_num();
                 node = new_node_unary(ND_CASE,
-                                      new_node_num(n, tok, new_type(TY_INT, NULL, 4, "int")),
+                                      new_node_num(n, tok, ty_int),
                                       tok, NULL);
                 node->val = count();
                 add_hash(cases, format("%d", node->val), (void *)n);

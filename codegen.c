@@ -230,7 +230,7 @@ Type *gen_stmt(Node *node)
                 }
                 if (node->els)
                 {
-                        printf("  jmp .Ldefault%d\n", node->els->val);
+                        printf("  jmp .Ldefault%ld\n", node->els->val);
                 }
 
                 break_labels[depth] = format(".Lend%d", num);
@@ -264,9 +264,9 @@ Type *gen_stmt(Node *node)
         else if (node->kind == ND_CASE)
         {
                 if (node->lhs)
-                        printf(".Lcase%d:\n", node->val);
+                        printf(".Lcase%ld:\n", node->val);
                 else
-                        printf(".Ldefault%d:\n", node->val);
+                        printf(".Ldefault%ld:\n", node->val);
         }
         else if (node->kind == ND_FOR)
         {
@@ -370,7 +370,7 @@ Type *gen_expr(Node *node)
         {
                 Obj *var = find_string(node->token);
                 // printf("  .loc 1 %d\n", node->token->loc);
-                printf("  mov rax , OFFSET FLAT:.LC%d\n", var->offset);
+                printf("  mov rax , OFFSET FLAT:.LC%ld\n", var->offset);
                 push("rax");
                 // printf("  push rax\n");
                 return node->type;
@@ -380,7 +380,7 @@ Type *gen_expr(Node *node)
                 // printf("  .loc 1 %d\n", node->token->loc);
                 //  printf("  push %d\n", node->val);
                 push(format("%d", node->val));
-                fprintf(tout2, "# %d</%s>\n", node->val, nodeKind[node->kind]);
+                fprintf(tout2, "# %ld</%s>\n", node->val, nodeKind[node->kind]);
                 return node->type;
         }
         else if (node->kind == ND_LVAR || node->kind == ND_GVAR)
@@ -676,15 +676,15 @@ void function(Obj*func){
                 printf("  mov rbx, %s\n", argreg[i]); // args to local
                 if (n->type->kind == TY_CHAR)
                 {
-                        printf("  mov BYTE PTR [rbp-%d], bl\n", n->offset); // get data from address
+                        printf("  mov BYTE PTR [rbp-%ld], bl\n", n->offset); // get data from address
                 }
                 else if (n->type->kind == TY_INT)
                 {
-                        printf("  mov DWORD PTR [rbp-%d], ebx\n", n->offset); // get data from address
+                        printf("  mov DWORD PTR [rbp-%ld], ebx\n", n->offset); // get data from address
                 }
                 else
                 {
-                        printf("  mov QWORD PTR [rbp-%d], rbx\n", n->offset); // get data from address
+                        printf("  mov QWORD PTR [rbp-%ld], rbx\n", n->offset); // get data from address
                         // printf("  mov rax, rbx\n"); // get data from address
                 }
                 // printf("  push rax\n"); // args to local
@@ -704,7 +704,7 @@ void codegen(Obj *code, char *filename)
         {
                 printf("  .text \n");
                 // printf("  .section      .rodata \n");
-                printf(".LC%d:\n", var->offset);
+                printf(".LC%ld:\n", var->offset);
                 printf("  .string %s\n", var->name);
         }
         // for debug

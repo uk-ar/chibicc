@@ -131,7 +131,7 @@ struct Node
        Node *next; // treat as list
        Type *type;
        HashMap *cases;
-       int val;    // enable iff kind == ND_NUM
+       long val;    // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        Token *token;
 };
@@ -168,7 +168,7 @@ struct Obj
        bool is_function;
 
        // for locals
-       int offset; // offset from RBP
+       long offset; // offset from RBP
        // for globals
        list *init;
        // for functions
@@ -190,5 +190,5 @@ void *get_hash(HashMap *h, char *key);
 void *get_node_value(HashNode *n);
 char *format(char *fmt, ...);
 void codegen(Obj *code, char *filename);
-
+Type *ty_int;
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
