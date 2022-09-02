@@ -657,17 +657,18 @@ Type *gen_expr(Node *node)
         return node->type;
 }
 
-int function(Obj*func){
+void function(Obj*func){
         printf("  .text \n");
         printf("  .global %s\n", func->name);
         printf("  .type %s, @function\n", func->name);
         printf("%s:\n", func->name);
         // printf("  .loc 1 %d\n", node->token->loc);
         // dump();
-        Obj *n = func->locals;
+
         printf("  push rbp\n");                                   // save base pointer
         printf("  mov rbp, rsp\n");                               // save stack pointer
-        printf("  sub rsp, %d\n", (n->offset + 15) / 16 * 16); // num of vals*8byte
+        printf("  sub rsp, %d\n", (func->stacksize + 15) / 16 * 16); // num of vals*8byte
+        Obj *n = func->locals;
         for (int i = 0; i < 6 && n && n->type; i++, n = n->next)
         {
                 // printf("  mov rax, %s\n", argreg[i]); // args to local
@@ -692,7 +693,7 @@ int function(Obj*func){
         gen_stmt(func->body);
 }
 char *global_types[] = {".byte", ".long", ".quad", ".quad"};
-int codegen(Node *code, char *filename)
+void codegen(Obj *code, char *filename)
 {
         // header
         printf(".file \"%s\"\n", filename);

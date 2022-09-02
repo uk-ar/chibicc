@@ -16,8 +16,8 @@ struct Type
 {
        TypeKind kind;
        struct Type *ptr_to;
-       char *str;
        long size;
+       char *str;
 };
 
 typedef enum
@@ -181,7 +181,7 @@ Token *tokenize(char *p);
 Node *expr();
 Type *gen_stmt(Node *root);
 // extern FILE *tout;
-Node *program();
+Obj *program();
 void error_at(char *loc, char *fmt, ...);
 
 HashMap *new_hash(int size);
@@ -189,5 +189,6 @@ HashNode *add_hash(HashMap *h, char *key, void *value);
 void *get_hash(HashMap *h, char *key);
 void *get_node_value(HashNode *n);
 char *format(char *fmt, ...);
+void codegen(Obj *code, char *filename);
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
