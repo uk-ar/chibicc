@@ -196,6 +196,8 @@ char *format(char *fmt, ...);
 void codegen(Obj *code, char *filename);
 long get_string_offset(char *s);
 extern int count();
+extern HashMap *keyword2token;
+//extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 Type *ty_int;
 Type *ty_char;
 

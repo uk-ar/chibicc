@@ -8,7 +8,7 @@ CC=gcc
 
 .PRECIOUS: test/common.s
 
-test/%.exe: stage1 test/%.c test/common.o #codegen.s hashmap.s #parse.s #main.s 
+test/%.exe: stage1 test/%.c test/common.o codegen.s hashmap.s #parse.s #main.s 
 # parse.s
 # 
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)

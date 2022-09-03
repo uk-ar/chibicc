@@ -50,9 +50,6 @@ extern int strncmp(const char *__s1, const char *__s2, size_t __n);
 #define isalpha(c) __isctype((c), _ISalpha)
 #define isdigit(c) __isctype((c), _ISdigit)
 #define isspace(c) __isctype((c), _ISspace)*/
-extern char *strstr(const char *__haystack, const char *__needle);
-extern long int strtol(const char *__restrict __nptr,
-                       char **__restrict __endptr, int __base);
 extern int memcmp(const void *__s1, const void *__s2, size_t __n);
 
 #include "9cc.h"
@@ -71,6 +68,7 @@ Obj *parameter_type_list();
 Type *abstract_declarator(Type *t);
 Obj *declaration();
 int align_to(int offset, int size);
+Obj *function_definition(Obj *obj, Obj *next);
 
 Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str)
 { //
@@ -148,202 +146,13 @@ long expect_num()
         return 0;
 }
 
-Token *new_token(TokenKind kind, Token *cur, char *str, int len, int loc)
-{
-        Token *tok = calloc(1, sizeof(Token));
-        tok->kind = kind;
-        tok->pos = str; // token->next=NULL;
-        tok->len = len;
-        cur->next = tok;
-        tok->str = format("%.*s", len, str);
-        tok->loc = loc;
-        return tok;
-}
 bool at_eof()
 {
         return !token || token->kind == TK_EOF;
 }
-bool isIdent(char c)
-{
-        return isdigit(c) || isalpha(c);
-}
+
 HashMap *strings;
 extern Obj *new_obj(Token *tok, Obj *next, Type *t);
-int loc = 1;
-
-Token *tokenize(char *p)
-{
-        Token head, *cur = &head;
-        while (*p)
-        {
-                // fprintf(tout," t:%c\n",*p);
-                if (*p == '"')
-                {
-                        char *s = p;
-                        p++;
-                        while (*p)
-                        {
-                                if (*p == '"' && *(p - 1) != '\\')
-                                        break;
-                                p++;
-                        }
-                        if (!(*p))
-                                error_at(p, "'\"' is not closing");
-                        cur = new_token(TK_STR, cur, s, p - s + 1, loc); // include " in order not to match consume
-                        p++;
-                        continue;
-                }
-                if (*p == '\'')
-                {
-                        char *pre = p;
-                        cur = new_token(TK_NUM, cur, p, 0, loc);
-                        p++;
-                        if (*p == '\\')
-                        {
-                                p++;
-                                if (*p == 'a')
-                                {
-                                        cur->val = 0x7;
-                                }
-                                else if (*p == '0')
-                                {
-                                        cur->val = 0x0;
-                                }
-                                else if (*p == 'b')
-                                {
-                                        cur->val = 0x8;
-                                }
-                                else if (*p == 'f')
-                                {
-                                        cur->val = 0xc;
-                                }
-                                else if (*p == 'n')
-                                {
-                                        cur->val = 0xa;
-                                }
-                                else if (*p == 'r')
-                                {
-                                        cur->val = 0xd;
-                                }
-                                else if (*p == 't')
-                                {
-                                        cur->val = 0x9;
-                                }
-                                else if (*p == 'v')
-                                {
-                                        cur->val = 0xb;
-                                }
-                                else if (*p == '\\' || *p == '\'' || *p == '\"' || *p == '\?')
-                                {
-                                        cur->val = *p;
-                                }
-                                else
-                                {
-                                        error_at(p, "cannot use \\%c in char", p);
-                                }
-                        }
-                        else
-                        {
-                                cur->val = *p;
-                        }
-                        p++;
-                        if (*p != '\'')
-                                error_at(p, "'\'' is not closing");
-                        p++;
-                        cur->len = p - pre;
-                        continue;
-                }
-                if (isspace(*p))
-                {
-                        if (*p == '\n')
-                                loc++;
-                        p++;
-                        continue;
-                }
-                if (!strncmp(p, "//", 2))
-                {
-                        while (*p && *p != '\n')
-                                p++;
-                        p++;
-                        loc++;
-                        continue;
-                }
-                if (!strncmp(p, "/*", 2))
-                {
-                        char *q = strstr(p + 2, "*/");
-                        char *r = strstr(p + 2, "\n");
-                        while (r < q)
-                        {
-                                loc++;
-                                r = strstr(r + 1, "\n");
-                        }
-                        if (!(*p))
-                                error_at(p, "'/*' is not closing");
-                        p = q + 2;
-                        continue;
-                }
-                if (!strncmp(p, "...", 3) && !isIdent(p[3]))
-                {
-                        cur = new_token(TK_RESERVED, cur, p, 3, loc);
-                        p += 3;
-                        continue;
-                }
-                if (!strncmp(p, "<=", 2) || !strncmp(p, ">=", 2) ||
-                    !strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "->", 2) ||
-                    !strncmp(p, "++", 2) || !strncmp(p, "--", 2) ||
-                    !strncmp(p, "+=", 2) || !strncmp(p, "-=", 2) ||
-                    !strncmp(p, "/=", 2) || !strncmp(p, "*=", 2) ||
-                    !strncmp(p, "%=", 2) || !strncmp(p, "||", 2) || !strncmp(p, "&&", 2))
-                {
-                        cur = new_token(TK_RESERVED, cur, p, 2, loc);
-                        p += 2;
-                        continue;
-                }
-                if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' ||
-                    *p == ')' || *p == '=' || *p == ';' || *p == '{' || *p == '}' || *p == ',' || *p == '&' ||
-                    *p == '[' || *p == ']' || *p == '.' || *p == '!' || *p == '%' || *p == ':' || *p == '?')
-                {
-                        cur = new_token(TK_RESERVED, cur, p++, 1, loc);
-                        continue;
-                }
-                if (isdigit(*p))
-                {
-                        char *pre = p;
-                        cur = new_token(TK_NUM, cur, p, 0, loc);
-                        cur->val = strtol(p, &p, 0);
-                        cur->len = p - pre;
-                        // printf("%d",p-pre);
-                        continue;
-                }
-                if (isalpha(*p) || *p == '_')
-                {
-                        char *pre = p;
-                        while (isalpha(*p) || isdigit(*p) || *p == '_')
-                        {
-                                p++;
-                        }
-                        char *str = format("%.*s", p - pre, pre);
-                        TokenKind t = (TokenKind)get_hash(keyword2token, str);
-                        if (t == TK_NOT_SUPPORT)
-                        {
-                                continue;
-                        }
-                        if (t == TK_NOT_EXIST)
-                        {
-                                cur = new_token(TK_IDENT, cur, pre, p - pre, loc);
-                        }
-                        else
-                        {
-                                cur = new_token(t, cur, pre, p - pre, loc);
-                        }
-                        continue;
-                }
-                // printf("eee");
-                error_at(p, " can not tokenize '%c'", *p);
-        }
-        cur = new_token(TK_EOF, cur, p, 0, loc);
-        return head.next;
-}
 
 Node *new_node(NodeKind kind, Token *token, Type *type)
 {
@@ -1637,7 +1446,94 @@ Obj *struct_declarator_list(Obj *lvar)
 
         return lvar;
 }
-int initializer_list(Type *type, Obj *obj)
+Obj *parameter_type_list() // it should return LVar*?
+{
+        /*Type *t = declaration_specifier();
+
+        if (consume(","))
+                return parameter_type_list();
+        return t;*/
+
+        if (equal(token, "void") && equal(token->next, ")"))
+        {
+                consume("void");
+                consume(")");
+                return NULL;
+        }
+
+        // Obj *ans = NULL;
+        for (int i = 0; i < 6 && !consume(")"); i++)
+        {
+                if (consume("..."))
+                {
+                        if (consume(")"))
+                                break;
+                        else
+                                error_tok(token, "va arg error\n");
+                }
+                parameter_declaration();
+                consume(",");
+        }
+        return locals;
+}
+/*
+<direct-declarator> ::= <identifier>
+                      | ( <declarator> )
+                      | <direct-declarator> [ {<constant-expression>}? ]
+                      | <direct-declarator> ( <parameter-type-list> )
+                      | <direct-declarator> ( {<identifier>}* )
+<declarator> ::= {<pointer>}? <direct-declarator>
+*/
+Obj *declarator(Type *base_t);
+Obj *direct_declarator()
+{
+        Token *tok;
+        if ((tok = consume("(")))
+        {
+                // Obj *ans = declarator();
+                expect(")");
+        }
+}
+Obj *declarator(Type *base_t)
+{
+        // declarator
+        Type *t = base_t;
+        while (consume("*"))
+                t = new_type(TY_PTR, t, 8, "ptr");
+        Token *tok = consume_ident();
+        if (!tok)
+                return NULL;
+        Obj *obj = new_obj(tok, NULL, t);
+        if (consume("[")) // declarator?
+        {
+                if (consume("]"))
+                {
+                        obj->type = new_type(TY_ARRAY, obj->type, 0, "array");
+                }
+                else
+                {
+                        int n = expect_num();
+                        obj->type = new_type(TY_ARRAY, obj->type, n * obj->type->size, "array");
+                        expect("]");
+                }
+        }
+        //todo: merge funcall
+        else
+        {
+                // already created
+        }
+        return obj;
+}
+/*
+<init-declarator> ::= <declarator>
+                    | <declarator> = <initializer>
+<initializer> ::= <assignment-expression>
+                | { <initializer-list> }
+                | { <initializer-list> , }
+<initializer-list> ::= <initializer>
+                     | <initializer-list> , <initializer>
+*/
+int initializer(Type *type, Obj *obj)
 {
         consume("&");
         char *p = token->pos;
@@ -1675,7 +1571,7 @@ int initializer_list(Type *type, Obj *obj)
                 return 1;
         }
 }
-void initializer(Obj *obj)
+Obj *initializer_list(Obj *obj)
 {
         Token *tok = NULL;
         int cnt = 0;
@@ -1683,88 +1579,64 @@ void initializer(Obj *obj)
         {
                 while (!consume("}"))
                 {
-                        initializer_list(obj->type->ptr_to, obj);
+                        initializer(obj->type->ptr_to, obj);
                         consume(",");
                         cnt++;
                 }
         }
         else
         {
-                cnt = initializer_list(obj->type, obj);
+                cnt = initializer(obj->type, obj);
         }
         if (obj->type->kind == TY_ARRAY)
         {
                 obj->type->size = MAX(obj->type->size, cnt * obj->type->ptr_to->size); // todo fix for escape charactors
         }
 }
-Obj *parameter_type_list() // it should return LVar*?
-{
-        /*Type *t = declaration_specifier();
-
-        if (consume(","))
-                return parameter_type_list();
-        return t;*/
-
-        if (equal(token, "void") && equal(token->next, ")"))
-        {
-                consume("void");
-                consume(")");
-                return NULL;
-        }
-
-        // Obj *ans = NULL;
-        for (int i = 0; i < 6 && !consume(")"); i++)
-        {
-                if (consume("..."))
-                {
-                        if (consume(")"))
-                                break;
-                        else
-                                error_tok(token, "va arg error\n");
-                }
-                parameter_declaration();
-                consume(",");
-        }
-        return locals;
-}
-Obj *declarator(Type *base_t)
-{
-        // declarator
-        Type *t = base_t;
-        while (consume("*"))
-                t = new_type(TY_PTR, t, 8, "ptr");
-        Token *tok = consume_ident();
-        if (!tok)
-                return NULL;
-        return new_obj(tok, NULL, t);
-}
-Obj *init_declarator(Obj *obj, Obj *next)
+Obj *init_declarator(Obj *declarator, Obj *next)
 {
         fprintf(tout, " \n<%s>\n", __func__);
-        if (consume("["))
-        {
-                if (consume("]"))
-                {
-                        obj->type = new_type(TY_ARRAY, obj->type, 0, "array");
-                }
-                else
-                {
-                        int n = expect_num();
-                        obj->type = new_type(TY_ARRAY, obj->type, n * obj->type->size, "array");
-                        expect("]");
-                }
-        }
-        else
-        {
-                // already created
-        }
-        obj->next = next;
+        declarator->next = next;
         if (consume("="))
         {
-                initializer(obj);
+                initializer_list(declarator);
         }
         fprintf(tout, " \n</%s>\n", __func__);
-        return obj;
+        return declarator;
+}
+/*
+<external-declaration> ::= <function-definition>
+                         | <declaration>
+
+<function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
+<declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
+<init-declarator> ::= <declarator>
+                    | <declarator> = <initializer>
+*/
+void external_declaration()
+{
+        loffset = 0;
+        Type *base_t = declaration_specifier();
+        if (consume(";"))
+                return;
+        if (!base_t)
+                error_tok(token, "declaration should start with \"type\"");
+
+        Obj *obj = declarator(base_t);
+        if (equal(token, "("))
+        {
+                globals = function_definition(obj, globals);
+                return;
+        }
+
+        globals = init_declarator(obj, globals);
+        while (!consume(";"))
+        {
+                expect(","); // should consume anywhere else
+                obj = declarator(base_t);
+                globals = init_declarator(obj, globals);
+        }
+        return;
 }
 Obj *function_definition(Obj *obj, Obj *next)
 {
@@ -1826,42 +1698,6 @@ Obj *function_definition(Obj *obj, Obj *next)
         fprintf(tout, " \n</%s>\n", __func__);
         return obj;
 }
-/*
-<external-declaration> ::= <function-definition>
-                         | <declaration>
-
-<function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
-<declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
-<init-declarator> ::= <declarator>
-                    | <declarator> = <initializer>
-<declarator> ::= {<pointer>}? <direct-declarator>
-*/
-void external_declaration()
-{
-        loffset = 0;
-        Type *base_t = declaration_specifier();
-        if (consume(";"))
-                return;
-        if (!base_t)
-                error_tok(token, "declaration should start with \"type\"");
-
-        Obj *obj = declarator(base_t);
-        if (equal(token, "("))
-        {
-                globals = function_definition(obj, globals);
-                return;
-        }
-
-        globals = init_declarator(obj, globals);
-        while (!consume(";"))
-        {
-                expect(",");
-                obj = declarator(base_t);
-                globals = init_declarator(obj, globals);
-        }
-        return;
-}
-
 // Node *code[10000] = {0};
 Obj *program()
 {
