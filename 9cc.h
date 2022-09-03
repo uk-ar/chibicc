@@ -186,8 +186,8 @@ Node *expr();
 Type *gen_stmt(Node *root);
 // extern FILE *tout;
 Obj *program();
-void error_at(char *loc, char *fmt, ...);
-
+void error_tok(Token *tok, char *fmt, ...);
+void error_at(char *s, char *fmt, ...);
 HashMap *new_hash(int size);
 HashNode *add_hash(HashMap *h, char *key, void *value);
 void *get_hash(HashMap *h, char *key);

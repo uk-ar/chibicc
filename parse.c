@@ -31,6 +31,7 @@ extern size_t strlen(const char *__s);
 // extern int vasprintf(char **ret, const char *format, va_list ap);
 //#define _ISbit(bit) ((bit) < 8 ? ((1 << (bit)) << 8) : ((1 << (bit)) >> 8))
 extern int strncmp(const char *__s1, const char *__s2, size_t __n);
+
 /*enum
 {
         _ISupper = _ISbit(0),
@@ -56,12 +57,13 @@ extern int memcmp(const void *__s1, const void *__s2, size_t __n);
 
 #include "9cc.h"
 
-Token *token; // current token
-
+// constant variables
 char *filename;
 char *user_input;
 FILE *tout;
 
+// global variables
+Token *token; // current token
 HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 
 // function prototypes
@@ -121,9 +123,9 @@ Token *consume_ident()
 void expect(char *op)
 { // if next == op, advance
         if (!token || token->kind != TK_RESERVED)
-                error_at(token->pos, "token is not '%s'", op);
+                error_tok(token, "token is not '%s'", op);
         if (strncmp(op, token->pos, strlen(op)) != 0)
-                error_at(token->pos, "token is not '%s'", op);
+                error_tok(token, "token is not '%s'", op);
         // printf("t:%s:%d\n",token->pos,token->len);
         token = token->next;
 }
@@ -142,7 +144,7 @@ long expect_num()
                 token = token->next;
                 return ans;
         }
-        error_at(token->pos, "token is not number");
+        error_tok(token, "token is not number");
         return 0;
 }
 
@@ -393,7 +395,7 @@ Node *new_node_string(char *s, Token *token)
 void add_node(Node *node, Node *new_node)
 {
         if (!new_node)
-                error_at(token->pos, "node empty");
+                error_tok(token, "node empty");
         if (!node->head)
         {
                 node->head = new_node;
@@ -551,7 +553,7 @@ Type *declaration_specifier() // bool declaration)
                                 type = new_type(TY_STRUCT, NULL, 0, NULL);
                                 type->str = identifier->str;
                                 if (!add_hash(types, src_name, type)) // for recursive field type
-                                        error_at(token->pos, "redefine %s", src_name);
+                                        error_tok(token, "redefine %s", src_name);
                                 st_vars = struct_declaration(type);
                                 add_hash(structs, src_name, st_vars);
                         }
@@ -563,13 +565,13 @@ Type *declaration_specifier() // bool declaration)
                 }
                 else
                 {
-                        error_at(token->pos, "need identifier for struct\n");
+                        error_tok(token, "need identifier for struct\n");
                 }
                 if (storage && (strncmp(storage->str, "typedef", 6) == 0))
                 {
                         Token *declarator = consume_ident(); // defname
                         if (!declarator)
-                                error_at(token->pos, "typedef need declarator for struct\n");
+                                error_tok(token, "typedef need declarator for struct\n");
                         if (src_name)
                         {
                                 add_hash(type_alias, declarator->str, src_name);
@@ -581,7 +583,7 @@ Type *declaration_specifier() // bool declaration)
                         }
                         else
                         {
-                                error_at(token->pos, "typedef need identifier for struct\n");
+                                error_tok(token, "typedef need identifier for struct\n");
                         }
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                 }
@@ -621,13 +623,13 @@ Type *declaration_specifier() // bool declaration)
                 }
                 else
                 {
-                        error_at(token->pos, "need identifier for struct\n");
+                        error_tok(token, "need identifier for struct\n");
                 }
                 if (storage && (strncmp(storage->str, "typedef", 6) == 0))
                 {
                         Token *declarator = consume_ident(); // defname
                         if (!declarator)
-                                error_at(token->pos, "typedef need declarator for struct\n");
+                                error_tok(token, "typedef need declarator for struct\n");
                         if (src_name)
                         {
                                 add_hash(type_alias, declarator->str, src_name);
@@ -650,7 +652,7 @@ Type *declaration_specifier() // bool declaration)
                         }
                         Token *declarator = consume_ident();
                         if (!declarator) // || !type || !st_vars)
-                                error_at(token->pos, "need declarator for\n");
+                                error_tok(token, "need declarator for\n");
                         // src_name = format("%s %s", type_str, identifier->str);
                         // add_hash(types, declarator->str, type);
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
@@ -797,7 +799,7 @@ Node *primary()
                         }
                         else
                         {
-                                error_at(tok->pos, "token '%s' is not defined", tok->str);
+                                error_tok(tok, "token '%s' is not defined", tok->str);
                         }
                         ans->offset = var->offset;
 
@@ -858,22 +860,22 @@ Node *postfix()
                         }
                         else
                         {
-                                error_at(token->pos, "[ takes array or pointer only");
+                                error_tok(token, "[ takes array or pointer only");
                         }
                 }
                 if ((tok = consume(".")))
                 {
                         if (ans->type->kind != TY_STRUCT)
-                                error_at(token->pos, "%s is not struct", ans->token->str);
+                                error_tok(token, "%s is not struct", ans->token->str);
                         tok = consume_ident();
                         if (!tok)
-                                error_at(token->pos, "no ident defined in struct %s", ans->type->str);
+                                error_tok(token, "no ident defined in struct %s", ans->type->str);
                         Obj *var = get_hash(structs, format("struct %s", ans->type->str));
                         if (!var)
-                                error_at(token->pos, "no struct %s defined", ans->type->str);
+                                error_tok(token, "no struct %s defined", ans->type->str);
                         Obj *field = find_var(tok->str, var);
                         if (!field)
-                                error_at(token->pos, "no %s field defined in %s struct", tok->str, ans->type->str);
+                                error_tok(token, "no %s field defined in %s struct", tok->str, ans->type->str);
                         ans->type = field->type;
                         ans->offset -= field->offset;
                         continue;
@@ -882,16 +884,16 @@ Node *postfix()
                 {
                         //(ans->(right))
                         if (ans->type->kind != TY_PTR || ans->type->ptr_to->kind != TY_STRUCT)
-                                error_at(token->pos, "%s is not pointer to struct", ans->token->str);
+                                error_tok(token, "%s is not pointer to struct", ans->token->str);
                         Obj *st_vars = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
                         if (!st_vars)
-                                error_at(token->pos, "no struct %s defined", ans->type->str);
+                                error_tok(token, "no struct %s defined", ans->type->str);
                         Token *right = consume_ident();
                         if (!right)
-                                error_at(token->pos, "no ident defined in struct %s", ans->type->str);
+                                error_tok(token, "no ident defined in struct %s", ans->type->str);
                         Obj *field = find_var(right->str, st_vars);
                         if (!field)
-                                error_at(token->pos, "no field defined %s", right->str);
+                                error_tok(token, "no field defined %s", right->str);
                         Node *lhs = new_node_num(field->offset, tok, new_type(TY_CHAR, NULL, 1, "char"));
                         ans = new_node_unary(ND_DEREF,
                                              new_node_binary(ND_ADD,
@@ -1377,12 +1379,12 @@ Node *stmt()
                 Token *tok = consume_ident(); // ident
                 if (!tok)
                 {
-                        error_at(token->pos, "need identifier");
+                        error_tok(token, "need identifier");
                 }
                 Obj *var = find_lvar(tok); //
                 if (var)
                 {
-                        error_at(tok->pos, "token '%s' is already defined", tok->str);
+                        error_tok(tok, "token '%s' is already defined", tok->str);
                 }
                 else if (consume("["))
                 {
@@ -1566,7 +1568,7 @@ Node *parameter_declaration()
         Type *base_t = declaration_specifier();
         if (!base_t)
                 return NULL;
-        // error_at(token->pos, "declaration should start with \"type\"");
+        // error_at(token, "declaration should start with \"type\"");
 
         /*Type *t = base_t;
         //while (consume("*"))
@@ -1579,7 +1581,7 @@ Node *parameter_declaration()
         Obj *var = find_lvar(tok);
         if (var)
         {
-                error_at(tok->pos, "dumpicate param name '%s'", tok->str);
+                error_tok(tok, "dumpicate param name '%s'", tok->str);
         }
         locals = new_local(tok, locals, t);
 
@@ -1593,7 +1595,7 @@ Obj *struct_declarator_list(Obj *lvar)
 {
         Type *base_t = declaration_specifier();
         if (!base_t)
-                error_at(token->pos, "declaration should start with \"type\"");
+                error_tok(token, "declaration should start with \"type\"");
 
         while (base_t)
         {
@@ -1609,7 +1611,7 @@ Obj *struct_declarator_list(Obj *lvar)
 
                 if (var)
                 {
-                        error_at(tok->pos, "token '%s' is already defined", tok->str);
+                        error_tok(tok, "token '%s' is already defined", tok->str);
                 }
                 else if (consume("["))
                 {
@@ -1718,7 +1720,7 @@ Obj *parameter_type_list() // it should return LVar*?
                         if (consume(")"))
                                 break;
                         else
-                                error_at(token->pos, "va arg error\n");
+                                error_tok(token, "va arg error\n");
                 }
                 parameter_declaration();
                 consume(",");
@@ -1779,12 +1781,12 @@ Obj *function_definition(Obj *obj, Obj *next)
 
         Token *tok = consume("{");
         if (!tok)
-                error_at(token->pos, "need block\n");
+                error_tok(token, "need block\n");
         // TODO:check mismatch
         Obj *var = find_gvar(obj->token); //
         if (var)
         {
-                error_at(obj->token->pos, "token '%s' is already defined", obj->token->str);
+                error_tok(obj->token, "token '%s' is already defined", obj->token->str);
         }
         // function declaration
         obj->is_function = true;
@@ -1801,16 +1803,19 @@ Obj *function_definition(Obj *obj, Obj *next)
         locals = new_local(tok, locals, t);
         locals->name = "__func__";
         locals->len = strlen(locals->name);
-        
+
         Node *func_name = new_node(ND_LVAR, tok, t);
         func_name->offset = locals->offset;
         add_node(node,
-                         new_node_binary(ND_ASSIGN, func_name,
+                 new_node_binary(ND_ASSIGN, func_name,
                                  new_node_string(format("\"%s\"", obj->name), obj->token),
                                  tok, t));
-        //loffset = locals->offset; //????
+
         add_node(node, compound_statement(tok, scope));
-        //loffset = locals->offset;//????
+
+        // if(loffset != locals->offset)
+        //         error_at(token, "loffset != locals->offset");
+
         leave_scope();
         obj->body = node;
         // force insert return
@@ -1838,7 +1843,7 @@ void external_declaration()
         if (consume(";"))
                 return;
         if (!base_t)
-                error_at(token->pos, "declaration should start with \"type\"");
+                error_tok(token, "declaration should start with \"type\"");
 
         Obj *obj = declarator(base_t);
         if (equal(token, "("))

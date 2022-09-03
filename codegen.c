@@ -112,7 +112,7 @@ Type *gen_lval(Node *node)
         }
         else
         {
-                error_at(node->token->pos, "token is not lvalue\n", node->token->str);
+                error_tok(node->token, "token is not lvalue\n", node->token->str);
                 return NULL;
         }
 }
@@ -211,7 +211,7 @@ Type *gen_stmt(Node *node)
                 while (d > 0 && !break_labels[d])
                         d--;
                 if (!break_labels[d])
-                        error_at(node->token->pos, "no break point");
+                        error_tok(node->token, "no break point");
                 printf("  jmp %s\n", break_labels[d]);
         }
         else if (node->kind == ND_CONTINUE)
@@ -220,7 +220,7 @@ Type *gen_stmt(Node *node)
                 while (d > 0 && !continue_labels[d])
                         d--;
                 if (!continue_labels[d])
-                        error_at(node->token->pos, "no break point");
+                        error_tok(node->token, "no break point");
                 printf("  jmp %s\n", continue_labels[d]);
         }
         else if (node->kind == ND_CASE)
@@ -321,7 +321,7 @@ Type *gen_stmt(Node *node)
                 pop("rax");
         }
         if (align != pre)
-                error_at(node->token->pos, "stack position is wrong");
+                error_tok(node->token, "stack position is wrong");
         return t;
 }
 Type *gen_expr(Node *node)
@@ -549,7 +549,7 @@ Type *gen_expr(Node *node)
         }
         if (!t)
         {
-                error_at(node->token->pos, "no type");
+                error_tok(node->token, "no type");
         }
         fprintf(tout2, "# ty:%d\n", t->kind);
         if (t && (t->kind == TY_PTR || t->kind == TY_ARRAY))

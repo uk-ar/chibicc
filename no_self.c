@@ -2,7 +2,7 @@
 //#include <stdio.h>
 struct _IO_FILE;
 typedef struct _IO_FILE FILE;
-//typedef __builtin_va_list va_list;
+// typedef __builtin_va_list va_list;
 /*typedef struct
 {
         unsigned int gp_offset;
@@ -83,10 +83,9 @@ char *format(char *fmt, ...)
         // fclose(out);
         return ptr;
 }
-
-void error_at(char *loc, char *fmt, ...)
-{
-        va_list ap;
+static void verror_at(char *s, char *fmt, va_list ap)
+{       
+        char *loc = s;
         char *start = loc;
         while (user_input < start && start[-1] != '\n') //*(start-1)
                 start--;
@@ -107,8 +106,19 @@ void error_at(char *loc, char *fmt, ...)
 
         int pos = loc - start + indent;
         fprintf(stderr, "%*s^ ", pos, " ");
-        va_start(ap, fmt);
         vfprintf(stderr, fmt, ap);
         fprintf(stderr, "\n");
         exit(1);
+}
+void error_at(char *s, char *fmt, ...)
+{
+        va_list ap;
+        va_start(ap, fmt);
+        verror_at(s,fmt,ap);
+}
+void error_tok(Token *tok, char *fmt, ...)
+{
+        va_list ap;
+        va_start(ap, fmt);
+        verror_at(tok->str, fmt, ap);
 }
