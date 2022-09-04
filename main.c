@@ -9,7 +9,7 @@
 */
 #include "9cc.h"
 
-#define NULL ((void *)0)
+#define NULL 0 //((void *)0) TODO:SUPPORT
 struct _IO_FILE;
 typedef struct _IO_FILE FILE;
 extern FILE *stderr; /* Standard error output stream.  */
@@ -70,9 +70,9 @@ char *read_file(char *path)
 extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str);
 extern HashNode *add_hash(HashMap *h, char *key, void *value);
 
-Type *ty_int = &(Type){TY_INT, NULL, 4, "int"};
-Type *ty_char = &(Type){TY_CHAR, NULL, 1, "char"};
-Type *ty_long = &(Type){TY_LONG, NULL, 8, "long"};
+Type *ty_int = NULL;  //&(Type){TY_INT, NULL, 4, "int"};//TODO:SUPPORT
+Type *ty_char = NULL; //&(Type){TY_CHAR, NULL, 1, "char"};
+Type *ty_long = NULL; //&(Type){TY_LONG, NULL, 8, "long"};
 
 int main(int argc, char **argv)
 {
@@ -91,6 +91,9 @@ int main(int argc, char **argv)
         structs = new_hash(100);
 
         types = new_hash(100);
+        ty_int = new_type(TY_INT, NULL, 4, "int");
+        ty_char = new_type(TY_CHAR, NULL, 1, "char");
+        ty_long = new_type(TY_LONG, NULL, 8, "long");
         add_hash(types, "int", ty_int);
         add_hash(types, "char", ty_char);
         add_hash(types, "long", ty_long);
