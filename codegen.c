@@ -713,7 +713,7 @@ void codegen(Obj *code, char *filename)
         }
         for (Obj *var = code; var; var = var->next)
         { // gvar
-                if (!var->is_function)
+                if (!var->is_function || !var->body)
                         continue;
                 function(var);
         }

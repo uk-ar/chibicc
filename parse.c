@@ -68,7 +68,7 @@ Obj *parameter_type_list();
 Type *abstract_declarator(Type *t);
 Obj *declaration();
 int align_to(int offset, int size);
-Obj *function_definition(Obj *obj, Obj *next);
+void function_definition(Obj *obj);
 
 Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str)
 { //
@@ -215,7 +215,7 @@ void add_node(Node *node, Node *new_node)
         node->tail = node->tail->next;
         return;
 }
-Obj *locals = &(Obj){};
+Obj *locals = NULL;
 Obj *globals = NULL;
 // Obj *functions = NULL;
 HashMap *cases = NULL;
@@ -691,7 +691,7 @@ Node *postfix()
                 }
                 if ((tok = consume("->")))
                 {
-                        //(ans->(right))
+                        // x->y is short for (*x).y 
                         if (ans->type->kind != TY_PTR || ans->type->ptr_to->kind != TY_STRUCT)
                                 error_tok(token, "%s is not pointer to struct", ans->token->str);
                         Obj *st_vars = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
@@ -1446,7 +1446,7 @@ Obj *struct_declarator_list(Obj *lvar)
 
         return lvar;
 }
-Obj *parameter_type_list() // it should return LVar*?
+Obj *parameter_type_list()
 {
         /*Type *t = declaration_specifier();
 
@@ -1517,7 +1517,7 @@ Obj *declarator(Type *base_t)
                         expect("]");
                 }
         }
-        //todo: merge funcall
+        //todo: merge funcall?
         else
         {
                 // already created
@@ -1625,7 +1625,7 @@ void external_declaration()
         Obj *obj = declarator(base_t);
         if (equal(token, "("))
         {
-                globals = function_definition(obj, globals);
+                function_definition(obj);
                 return;
         }
 
@@ -1638,39 +1638,40 @@ void external_declaration()
         }
         return;
 }
-Obj *function_definition(Obj *obj, Obj *next)
+//ND_FUNC
+void function_definition(Obj *declarator)
 {
         expect("(");
         Obj *scope = enter_scope(); // scope for function
         parameter_type_list();
+        declarator->params = locals;
+        declarator->is_function = true;
+        Obj *var = find_gvar(declarator->token);
+        if (var)
+        {
+                declarator = var;
+        }else{
+                declarator->next = globals;
+                globals = declarator;
+        }
         if (consume(";"))
         { // prototype only
+                // TODO:check mismatch
+                // Obj *var = find_gvar(declarator->token);
+                // if(var->type!=declarator->type)
                 leave_scope();
-                // TODO:save obj to validate
-                return next;
+                return;
         }
-        obj->params = locals;
-
         Token *tok = consume("{");
         if (!tok)
                 error_tok(token, "need block\n");
-        // TODO:check mismatch
-        Obj *var = find_gvar(obj->token); //
-        if (var)
-        {
-                error_tok(obj->token, "token '%s' is already defined", obj->token->str);
-        }
-        // function declaration
-        obj->is_function = true;
-        obj->next = next;
 
+        // TODO:check mismatch        
+        if(declarator->body)
+                error_tok(declarator->token, "token '%s' is already defined", declarator->token->str);
+        
         enter_scope(); // scope for func
         Node *node = new_node(ND_BLOCK, tok, NULL);
-        /*
-        Node *lnode = new_node(ND_LVAR, tok, t);
-        lnode->offset = locals->offset;
-        add_node(node, new_node_binary(ND_ASSIGN, lnode, assign(), tok, lnode->type));
-        */
         Type *t = new_type(TY_PTR, ty_char, 8, "char *");
         locals = new_local(tok, locals, t);
         locals->name = "__func__";
@@ -1680,7 +1681,7 @@ Obj *function_definition(Obj *obj, Obj *next)
         func_name->offset = locals->offset;
         add_node(node,
                  new_node_binary(ND_ASSIGN, func_name,
-                                 new_node_string(format("\"%s\"", obj->name), obj->token),
+                                 new_node_string(format("\"%s\"", declarator->name), declarator->token),
                                  tok, t));
 
         add_node(node, compound_statement(tok, scope));
@@ -1689,14 +1690,14 @@ Obj *function_definition(Obj *obj, Obj *next)
         //         error_at(token, "loffset != locals->offset");
 
         leave_scope();
-        obj->body = node;
+        declarator->body = node;
         // force insert return
-        add_node(obj->body, new_node(ND_RETURN, tok, NULL));
+        add_node(declarator->body, new_node(ND_RETURN, tok, NULL));
 
-        obj->stacksize = loffset;
+        declarator->stacksize = loffset;
 
         fprintf(tout, " \n</%s>\n", __func__);
-        return obj;
+        return;
 }
 // Node *code[10000] = {0};
 Obj *program()

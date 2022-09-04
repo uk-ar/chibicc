@@ -69,9 +69,21 @@ struct s8
 /*struct empty{
 
 }*/
+struct s1 o11;
+//struct s1 *get();
+struct s1 *get(int i)
+{
+    if(i==0)
+        return &o11;
+    printf("%d", get(i - 1)->f1); // recursive call;
+    return get(i - 1);
+}
 
 int main(int argc, char **argv)
 {
+    ASSERT(get()->f1,0);
+    //ASSERT(1, 0);
+    /*
     char start;
     struct s1 o1; // 4+8+1+4+1=18 offset
     struct s1 o2, *o3 = &o1;
@@ -158,5 +170,6 @@ int main(int argc, char **argv)
         ASSERT(1, v[0]);
         ASSERT(1, o2->a[0]);
     }
+    //*/
     return 0;
 }
