@@ -691,7 +691,7 @@ Node *postfix()
                 }
                 if ((tok = consume("->")))
                 {
-                        // x->y is short for (*x).y 
+                        // x->y is short for (*x).y
                         if (ans->type->kind != TY_PTR || ans->type->ptr_to->kind != TY_STRUCT)
                                 error_tok(token, "%s is not pointer to struct", ans->token->str);
                         Obj *st_vars = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
@@ -1517,7 +1517,7 @@ Obj *declarator(Type *base_t)
                         expect("]");
                 }
         }
-        //todo: merge funcall?
+        // todo: merge funcall?
         else
         {
                 // already created
@@ -1593,10 +1593,19 @@ Obj *initializer_list(Obj *obj)
                 obj->type->size = MAX(obj->type->size, cnt * obj->type->ptr_to->size); // todo fix for escape charactors
         }
 }
-Obj *init_declarator(Obj *declarator, Obj *next)
+Obj *init_declarator(Obj *declarator)
 {
         fprintf(tout, " \n<%s>\n", __func__);
-        declarator->next = next;
+        Obj *var = find_gvar(declarator->token);
+        if (var)
+        {
+                declarator = var;
+        }
+        else
+        {
+                declarator->next = globals;
+                globals = declarator;
+        }
         if (consume("="))
         {
                 initializer_list(declarator);
@@ -1629,16 +1638,16 @@ void external_declaration()
                 return;
         }
 
-        globals = init_declarator(obj, globals);
+        init_declarator(obj);
         while (!consume(";"))
         {
                 expect(","); // should consume anywhere else
                 obj = declarator(base_t);
-                globals = init_declarator(obj, globals);
+                init_declarator(obj);
         }
         return;
 }
-//ND_FUNC
+// ND_FUNC
 void function_definition(Obj *declarator)
 {
         expect("(");
@@ -1646,11 +1655,14 @@ void function_definition(Obj *declarator)
         parameter_type_list();
         declarator->params = locals;
         declarator->is_function = true;
+        //move to
         Obj *var = find_gvar(declarator->token);
         if (var)
         {
                 declarator = var;
-        }else{
+        }
+        else
+        {
                 declarator->next = globals;
                 globals = declarator;
         }
@@ -1666,10 +1678,10 @@ void function_definition(Obj *declarator)
         if (!tok)
                 error_tok(token, "need block\n");
 
-        // TODO:check mismatch        
-        if(declarator->body)
+        // TODO:check mismatch
+        if (declarator->body)
                 error_tok(declarator->token, "token '%s' is already defined", declarator->token->str);
-        
+
         enter_scope(); // scope for func
         Node *node = new_node(ND_BLOCK, tok, NULL);
         Type *t = new_type(TY_PTR, ty_char, 8, "char *");

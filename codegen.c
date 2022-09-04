@@ -14,6 +14,7 @@ extern int strcmp(const char *__s1, const char *__s2);
 #define NULL ((void *)0)
 
 #include "9cc.h"
+HashMap *labels;
 /*#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -174,6 +175,8 @@ Type *gen_stmt(Node *node)
                         gen_stmt(node->els);
                 }
                 printf(".Lend%d:\n", num);
+                if (!add_hash(labels, format(".Lend%d:\n", num), 1))
+                        abort();
                 // printf("  push 0\n", num);//
                 // fprintf(tout2, "# </%s>\n", nodeK);
         }
@@ -201,6 +204,8 @@ Type *gen_stmt(Node *node)
                 depth--;
                 fprintf(tout2, "# </then>\n");
 
+                if (!add_hash(labels, format("%s:\n", break_labels[depth]), 1))
+                        abort();
                 printf("%s:\n", break_labels[depth]); // for break;
                 // fprintf(tout2, "# </%s>\n", nodeK);
         }
@@ -234,9 +239,12 @@ Type *gen_stmt(Node *node)
                 // int pre = align;
                 //  printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
-                continue_labels[depth] = format(".Lnext%d", num);
-                break_labels[depth] = format(".Lend%d", num);
+                char *continue_label = format(".Lnext%d", num);
+                char *break_label = format(".Lend%d", num);
                 char *cond_label = format(".Lbegin%d", num);
+                continue_labels[depth] = continue_label;
+                break_labels[depth] = break_label;
+                depth++;
 
                 if (node->init)
                 {
@@ -257,7 +265,7 @@ Type *gen_stmt(Node *node)
 
                 // printf("  pop rax\n"); // move result to rax
                 printf("  cmp rax, 0\n");
-                printf("  je %s\n", break_labels[depth]);
+                printf("  je %s\n", break_label);
                 if (node->then)
                 {
                         fprintf(tout2, "# <then>\n");
@@ -265,19 +273,20 @@ Type *gen_stmt(Node *node)
                         fprintf(tout2, "# </then>\n");
                 }
 
-                printf("%s:\n", continue_labels[depth]);
+                printf("%s:\n", continue_label);
                 if (node->inc)
                 {
-                        depth++;
                         fprintf(tout2, "# <next>\n");
                         gen_expr(node->inc);
                         pop("rax"); // move result to rax
                         fprintf(tout2, "# </next>\n");
-                        depth--;
                 }
 
+                depth--;
                 printf("  jmp %s\n", cond_label);
-                printf("%s:\n", break_labels[depth]);
+                printf("%s:\n", break_label);
+                //if (!add_hash(labels, format("%s:\n", break_labels[depth]), 1))
+                //        abort();
                 // fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_BLOCK)
@@ -295,23 +304,30 @@ Type *gen_stmt(Node *node)
                 // int pre = align;
                 //  printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
-                continue_labels[depth] = format(".Lbegin%d", num);
-                break_labels[depth] = format(".Lend%d", num);
+                //continue_labels[depth] = format(".Lbegin%d", num);
+                //break_labels[depth] = format(".Lend%d", num);
+                char *continue_label = format(".Lnext%d", num);
+                char *break_label = format(".Lend%d", num);
+                char *cond_label = format(".Lbegin%d", num);
+                continue_labels[depth] = continue_label;
+                break_labels[depth] = break_label;
+                depth++;
 
-                printf("%s:\n", continue_labels[depth]);
+                printf("%s:\n", continue_label);
                 fprintf(tout2, "# <cond>\n");
                 gen_expr(node->cond);
                 fprintf(tout2, "# </cond>\n");
                 pop("rax"); // move result to rax
                 printf("  cmp rax, 0\n");
-                printf("  je %s\n", break_labels[depth]);
+                printf("  je %s\n", break_label);
 
                 fprintf(tout2, "# <then>\n");
                 gen_stmt(node->then); // block
                 fprintf(tout2, "# </then>\n");
 
-                printf("  jmp %s\n", continue_labels[depth]);
-                printf("%s:\n", break_labels[depth]);
+                depth--;
+                printf("  jmp %s\n", continue_label);
+                printf("%s:\n", break_label);
                 // fprintf(tout2, "# </%s>\n", nodeK);
         }
         else
@@ -418,6 +434,8 @@ Type *gen_expr(Node *node)
                 pop("rax"); // move result to rax
 
                 printf(".Lend%d:\n", num);
+                if (!add_hash(labels, format(".Lend%d:\n", num), 1))
+                        abort();
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
                 push("rax"); // push result
@@ -436,6 +454,8 @@ Type *gen_expr(Node *node)
                 Type *t = gen_expr(node->rhs); // result is in stack
                 pop("rax");                    // move result to rax
 
+                if (!add_hash(labels, format(".Lend%d:\n", num), 1))
+                        abort();
                 printf(".Lend%d:\n", num);
                 push("rax");
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
@@ -454,6 +474,8 @@ Type *gen_expr(Node *node)
                 Type *t = gen_expr(node->rhs); // result is in stack
                 pop("rax");                    // move result to rax
 
+                if (!add_hash(labels, format(".Lend%d:\n", num), 1))
+                        abort();
                 printf(".Lend%d:\n", num);
                 push("rax");
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);

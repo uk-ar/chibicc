@@ -39,7 +39,7 @@ extern char *user_input;
 extern char *filename;
 extern Token *token;
 // extern Node *code[];
-extern HashMap *strings;
+extern HashMap *strings,*labels;
 //, *functions;
 extern int lstack_i;
 extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
@@ -89,6 +89,7 @@ int main(int argc, char **argv)
         // lstack[lstack_i]=locals;
         strings = new_hash(1000);
         structs = new_hash(100);
+        labels = new_hash(100);
 
         types = new_hash(100);
         ty_int = new_type(TY_INT, NULL, 4, "int");
