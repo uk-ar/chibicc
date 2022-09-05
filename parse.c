@@ -1724,13 +1724,14 @@ void function_definition(Obj *declarator)
         expect("(");
         Obj *scope = enter_scope(); // scope for function
         parameter_type_list();
-        declarator->params = rev(locals); // TODO: reverse
+        locals = rev(locals);
+        declarator->params = locals; // TODO: split params from locals
         declarator->is_function = true;
         if (consume(";"))
         { // prototype only
                 // TODO:check mismatch
                 // Obj *var = find_gvar(declarator->token);
-                // if(var->type!=declarator->type)
+                // if(var->type!=declarator->type)                
                 leave_scope();
                 return;
         }
