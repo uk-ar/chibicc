@@ -693,7 +693,6 @@ void codegen(Obj *code, char *filename)
         // for debug
         printf(".LCdebug:\n");
         printf("  .string \"%s\"\n", "rsp:%p\\n");
-
         for (Obj *var = code; var; var = var->next)
         { // gvar
                 if (var->is_function)

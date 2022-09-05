@@ -23,8 +23,8 @@ test/%.exe: stage1 test/%.c test/common.o codegen.s hashmap.s parse.s main.s
 stage1: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(CFLAGS)
 
-stage2: test stage1 $(ASMS)
-	$(CC) -o $@ $(ASMS) $(CFLAGS)
+stage2: test stage1 $(ASMS) no_self.o
+	$(CC) -o $@ $(ASMS) no_self.o $(CFLAGS)
 
 all: stage2
 

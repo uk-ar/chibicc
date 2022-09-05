@@ -100,7 +100,8 @@ Token *consume_Token(TokenKind kind)
 }
 bool equal(Token *tok, char *op)
 {
-        return (strcmp(op, tok->str) == 0);
+        int n=strlen(op);
+        return (strncmp(op, tok->str,n+1) == 0);
 }
 
 Token *consume(char *op)
@@ -748,23 +749,63 @@ Node *postfix()
 
 Type *direct_abstract_declarator(Type *t)
 {
-        // not used?
+        //( abstract-declarator )
         if (consume("("))
         {
                 if ((t = abstract_declarator(t)))
                 {
                         expect(")");
                 }
-                else
+        }
+        Token *tok=NULL;
+        for(;;){
+                //direct-abstract-declarator opt ( parameter-type-list opt )
+                if ((tok = consume("(")))
                 {
                         t = parameter_type_list()->type;
+                        expect(")");
+                        continue;
+                }
+                //direct-abstract-declarator opt [ static type-qualifier-list opt assignment-expression ]
+                if ((equal(token,"[") && equal(token->next,"static"))){
+                        expect("[");
+                        consume("static");
+                        consume_Token(TK_TYPE_QUAL);
+                        assign();
+                        expect("]");
+                        continue;
+                }
+                //direct-abstract-declaratoropt [ * ]
+                if ((equal(token,"[") && equal(token->next,"*"))){
+                        expect("[");
+                        expect("*");
+                        expect("]");
+                        continue;
+                }
+                //direct-abstract-declarator opt [ type-qualifier-list static assignment-expression ]
+                if ((equal(token,"[") && equal_Token(token->next,TK_TYPE_QUAL) && equal(token->next->next,"static"))){
+                        expect("[");
+                        consume_Token(TK_TYPE_QUAL);
+                        expect("static");
+                        assign();
+                        expect("]");
+                        continue;
+                }
+                //direct-abstract-declarator opt [ type-qualifier-list opt assignment-expression opt ]
+                if ((equal(token,"[") )){
+                        expect("[");
+                        consume_Token(TK_TYPE_QUAL);
+                        assign();
+                        expect("]");
+                        continue;
                 }
                 return t;
         }
-        // TODO:constant-expression(conditional-expression : ?)
-        // TODO:parameter-type-list
         return t;
 }
+//abstract-declarator:
+//      pointer
+//      pointer opt direct-abstract-declarator
 Type *abstract_declarator(Type *t)
 {
         while (consume("*"))
@@ -772,6 +813,8 @@ Type *abstract_declarator(Type *t)
         t = direct_abstract_declarator(t);
         return t;
 }
+//type-name:
+//      specifier-qualifier-list abstract-declarator opt
 Type *type_name() // TODO:need non consume version?
 {
         // specifier-qualifier
@@ -779,6 +822,7 @@ Type *type_name() // TODO:need non consume version?
         Token *t = consume_Token(TK_TYPE_SPEC);
         if (!t)
                 return NULL;
+
         char *str = t->str;
         while (t)
         {
@@ -1503,7 +1547,13 @@ Obj *declarator(Type *base_t)
         Token *tok = consume_ident();
         if (!tok)
                 return NULL;
-        Obj *obj = new_obj(tok, NULL, t);
+        Obj *obj = find_gvar(tok);
+        if (!obj){
+                //todo:Check type
+                globals = new_obj(tok, globals, t);
+                //globals = obj;
+                obj=globals;
+        }
         if (consume("[")) // declarator?
         {
                 if (consume("]"))
@@ -1597,15 +1647,6 @@ Obj *init_declarator(Obj *declarator)
 {
         fprintf(tout, " \n<%s>\n", __func__);
         Obj *var = find_gvar(declarator->token);
-        if (var)
-        {
-                declarator = var;
-        }
-        else
-        {
-                declarator->next = globals;
-                globals = declarator;
-        }
         if (consume("="))
         {
                 initializer_list(declarator);
@@ -1655,17 +1696,6 @@ void function_definition(Obj *declarator)
         parameter_type_list();
         declarator->params = locals;
         declarator->is_function = true;
-        //move to
-        Obj *var = find_gvar(declarator->token);
-        if (var)
-        {
-                declarator = var;
-        }
-        else
-        {
-                declarator->next = globals;
-                globals = declarator;
-        }
         if (consume(";"))
         { // prototype only
                 // TODO:check mismatch
