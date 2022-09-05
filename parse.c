@@ -484,7 +484,8 @@ Type *declaration_specifier() // bool declaration)
 Obj *enter_scope()
 {
         lstack[lstack_i++] = locals;
-        locals = calloc(1, sizeof(Obj));
+        locals = NULL;
+        //calloc(1, sizeof(Obj));
         return locals;
 }
 void leave_scope() // return loffset?
@@ -1707,13 +1708,23 @@ void external_declaration()
         }
         return;
 }
+Obj*rev(Obj*obj){
+        Obj*h=NULL;
+        while(obj){
+                Obj *next = obj->next;
+                obj->next = h;
+                h = obj;
+                obj = next;
+        }
+        return h;
+}
 // ND_FUNC
 void function_definition(Obj *declarator)
 {
         expect("(");
         Obj *scope = enter_scope(); // scope for function
         parameter_type_list();
-        declarator->params = locals;
+        declarator->params = rev(locals); // TODO: reverse
         declarator->is_function = true;
         if (consume(";"))
         { // prototype only

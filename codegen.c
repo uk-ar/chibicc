@@ -708,7 +708,7 @@ void codegen(Obj *code, char *filename)
                         printf("  .comm %s, %ld, %ld\n", var->name,var->type->size,align);
                         continue;
                 }
-                
+
                 printf("  .align %ld\n", var->type->align);
                 printf("%s:\n", var->name);
                 list *p = var->init;

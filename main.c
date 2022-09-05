@@ -73,16 +73,17 @@ Type *ty_long = NULL; //&(Type){TY_LONG, NULL, 8, "long"};
 
 int main(int argc, char **argv)
 {
-        tout2 = stdout; // debug
-        // tout=stderr;
-        // hashmap_test();
         if (argc != 2)
         {
                 fprintf(stderr, "wrong number of argument\n.");
                 return 1;
         }
+        tout2 = stdout; // debug
+        // tout=stderr;
+        // hashmap_test();
         tout = fopen("tmp.xml", "w");
-        locals = calloc(1, sizeof(Obj));
+        locals = NULL;
+        //calloc(1, sizeof(Obj));
         // lstack[lstack_i]=locals;
         strings = new_hash(1000);
         structs = new_hash(100);
