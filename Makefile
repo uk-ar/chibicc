@@ -1,7 +1,9 @@
 CFLAGS=-std=c99 -g -static -Wall
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
-ASMS=$(filter-out no_self.1.s ,$(SRCS:.c=.1.s))
+#ASMS=$(filter-out no_self.1.s ,$(SRCS:.c=.1.s))
+ASMS2=main.1.s
+OBJS2=$($(filter-out $(ASMS2) ,$(SRCS:.c=.1.s)):.1.s=.o)
 TESTSRCS=$(filter-out test/common.c ,$(wildcard test/*.c))
 TESTS=$(TESTSRCS:.c=.exe1)
 TESTS2=$(TESTSRCS:.c=.exe2)
@@ -35,8 +37,8 @@ test/%.exe2: stage2 test/%.c test/%.2.s test/common.1.s hashmap.1.s
 stage1: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(CFLAGS)
 
-stage2: test stage1 $(ASMS) no_self.o
-	$(CC) -o $@ $(ASMS) no_self.o $(CFLAGS)
+stage2: test stage1 $(ASMS2) $(OBJS2)
+	$(CC) -o $@ $(ASMS2) $(OBJS2) $(CFLAGS)
 
 all: stage2
 
