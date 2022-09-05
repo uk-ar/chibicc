@@ -156,7 +156,7 @@ extern list *new_list();
 extern void add_list(list *l, void *value);
 
 #define bool char
-
+typedef long unsigned int size_t;
 typedef struct Obj Obj;
 
 struct Obj
@@ -196,6 +196,8 @@ char *format(char *fmt, ...);
 void codegen(Obj *code, char *filename);
 long get_string_offset(char *s);
 extern int count();
+extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str, int align);
+
 extern HashMap *keyword2token;
 // extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 Type *ty_int;

@@ -70,16 +70,28 @@ Obj *declaration();
 int align_to(int offset, int size);
 void function_definition(Obj *obj);
 
-Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str)
+Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str, int align)
 { //
         Type *type = calloc(1, sizeof(Type));
         type->kind = ty;
         type->ptr_to = ptr_to;
         type->size = size;
         type->str = str;
+        type->align = align;
         return type;
 }
-
+Type *new_type_struct(int size, int align)
+{
+        Type *ans = new_type(TY_STRUCT, NULL, size, NULL, align);
+}
+Type *new_type_ptr(Type *ptr_to)
+{
+        Type *ans = new_type(TY_PTR, ptr_to, 8, NULL, 8);
+}
+Type *new_type_array(Type *ptr_to, int elem)
+{
+        Type *ans = new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL, elem);
+}
 bool equal_Token(Token *tok, TokenKind kind)
 {
         if (!tok)
@@ -100,8 +112,8 @@ Token *consume_Token(TokenKind kind)
 }
 bool equal(Token *tok, char *op)
 {
-        int n=strlen(op);
-        return (strncmp(op, tok->str,n+1) == 0);
+        int n = strlen(op);
+        return (strncmp(op, tok->str, n + 1) == 0);
 }
 
 Token *consume(char *op)
@@ -289,9 +301,6 @@ int align_to(int offset, int size)
 Obj *struct_declaration(Type *type)
 {
         Obj *st_vars = calloc(1, sizeof(Obj));
-        // Type *type = new_type(TY_STRUCT, NULL, 0,NULL);
-        // type->str = str1;
-        // add_hash(types, format("%s %s", type_str, str1), type);
         int max_offset = 0;
         while (!consume("}"))
         {
@@ -342,7 +351,7 @@ Type *declaration_specifier() // bool declaration)
                 Obj *st_vars = NULL;
                 if (consume("{"))
                 { // anonymous
-                        type = new_type(TY_STRUCT, NULL, 0, NULL);
+                        type = new_type_struct(0, 0);
                         st_vars = struct_declaration(type);
                 }
                 else if ((identifier = consume_ident())) // struct name
@@ -354,13 +363,13 @@ Type *declaration_specifier() // bool declaration)
                                 type = get_hash(types, src_name);
                                 if (!type)
                                 {
-                                        add_hash(types, src_name, new_type(TY_STRUCT, NULL, 0, NULL));
+                                        add_hash(types, src_name, new_type_struct(0, 0));
                                 }
                                 return get_hash(types, src_name);
                         }
                         if (consume("{"))
                         {
-                                type = new_type(TY_STRUCT, NULL, 0, NULL);
+                                type = new_type_struct(0, 0);
                                 type->str = identifier->str;
                                 if (!add_hash(types, src_name, type)) // for recursive field type
                                         error_tok(token, "redefine %s", src_name);
@@ -415,12 +424,6 @@ Type *declaration_specifier() // bool declaration)
                         src_name = format("%s %s", type_str, identifier->str);
                         if (consume("{"))
                         {
-                                /*type = new_type(TY_STRUCT, NULL, 0,NULL);
-                                type->str = identifier->str;
-                                add_hash(types, src_name, type); // for recursive field type
-                                st_vars = struct_declaration(type);
-                                add_hash(structs, src_name, st_vars);*/
-                                // type = new_type(TY_STRUCT, NULL, 0,NULL);
                                 st_vars = enumerator_list();
                                 add_hash(types, src_name, ty_int);
                                 add_hash(structs, src_name, st_vars);
@@ -662,7 +665,8 @@ Node *postfix()
                                 ans = new_node_unary(ND_DEREF,
                                                      new_node_binary(ND_ADD,
                                                                      new_node_unary(ND_ADDR, ans, ans->token, ans->type),
-                                                                     expr(), tok, new_type(TY_PTR, ans->type, 8, "from array")),
+                                                                     expr(), tok,
+                                                                     new_type_ptr(ans->type)),
                                                      tok, type);
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
@@ -704,7 +708,7 @@ Node *postfix()
                         Obj *field = find_var(right->str, st_vars);
                         if (!field)
                                 error_tok(token, "no field defined %s", right->str);
-                        Node *lhs = new_node_num(field->offset, tok, new_type(TY_CHAR, NULL, 1, "char"));
+                        Node *lhs = new_node_num(field->offset, tok, ty_char);
                         ans = new_node_unary(ND_DEREF,
                                              new_node_binary(ND_ADD,
                                                              lhs, // ans
@@ -757,17 +761,19 @@ Type *direct_abstract_declarator(Type *t)
                         expect(")");
                 }
         }
-        Token *tok=NULL;
-        for(;;){
-                //direct-abstract-declarator opt ( parameter-type-list opt )
+        Token *tok = NULL;
+        for (;;)
+        {
+                // direct-abstract-declarator opt ( parameter-type-list opt )
                 if ((tok = consume("(")))
                 {
                         t = parameter_type_list()->type;
                         expect(")");
                         continue;
                 }
-                //direct-abstract-declarator opt [ static type-qualifier-list opt assignment-expression ]
-                if ((equal(token,"[") && equal(token->next,"static"))){
+                // direct-abstract-declarator opt [ static type-qualifier-list opt assignment-expression ]
+                if ((equal(token, "[") && equal(token->next, "static")))
+                {
                         expect("[");
                         consume("static");
                         consume_Token(TK_TYPE_QUAL);
@@ -775,15 +781,17 @@ Type *direct_abstract_declarator(Type *t)
                         expect("]");
                         continue;
                 }
-                //direct-abstract-declaratoropt [ * ]
-                if ((equal(token,"[") && equal(token->next,"*"))){
+                // direct-abstract-declaratoropt [ * ]
+                if ((equal(token, "[") && equal(token->next, "*")))
+                {
                         expect("[");
                         expect("*");
                         expect("]");
                         continue;
                 }
-                //direct-abstract-declarator opt [ type-qualifier-list static assignment-expression ]
-                if ((equal(token,"[") && equal_Token(token->next,TK_TYPE_QUAL) && equal(token->next->next,"static"))){
+                // direct-abstract-declarator opt [ type-qualifier-list static assignment-expression ]
+                if ((equal(token, "[") && equal_Token(token->next, TK_TYPE_QUAL) && equal(token->next->next, "static")))
+                {
                         expect("[");
                         consume_Token(TK_TYPE_QUAL);
                         expect("static");
@@ -791,8 +799,9 @@ Type *direct_abstract_declarator(Type *t)
                         expect("]");
                         continue;
                 }
-                //direct-abstract-declarator opt [ type-qualifier-list opt assignment-expression opt ]
-                if ((equal(token,"[") )){
+                // direct-abstract-declarator opt [ type-qualifier-list opt assignment-expression opt ]
+                if ((equal(token, "[")))
+                {
                         expect("[");
                         consume_Token(TK_TYPE_QUAL);
                         assign();
@@ -803,18 +812,18 @@ Type *direct_abstract_declarator(Type *t)
         }
         return t;
 }
-//abstract-declarator:
-//      pointer
-//      pointer opt direct-abstract-declarator
+// abstract-declarator:
+//       pointer
+//       pointer opt direct-abstract-declarator
 Type *abstract_declarator(Type *t)
 {
         while (consume("*"))
-                t = new_type(TY_PTR, t, 8, "ptr");
+                t = new_type_ptr(t);
         t = direct_abstract_declarator(t);
         return t;
 }
-//type-name:
-//      specifier-qualifier-list abstract-declarator opt
+// type-name:
+//       specifier-qualifier-list abstract-declarator opt
 Type *type_name() // TODO:need non consume version?
 {
         // specifier-qualifier
@@ -1228,7 +1237,7 @@ Node *stmt()
                 Type *t = base_t;
                 fprintf(tout, " var decl\n<%s>\n", __func__);
                 while (consume("*"))
-                        t = new_type(TY_PTR, t, 8, "ptr");
+                        t = new_type_ptr(t);
                 Token *tok = consume_ident(); // ident
                 if (!tok)
                 {
@@ -1239,10 +1248,11 @@ Node *stmt()
                 {
                         error_tok(tok, "token '%s' is already defined", tok->str);
                 }
-                else if (consume("["))
+
+                if (consume("["))
                 {
                         int n = expect_num();
-                        locals = new_local(tok, locals, new_type(TY_ARRAY, t, n * t->size, "array"));
+                        locals = new_local(tok, locals, new_type_array(t, n));
                         expect("]");
                 }
                 else
@@ -1423,9 +1433,6 @@ Node *parameter_declaration()
                 return NULL;
         // error_at(token, "declaration should start with \"type\"");
 
-        /*Type *t = base_t;
-        //while (consume("*"))
-                t = new_type(TY_PTR, t, 8,"ptr");*/
         Type *t = abstract_declarator(base_t);
         Token *tok = consume_ident();
         Node *ans = new_node(ND_LVAR, tok, t);
@@ -1543,35 +1550,29 @@ Obj *declarator(Type *base_t)
         // declarator
         Type *t = base_t;
         while (consume("*"))
-                t = new_type(TY_PTR, t, 8, "ptr");
+                t = new_type_ptr(t);
         Token *tok = consume_ident();
         if (!tok)
                 return NULL;
         Obj *obj = find_gvar(tok);
-        if (!obj){
-                //todo:Check type
+        if (!obj)
+        {
+                // todo:Check type
                 globals = new_obj(tok, globals, t);
-                //globals = obj;
-                obj=globals;
+                // globals = obj;
+                obj = globals;
         }
+        int n = 0;
         if (consume("[")) // declarator?
         {
-                if (consume("]"))
+                if(!consume("]"))
                 {
-                        obj->type = new_type(TY_ARRAY, obj->type, 0, "array");
-                }
-                else
-                {
-                        int n = expect_num();
-                        obj->type = new_type(TY_ARRAY, obj->type, n * obj->type->size, "array");
+                        n = expect_num();
                         expect("]");
                 }
+                obj->type = new_type_array(obj->type, n);
         }
         // todo: merge funcall?
-        else
-        {
-                // already created
-        }
         return obj;
 }
 /*
@@ -1714,7 +1715,7 @@ void function_definition(Obj *declarator)
 
         enter_scope(); // scope for func
         Node *node = new_node(ND_BLOCK, tok, NULL);
-        Type *t = new_type(TY_PTR, ty_char, 8, "char *");
+        Type *t = new_type_ptr(ty_char);
         locals = new_local(tok, locals, t);
         locals->name = "__func__";
         locals->len = strlen(locals->name);

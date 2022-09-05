@@ -39,7 +39,7 @@ extern char *user_input;
 extern char *filename;
 extern Token *token;
 // extern Node *code[];
-extern HashMap *strings,*labels;
+extern HashMap *strings, *labels;
 //, *functions;
 extern int lstack_i;
 extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
@@ -67,9 +67,6 @@ char *read_file(char *path)
         return buf;
 }
 
-extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str);
-extern HashNode *add_hash(HashMap *h, char *key, void *value);
-
 Type *ty_int = NULL;  //&(Type){TY_INT, NULL, 4, "int"};//TODO:SUPPORT
 Type *ty_char = NULL; //&(Type){TY_CHAR, NULL, 1, "char"};
 Type *ty_long = NULL; //&(Type){TY_LONG, NULL, 8, "long"};
@@ -92,16 +89,16 @@ int main(int argc, char **argv)
         labels = new_hash(100);
 
         types = new_hash(100);
-        ty_int = new_type(TY_INT, NULL, 4, "int");
-        ty_char = new_type(TY_CHAR, NULL, 1, "char");
-        ty_long = new_type(TY_LONG, NULL, 8, "long");
+        ty_int = new_type(TY_INT, NULL, 4, "int", 4);
+        ty_char = new_type(TY_CHAR, NULL, 1, "char", 1);
+        ty_long = new_type(TY_LONG, NULL, 8, "long", 8);
         add_hash(types, "int", ty_int);
         add_hash(types, "char", ty_char);
         add_hash(types, "long", ty_long);
         add_hash(types, "_Bool", ty_char);
-        add_hash(types, "long int", new_type(TY_LONG, NULL, 8, "long int"));
-        add_hash(types, "long long int", new_type(TY_LONG, NULL, 8, "long long int"));
-        add_hash(types, "void", new_type(TY_INT, NULL, 4, "void"));
+        add_hash(types, "long int", ty_long);
+        add_hash(types, "long long int", ty_long);
+        add_hash(types, "void", ty_int);
 
         type_alias = new_hash(100);
 

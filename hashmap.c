@@ -1,5 +1,5 @@
+#include "9cc.h"
 //#include <stdlib.h>
-typedef long unsigned int size_t;
 extern void *calloc(size_t __nmemb, size_t __size);
 //#include <stdio.h>
 extern int printf(const char *__restrict __fmt, ...);
@@ -7,7 +7,6 @@ extern int printf(const char *__restrict __fmt, ...);
 extern int strcmp(const char *__s1, const char *__s2);
 //#include <stddef.h>
 #define NULL ((void *)0)
-#include "9cc.h"
 
 list *new_list()
 {
