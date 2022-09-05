@@ -2,8 +2,8 @@ CFLAGS=-std=c99 -g -static -Wall
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
 #ASMS=$(filter-out no_self.1.s ,$(SRCS:.c=.1.s))
-ASMS2=main.1.s
-OBJS2=$($(filter-out $(ASMS2) ,$(SRCS:.c=.1.s)):.1.s=.o)
+ASMS2=main.1.s hashmap.1.s #parse.1.s #codegen tokenizer
+OBJS2=$(filter-out main.o hashmap.o ,$(OBJS))
 TESTSRCS=$(filter-out test/common.c ,$(wildcard test/*.c))
 TESTS=$(TESTSRCS:.c=.exe1)
 TESTS2=$(TESTSRCS:.c=.exe2)
