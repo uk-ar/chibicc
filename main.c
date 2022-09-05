@@ -134,6 +134,7 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "default", (void *)TK_RESERVED);
         add_hash(keyword2token, "break", (void *)TK_RESERVED);
         add_hash(keyword2token, "continue", (void *)TK_RESERVED);
+        add_hash(keyword2token, "_Alignof", (void *)TK_RESERVED);
         // add_hash(keyword2token, "...", (void *)TK_RESERVED);// conflict with .
 
         add_hash(keyword2token, "sizeof", (void *)TK_SIZEOF);

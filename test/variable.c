@@ -7,9 +7,23 @@ char *k[] = {"ab", "cd"};
 
 // int *l = ((void *)0);
 int *l = (0);
+int gi1;
+long gl2;
 
 int main(int argc, char **argv)
 {
+    ASSERT(1, _Alignof(char));
+    //ASSERT(2, _Alignof(short));
+    ASSERT(4, _Alignof(int));
+    ASSERT(8, _Alignof(long));
+    ASSERT(8, _Alignof(char *));//?
+    ASSERT(1, _Alignof(char[3]));
+    ASSERT(4, _Alignof(int[3]));
+    ASSERT(0, (long)(char*)&gi1%4);
+    ASSERT(0, (long)(char*)&gl2%8);
+    //ASSERT(1, _Alignof(struct {char a; char b;}[2]));//?
+    //ASSERT(8, _Alignof(struct {char a; long b;}[2]));//?
+
     ASSERT(0, strcmp("main", __func__));
     ASSERT(1, ({int a;a=3;{a=1;}a; }));
     ASSERT(4, ({ a; }));//dont reuse name scope

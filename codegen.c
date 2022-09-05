@@ -700,13 +700,23 @@ void codegen(Obj *code, char *filename)
                 // https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
                 printf(".data\n");
                 printf(".global %s\n", var->name);
+
+                long align=(var->type->kind == TY_ARRAY && var->type->size >= 16) ?
+                MAX(16,var->type->align) : var->type->align;
+                //common symbol
+                if(!var->init){
+                        printf("  .comm %s, %ld, %ld\n", var->name,var->type->size,align);
+                        continue;
+                }
+                
+                printf("  .align %ld\n", var->type->align);
                 printf("%s:\n", var->name);
                 list *p = var->init;
                 if (!p)
                 {
                         printf("  .zero %ld\n", var->type->size);
                 }
-                else if (p->size == 1)
+                else if (p->size == 1)//TODO:clean up
                 {
                         if (var->type->kind == TY_ARRAY)
                         {

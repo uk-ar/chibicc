@@ -82,8 +82,8 @@ struct s1 *get(int i)
 int main(int argc, char **argv)
 {
     ASSERT(get()->f1,0);
-    //ASSERT(1, 0);
-    /*
+    ASSERT(8, _Alignof(struct s1));//long int quato
+
     char start;
     struct s1 o1; // 4+8+1+4+1=18 offset
     struct s1 o2, *o3 = &o1;
@@ -96,6 +96,7 @@ int main(int argc, char **argv)
         struct s3 a, *c = &a;          // 4+(4)+8+24=40
         int b;                         // 4+(4)+8+24+4+(4)=48
         ASSERT(24, sizeof(struct s3)); // 81->24
+        ASSERT(8, _Alignof(struct s3)); // long f3
         ASSERT(&(a.f1), &(c->f1));
         ASSERT(&(a.f2), &(c->f2));
         ASSERT(&(a.f3), &(c->f3));
@@ -132,6 +133,8 @@ int main(int argc, char **argv)
     ASSERT(2, o3->f2);
 
     struct s2 a, c, *b = &a, d;
+    ASSERT(16, _Alignof(struct s2)); // long f3
+    ASSERT(4, _Alignof(foo)); // int
     ASSERT(1, ({ a.f3 = 1; a.f3; }));
     ASSERT(1, ({ b->f3; }));
     ASSERT(2, ({ c.f3 = 2; c.f3; }));

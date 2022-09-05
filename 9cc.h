@@ -18,6 +18,7 @@ struct Type
        struct Type *ptr_to;
        long size;
        char *str;
+       long align;
 };
 
 typedef enum
@@ -204,3 +205,4 @@ Type *ty_int;
 Type *ty_char;
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))

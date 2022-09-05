@@ -4,6 +4,11 @@ char a[2];
 int a2[2];
 int main(int argc, char **argv)
 {
+   //ASSERT(0, ({ char x[16]; (unsigned long)&x % 16; }));
+   //ASSERT(0, ({ char x[17]; (unsigned long)&x % 16; }));
+   //ASSERT(0, ({ char x[100]; (unsigned long)&x % 16; }));
+   //ASSERT(0, ({ char x[101]; (unsigned long)&x % 16; }));
+
    ASSERT(1, ({char a[2];printA(a);printA(a+1);distance(a,a+1); }));
    ASSERT(1, ({printA(a);printA(a+1);distance(a,a+1); }));
    ASSERT(1, ({int a[2];a[0]=1;*a; }));

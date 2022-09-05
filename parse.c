@@ -309,7 +309,8 @@ Obj *struct_declaration(Type *type)
                 consume(";");
         }
         // add_hash(structs, str1, st_vars);
-        type->size = align_to(loffset, max_offset);
+        type->align = MIN(16,max_offset);
+        type->size = align_to(loffset, type->align);
         return st_vars;
 }
 
@@ -345,7 +346,6 @@ Type *declaration_specifier() // bool declaration)
 
         char *type_str = type_spec->str;
         if (strncmp(type_str, "struct", 6) == 0)
-        // if (type_spec->kind == TY_STRUCT)
         {
                 Type *type = NULL;
                 Obj *st_vars = NULL;
@@ -415,8 +415,6 @@ Type *declaration_specifier() // bool declaration)
                 Obj *st_vars = NULL;
                 if (consume("{"))
                 { // anonymous
-                        // type = new_type(TY_STRUCT, NULL, 0,NULL);
-                        // st_vars = struct_declaration(type);
                         st_vars = enumerator_list();
                 }
                 else if ((identifier = consume_ident())) // struct name
@@ -856,6 +854,25 @@ Node *unary()
 {
         Token *tok = NULL;
         Node *ans = NULL;
+        if ((tok = consume("_Alignof")))
+        {
+                fprintf(tout, " <%s>\"\n", __func__);
+                Type *t = NULL;
+                if (equal(token, "(") && equal_Token(token->next, TK_TYPE_SPEC))
+                {
+                        consume("(");
+                        t = type_name();
+                        expect(")");
+                        return new_node_num(t->align, token, t);
+                }
+                if (equal_Token(token->next, TK_TYPE_SPEC))
+                {
+                        t = type_name();
+                        return new_node_num(t->align, token, t);
+                }
+                t = unary()->type;
+                return new_node_num(t->align, token, t);
+        }
         if ((tok = consume_Token(TK_SIZEOF)))
         {
                 fprintf(tout, " <%s>\"\n", __func__);
@@ -1476,13 +1493,14 @@ Obj *struct_declarator_list(Obj *lvar)
                 else if (consume("["))
                 {
                         int n = expect_num();
-                        lvar = new_obj(tok, lvar, new_type(TY_ARRAY, t, n * t->size, "array"));
+                        lvar = new_obj(tok, lvar, new_type_array(t, n));
                         expect("]");
                 }
                 else
                 {
                         lvar = new_obj(tok, lvar, t);
                 }
+                // int align=(lvar->type==TY_ARRAY) ? MAX(16,lvar->type->size) :
                 loffset = align_to(loffset, lvar->type->size);
                 lvar->offset = loffset;
                 // struct_declaration 側でクリアされる
@@ -1565,7 +1583,7 @@ Obj *declarator(Type *base_t)
         int n = 0;
         if (consume("[")) // declarator?
         {
-                if(!consume("]"))
+                if (!consume("]"))
                 {
                         n = expect_num();
                         expect("]");
