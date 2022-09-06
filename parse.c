@@ -1436,6 +1436,8 @@ Node *stmt()
         }
         if ((tok = consume("{"))) // compound-statement
                 return compound_statement(tok, NULL);
+        if ((tok = consume(";")))
+                return node = new_node(ND_NOP, tok, NULL);
         fprintf(tout, " <%s>\n", __func__);
         node = expr(); // expression-statement
         expect(";");

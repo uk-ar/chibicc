@@ -28,6 +28,7 @@ HashMap *labels;
 Type *gen_expr(Node *node);
 FILE *tout2;
 char *nodeKind[] = {
+    "ND_NOP",
     "ND_CONTINUE",
     "ND_COND",
     "ND_EXPR",
@@ -128,32 +129,35 @@ void dump()
         printf("  mov eax, 0\n");
         printf("  call printf\n");
 }
-char *break_labels[100];
-char *continue_labels[100];
-int depth = 0;
+char *break_label = NULL;
+char *continue_label = NULL;
 // static char *argreg[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 Type *gen_stmt(Node *node)
 {
-        // char *nodeK = nodeKind[node->kind];
+        char *nodeK = nodeKind[node->kind];
         int pre = align;
         Type *t = NULL;
-        if (node->kind == ND_RETURN)
+        if (node->kind == ND_NOP)
         {
+        }
+        else if (node->kind == ND_RETURN)
+        {
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 // printf("  .loc 1 %d\n", node->token->loc);
                 if (node->lhs)
                 {
                         gen_expr(node->lhs);
                         pop("rax"); // move result to rax
                 }
-                // printf("  pop rax\n");     //
                 printf("  mov rsp,rbp\n"); // restore stack pointer
                 printf("  pop rbp\n");     // restore base pointer
                 printf("  ret\n");
-                // fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
+                fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         }
         else if (node->kind == ND_IF)
         {
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 // int pre = align;
                 // printf("  .loc 1 %d\n", node->token->loc);
                 fprintf(tout2, "# <cond>\n");
@@ -178,10 +182,11 @@ Type *gen_stmt(Node *node)
                 if (!add_hash(labels, format(".Lend%d:\n", num), 1))
                         abort();
                 // printf("  push 0\n", num);//
-                // fprintf(tout2, "# </%s>\n", nodeK);
+                fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_SWITCH)
         {
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 // int pre = align;
                 //  printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
@@ -196,55 +201,57 @@ Type *gen_stmt(Node *node)
                 {
                         printf("  jmp .Ldefault%ld\n", node->els->val);
                 }
+                char *parent_break_label = break_label;
+                break_label = format(".Lend%d", num);
 
-                break_labels[depth] = format(".Lend%d", num);
                 fprintf(tout2, "# <then>\n");
-                depth++;
                 gen_stmt(node->then); // block
-                depth--;
                 fprintf(tout2, "# </then>\n");
 
-                if (!add_hash(labels, format("%s:\n", break_labels[depth]), 1))
-                        abort();
-                printf("%s:\n", break_labels[depth]); // for break;
-                // fprintf(tout2, "# </%s>\n", nodeK);
+                /*if (!add_hash(labels, format("%s:\n", break_labels[depth]), 1))
+                        abort();*/
+
+                printf("%s:\n", break_label); // for break;
+                break_label = parent_break_label;
+
+                fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_BREAK)
         {
-                int d = depth;
-                while (d > 0 && !break_labels[d])
-                        d--;
-                if (!break_labels[d])
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
+                if (!break_label)
                         error_tok(node->token, "no break point");
-                printf("  jmp %s\n", break_labels[d]);
+                printf("  jmp %s\n", break_label);
+                fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         }
         else if (node->kind == ND_CONTINUE)
         {
-                int d = depth;
-                while (d > 0 && !continue_labels[d])
-                        d--;
-                if (!continue_labels[d])
-                        error_tok(node->token, "no break point");
-                printf("  jmp %s\n", continue_labels[d]);
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
+                if (!continue_label)
+                        error_tok(node->token, "no continue point");
+                printf("  jmp %s\n", continue_label);
+                fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         }
         else if (node->kind == ND_CASE)
         {
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 if (node->lhs)
                         printf(".Lcase%ld:\n", node->val);
                 else
                         printf(".Ldefault%ld:\n", node->val);
+                fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         }
         else if (node->kind == ND_FOR)
         {
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 // int pre = align;
                 //  printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
-                char *continue_label = format(".Lnext%d", num);
-                char *break_label = format(".Lend%d", num);
+                char *parent_continue_label = continue_label;
+                continue_label = format(".Lnext%d", num);
+                char *parent_break_label = break_label;
+                break_label = format(".Lend%d", num);
                 char *cond_label = format(".Lbegin%d", num);
-                continue_labels[depth] = continue_label;
-                break_labels[depth] = break_label;
-                depth++;
 
                 if (node->init)
                 {
@@ -282,36 +289,34 @@ Type *gen_stmt(Node *node)
                         fprintf(tout2, "# </next>\n");
                 }
 
-                depth--;
                 printf("  jmp %s\n", cond_label);
                 printf("%s:\n", break_label);
-                //if (!add_hash(labels, format("%s:\n", break_labels[depth]), 1))
-                //        abort();
-                // fprintf(tout2, "# </%s>\n", nodeK);
+                // if (!add_hash(labels, format("%s:\n", break_labels[depth]), 1))
+                //         abort();
+                fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_BLOCK)
         {
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 // printf("  .loc 1 %d\n", node->token->loc);
                 for (Node *c = node->head; c; c = c->next)
                 {
                         gen_stmt(c);
                 }
                 //  printf("  push 0\n"); // same behavior as ({;})
-                // fprintf(tout2, "# </%s>\n", nodeK);
+                fprintf(tout2, "# </%s>\n", nodeK);
         }
         else if (node->kind == ND_WHILE)
         {
+                fprintf(tout2, "# <%s>\n", nodeKind[node->kind]);
                 // int pre = align;
                 //  printf("  .loc 1 %d\n", node->token->loc);
                 int num = count();
-                //continue_labels[depth] = format(".Lbegin%d", num);
-                //break_labels[depth] = format(".Lend%d", num);
-                char *continue_label = format(".Lnext%d", num);
-                char *break_label = format(".Lend%d", num);
+                char *parent_continue_label = continue_label;
+                continue_label = format(".Lnext%d", num);
+                char *parent_break_label = break_label;
+                break_label = format(".Lend%d", num);
                 char *cond_label = format(".Lbegin%d", num);
-                continue_labels[depth] = continue_label;
-                break_labels[depth] = break_label;
-                depth++;
 
                 printf("%s:\n", continue_label);
                 fprintf(tout2, "# <cond>\n");
@@ -325,10 +330,12 @@ Type *gen_stmt(Node *node)
                 gen_stmt(node->then); // block
                 fprintf(tout2, "# </then>\n");
 
-                depth--;
                 printf("  jmp %s\n", continue_label);
                 printf("%s:\n", break_label);
-                // fprintf(tout2, "# </%s>\n", nodeK);
+
+                continue_label = parent_continue_label;
+                break_label = parent_break_label;
+                fprintf(tout2, "# </%s>\n", nodeK);
         }
         else
         {
@@ -701,11 +708,11 @@ void codegen(Obj *code, char *filename)
                 printf(".data\n");
                 printf(".global %s\n", var->name);
 
-                long align=(var->type->kind == TY_ARRAY && var->type->size >= 16) ?
-                MAX(16,var->type->align) : var->type->align;
-                //common symbol
-                if(!var->init){
-                        printf("  .comm %s, %ld, %ld\n", var->name,var->type->size,align);
+                long align = (var->type->kind == TY_ARRAY && var->type->size >= 16) ? MAX(16, var->type->align) : var->type->align;
+                // common symbol
+                if (!var->init)
+                {
+                        printf("  .comm %s, %ld, %ld\n", var->name, var->type->size, align);
                         continue;
                 }
 
@@ -716,7 +723,7 @@ void codegen(Obj *code, char *filename)
                 {
                         printf("  .zero %ld\n", var->type->size);
                 }
-                else if (p->size == 1)//TODO:clean up
+                else if (p->size == 1) // TODO:clean up
                 {
                         if (var->type->kind == TY_ARRAY)
                         {
