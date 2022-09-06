@@ -943,7 +943,7 @@ Node *unary()
         {
                 fprintf(tout, " ref\n<%s>\n", __func__);
                 Node *lhs = unary();
-                return new_node_unary(ND_ADDR, lhs, tok, lhs->type);
+                return new_node_unary(ND_ADDR, lhs, tok, new_type_ptr(lhs->type));
         }
         if ((tok = consume("!"))) // TODO:~
         {

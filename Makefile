@@ -64,7 +64,7 @@ test1: $(TESTS1)
 	cp $${i%.*}.1.s tmp.s; \
 	cp $${i%.*}.exe1 tmp; \
 	echo ./$$i ; \
-	if ! ./$$i ; then gcc -static -g -o tmp tmp.1.s test/common.1.s ; exit 1; fi; echo; \
+	if ! ./$$i ; then gcc -static -g -o tmp tmp.s test/common.o ; exit 1; fi; echo; \
 	done
 # 失敗したらデバッグ情報付で再コンパイル
 # test/common.s1をリンクするとデバッガでmainが追えなくなる？

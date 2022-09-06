@@ -4,6 +4,8 @@
 char x;
 int main(int argc, char **argv)
 {
+    ASSERT(8, ({int x; sizeof(&x); }));
+
     // ASSERT(3, sizeof(char[3]));//
     // ASSERT(24, ({sizeof(int *[3]); }));//(c) array of three pointer to int = 8*3 = 24
     ASSERT(8, ({ sizeof(int(*)[3]); })); //(d) pointer to an array of three ints = 8
@@ -13,7 +15,7 @@ int main(int argc, char **argv)
     ASSERT(8, ({ sizeof(int *()); })); //(f) function with no parameter specification returning a pointer to int,
     // ASSERT(8, ({sizeof(int (*)(void)); }));//(g) pointer to function with no parameters returning an int,
     // ASSERT(8, ({sizeof(int (*const [])(unsigned int,...)); }));//(h) array of an unspecified number of constant pointers to functions, each with one parameter that has type unsigned int and an unspecified number of other parameters, returning an int.
-    //ASSERT(8, ({int x; sizeof(&x); }));
+    
     ASSERT(4, ({int x;sizeof(int); }));
     ASSERT(8, ({int x;sizeof(int *); }));
 

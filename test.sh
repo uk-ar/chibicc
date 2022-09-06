@@ -98,7 +98,7 @@ assert  3  "int main(){int i=1; int x; switch(i){case 0:x=2;break; case 1:x=3;br
 assert  4  "int main(){int i=1; int x; switch(i){case 0:x=2;break; case 1:x=3; case 2:x=4;break; default:x=5;} return x;}"
 assert  5  "int main(){int i=8; int x; switch(i){case 0:x=2;break; case 1:x=3;break; case 2:x=4;break; default:x=5;} return x;}"
 assert  10 "int main(){int i; int x=1; for(i=0; i<4; i++){switch(i){case 0:x=2;break; case 1:x=3;break; case 2:x=4;break; default:x=10;}} return x;}"
-#assert  6  "int main(){int i;for(i=0;i<12;i++){while(i<0);while(i<0);if(i==6) break;}return i;}"
+assert  6  "int main(){int i;for(i=0;i<12;i++){while(i<0);while(i<0);if(i==6) break;}return i;}"
 
 
 assert  2  "int main(){int a;int b;int c; a=2;b=3;c=5;if(a>b){a=a+b;a=a+c;} a;}"
