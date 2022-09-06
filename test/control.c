@@ -5,9 +5,12 @@ enum
     EB
 };
 int main(int argc, char **argv)
-{   
-    int y;
+{
+    ASSERT(6, ({int i;for(i=0;i<12;i++){if(i==6) break;}i; }));
+    ASSERT(6, ({int i;for(i=0;i<12;i++){while(i<0);if(i==6) break;}i; }));
+    ASSERT(6, ({int i;for(i=0;i<12;i++){while(i<0);while(i<0);if(i==6) break;}i; }));
 
+    int y;
     ASSERT(3, ({ int x; if (0) x=2; else x=3; x; })); // works!
     ASSERT(2, ({if(1==1){y=2;} y; }));
     ASSERT(3, ({if(1==1){y=2;y=3;} y; }));

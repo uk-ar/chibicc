@@ -1,9 +1,13 @@
 *~
 *.e
 *.exe
+*.exe1
+*.exe2
+*.exe3
 *.s
 *.log
 *.o
+
 tmp*
 a.out
 9cc
