@@ -90,7 +90,7 @@ Type *new_type_ptr(Type *ptr_to)
 }
 Type *new_type_array(Type *ptr_to, int elem)
 {
-        Type *ans = new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL, elem);
+        Type *ans = new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL, ptr_to->size);
 }
 bool equal_Token(Token *tok, TokenKind kind)
 {
@@ -803,7 +803,8 @@ Type *direct_abstract_declarator(Type *t)
                 {
                         expect("[");
                         consume_Token(TK_TYPE_QUAL);
-                        assign();
+                        Node *ans = assign();
+                        t = new_type_array(t, ans->val);
                         expect("]");
                         continue;
                 }
