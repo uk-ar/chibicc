@@ -9,6 +9,7 @@ char *k[] = {"ab", "cd"};
 int *l = (0);
 int gi1;
 long gl2;
+//char *break_label = ((void *)0);//cannot handle
 
 int main(int argc, char **argv)
 {
@@ -61,6 +62,12 @@ int main(int argc, char **argv)
     ASSERT(4, ({ d; }));
     ASSERT(3, ({*e=3;*e; }));
     ASSERT(3, ({ d; }));
+
+    //init
+    ASSERT(0, ({ char *break_label = ((void *)0); }));
+
+    //static
+    //ASSERT(2, ({ static int cnt = 1;++cnt; }));// not supported but test passed
 
     // global
     ASSERT(4, ({ a; }));

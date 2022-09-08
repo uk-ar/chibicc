@@ -292,6 +292,8 @@ Type *gen_stmt(Node *node)
 
                 printf("  jmp %s\n", cond_label);
                 printf("%s:\n", break_label);
+                break_label=parent_break_label;
+                continue_label=parent_continue_label;
                 // if (!add_hash(labels, format("%s:\n", break_labels[depth]), 1))
                 //         abort();
                 fprintf(tout2, "# </%s>\n", nodeK);
