@@ -13,6 +13,19 @@ long gl2;
 
 int main(int argc, char **argv)
 {
+    //type
+    //ASSERT(1,({_Bool x = 3; sizeof(x);}));
+    /*
+    ASSERT(1,({_Bool x = 3; x;}));
+    ASSERT(1,({_Bool x = 3; x++; x;}));
+    ASSERT(0,({_Bool x = 3; x--; x;}));
+    ASSERT(1,({_Bool x = 3; x+=3; x;}));
+    ASSERT(0,({_Bool x = 3; x-=1; x;}));
+    ASSERT(1,({_Bool x = 3; x-=4; x;}));
+    ASSERT(4,({_Bool x = 3; x+3;}));
+    */
+    ASSERT(3,({char x = 3; x;}));
+    //ASSERT(0, strcmp("main", __func__));//fixme!!
     ASSERT(1, _Alignof(char));
     //ASSERT(2, _Alignof(short));
     ASSERT(4, _Alignof(int));
@@ -25,7 +38,7 @@ int main(int argc, char **argv)
     //ASSERT(1, _Alignof(struct {char a; char b;}[2]));//?
     //ASSERT(8, _Alignof(struct {char a; long b;}[2]));//?
 
-    ASSERT(0, strcmp("main", __func__));
+    //ASSERT(0, strcmp("main", __func__));
     ASSERT(1, ({int a;a=3;{a=1;}a; }));
     ASSERT(4, ({ a; }));//dont reuse name scope
     ASSERT(a, 4);
