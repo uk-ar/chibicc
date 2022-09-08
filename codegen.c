@@ -11,7 +11,7 @@ extern int printf(const char *__restrict __fmt, ...);
 //#include <string.h>
 extern int strcmp(const char *__s1, const char *__s2);
 //#include <stddef.h>
-#define NULL ((void *)0)
+#define NULL 0 // TODO:((void *)0)
 
 #include "9cc.h"
 HashMap *labels;
@@ -117,9 +117,10 @@ Type *gen_lval(Node *node)
                 return NULL;
         }
 }
+int cnt = 1;
 int count()
 {
-        static int cnt = 1;
+        //static int cnt = 1;
         return cnt++;
 }
 void dump()

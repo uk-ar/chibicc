@@ -207,3 +207,8 @@ Type *ty_char;
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str, int align);
+Type *new_type_struct(int size, int align);
+Type *new_type_ptr(Type *ptr_to);
+Type *new_type_array(Type *ptr_to, int elem);

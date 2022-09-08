@@ -70,28 +70,7 @@ Obj *declaration();
 int align_to(int offset, int size);
 void function_definition(Obj *obj);
 
-Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str, int align)
-{ //
-        Type *type = calloc(1, sizeof(Type));
-        type->kind = ty;
-        type->ptr_to = ptr_to;
-        type->size = size;
-        type->str = str;
-        type->align = align;
-        return type;
-}
-Type *new_type_struct(int size, int align)
-{
-        Type *ans = new_type(TY_STRUCT, NULL, size, NULL, align);
-}
-Type *new_type_ptr(Type *ptr_to)
-{
-        Type *ans = new_type(TY_PTR, ptr_to, 8, NULL, 8);
-}
-Type *new_type_array(Type *ptr_to, int elem)
-{
-        Type *ans = new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL, ptr_to->size);
-}
+//maybe bool causing problem?
 bool equal_Token(Token *tok, TokenKind kind)
 {
         if (!tok)
