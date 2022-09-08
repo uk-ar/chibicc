@@ -50,46 +50,46 @@ Token *tokenize(char *p)
         if (*p == '\'')
         {
             char *pre = p;
-            cur = new_token(TK_NUM, cur, p, 0, loc);
+            char val=0;
             p++;
             if (*p == '\\')
             {
                 p++;
                 if (*p == 'a')
                 {
-                    cur->val = 0x7;
+                    val = 0x7;
                 }
                 else if (*p == '0')
                 {
-                    cur->val = 0x0;
+                    val = 0x0;
                 }
                 else if (*p == 'b')
                 {
-                    cur->val = 0x8;
+                    val = 0x8;
                 }
                 else if (*p == 'f')
                 {
-                    cur->val = 0xc;
+                    val = 0xc;
                 }
                 else if (*p == 'n')
                 {
-                    cur->val = 0xa;
+                    val = 0xa;
                 }
                 else if (*p == 'r')
                 {
-                    cur->val = 0xd;
+                    val = 0xd;
                 }
                 else if (*p == 't')
                 {
-                    cur->val = 0x9;
+                    val = 0x9;
                 }
                 else if (*p == 'v')
                 {
-                    cur->val = 0xb;
+                    val = 0xb;
                 }
                 else if (*p == '\\' || *p == '\'' || *p == '\"' || *p == '\?')
                 {
-                    cur->val = *p;
+                    val = *p;
                 }
                 else
                 {
@@ -98,13 +98,14 @@ Token *tokenize(char *p)
             }
             else
             {
-                cur->val = *p;
+                val = *p;
             }
             p++;
             if (*p != '\'')
                 error_at(p, "'\'' is not closing");
             p++;
-            cur->len = p - pre;
+            cur = new_token(TK_NUM, cur, pre, p-pre, loc);
+            cur->val=val;
             continue;
         }
         if (isspace(*p))
@@ -163,9 +164,9 @@ Token *tokenize(char *p)
         if (isdigit(*p))
         {
             char *pre = p;
-            cur = new_token(TK_NUM, cur, p, 0, loc);
-            cur->val = strtol(p, &p, 0);
-            cur->len = p - pre;
+            long val=strtol(p, &p, 0);
+            cur = new_token(TK_NUM, cur, pre, p-pre, loc);
+            cur->val = val;
             // printf("%d",p-pre);
             continue;
         }

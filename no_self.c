@@ -120,5 +120,5 @@ void error_tok(Token *tok, char *fmt, ...)
 {
         va_list ap;
         va_start(ap, fmt);
-        verror_at(tok->str, fmt, ap);
+        verror_at(tok->pos, fmt, ap);
 }
