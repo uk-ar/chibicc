@@ -37,7 +37,6 @@ int f6()
     int a; // duplicate variable name
     return 6;
 }
-
 int fib(int x)
 {
     if (x <= 1)
@@ -68,7 +67,7 @@ int a6(int a, int b, int c, int d, int e, int f)
 int main(int argc, char **argv)
 {
     ASSERT(0, a6(1, 2, 3, 4, 5, 6));
-    /*ASSERT(1, f1());
+    ASSERT(1, f1());
     ASSERT(2, f2(2));
     ASSERT(3, f3(1, 2));
     ASSERT(7, f3(2 + 3, 2));

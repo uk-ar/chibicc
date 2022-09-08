@@ -181,8 +181,18 @@ struct Obj
        Obj *locals;
        Node *body;
 };
-extern Obj *locals, *globals;
+extern Obj *globals; //*locals,
 
+typedef struct Scope Scope;
+struct Scope
+{
+       Obj *locals;
+       Scope *next;
+       int offset;
+};
+extern Scope *scope;
+
+Scope *new_scope(Scope *next, int offset);
 Token *tokenize(char *p);
 Node *expr();
 Type *gen_stmt(Node *root);

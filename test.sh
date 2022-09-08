@@ -128,7 +128,7 @@ assert  3  "int main(){int x; int *y; int **z; y=&x;z=&y;**z=3;return x;}"
 
 assert  4  "int main(){int x; sizeof(x);}"
 assert  8  "int main(){int *x; sizeof(x);}"
-#assert  8  "int main(){int x; sizeof(&x);}"
+assert  8  "int main(){int x; sizeof(&x);}"
 assert  4  "int main(){int x; sizeof(x+2);}"
 assert  8  "int main(){int *x; sizeof(x+2);}"
 assert  8  "int main(){int *x; sizeof((x));}"
@@ -167,7 +167,7 @@ assert  2  "int main(){char a;a=2;return a;}"
 assert  25 "int main(){char a;char b;char c;char d; a=3;b=2;c=12;d=17;(d-c)*(a+b);}"
 assert  9  "int main(){char a;char b;char c; a=2;b=3;if(a>b) c=b-a/a; else c=a+b*b-a;c;}"
 assert  3  "int main(){char x; char *y; char **z; y=&x;z=&y;**z=3;return x;}"
-#assert  4  "int main(){char x; sizeof(x+2);}"
+#assert  4  "int main(){char x; sizeof(x+2);}"//cast
 assert  3  "int main(){char a[4]; *a=1; *(a+1)=2; char *p; p=a; return *p + *(p+1);}"
 
 assert  101  'int main(){char *x; x="hello"; x[1];}'

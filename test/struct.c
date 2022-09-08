@@ -66,14 +66,12 @@ struct s8
     int **a;
 };
 // TODO:
-/*struct empty{
-
-}*/
+// struct empty{};
 struct s1 o11;
-//struct s1 *get();
+struct s1 *get();
 struct s1 *get(int i)
 {
-    if(i==0)
+    if (i == 0)
         return &o11;
     printf("%d", get(i - 1)->f1); // recursive call;
     return get(i - 1);
@@ -81,27 +79,28 @@ struct s1 *get(int i)
 
 int main(int argc, char **argv)
 {
-    ASSERT(get()->f1,0);
-    ASSERT(8, _Alignof(struct s1));//long int quato
+    ASSERT(get()->f1, 0);
+    ASSERT(8, _Alignof(struct s1)); // long int quato
 
     char start;
     struct s1 o1; // 4+8+1+4+1=18 offset
     struct s1 o2, *o3 = &o1;
-    // o1.f1 = 1;
-    //  ASSERT(5, distance(&o1, &start));
-    //  ASSERT(5, distance(&o2, &o1));
-    //  ASSERT(10, distance(&o2, &start));
-    //  ASSERT(8, distance(&o3, &o2));
+    o1.f1 = 1;
+    //   ASSERT(5, distance(&o1, &start));
+    //   ASSERT(5, distance(&o2, &o1));
+    //   ASSERT(10, distance(&o2, &start));
+    //   ASSERT(8, distance(&o3, &o2));
     {
-        struct s3 a, *c = &a;          // 4+(4)+8+24=40
-        int b;                         // 4+(4)+8+24+4+(4)=48
-        ASSERT(24, sizeof(struct s3)); // 81->24
+        struct s3 a, *c = &a;           // 4+(4)+8+24=40
+        int b;                          // 4+(4)+8+24+4+(4)=48
+        ASSERT(24, sizeof(struct s3));  // 81->24
         ASSERT(8, _Alignof(struct s3)); // long f3
         ASSERT(&(a.f1), &(c->f1));
         ASSERT(&(a.f2), &(c->f2));
         ASSERT(&(a.f3), &(c->f3));
         ASSERT(&(a.f4), &(c->f4));
     }
+
     ASSERT(24, sizeof(o1)); // 1+(3)+4+1+(3)
     ASSERT(0, distance(&o1, &o1.f1));
     ASSERT(1, ({ o1.f1 = 1; o1.f1 ; }));
@@ -120,7 +119,7 @@ int main(int argc, char **argv)
     ASSERT(1, o1.f1);
 
     ASSERT(16, sizeof(node));
-    //ASSERT(16, sizeof(list));
+    // ASSERT(16, sizeof(list));
     ASSERT(8, sizeof(o3));
     printf("c:%p\n", &(o1.f1));
     printf("i:%p\n", &(o3->f1));
@@ -134,7 +133,7 @@ int main(int argc, char **argv)
 
     struct s2 a, c, *b = &a, d;
     ASSERT(16, _Alignof(struct s2)); // long f3
-    ASSERT(4, _Alignof(foo)); // int
+    ASSERT(4, _Alignof(foo));        // int
     ASSERT(1, ({ a.f3 = 1; a.f3; }));
     ASSERT(1, ({ b->f3; }));
     ASSERT(2, ({ c.f3 = 2; c.f3; }));

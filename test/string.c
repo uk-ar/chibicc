@@ -8,7 +8,7 @@ int main(int argc, char **argv) // 4+(4)+8=16
     ASSERT(97, 'a');
     ASSERT(3, ({printf("abc");3; }));
 
-    ASSERT(1, ({printf("abc");1; }));
+    ASSERT(1, ({printf("abc");1; }));    
     ASSERT(2, ({printf("abc:%d",1);2; }));
 
     ASSERT(3, ({puts("abc");3; }));

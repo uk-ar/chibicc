@@ -37,11 +37,11 @@ int assert(int expected, int actual, char *code, char *file)
 {
         if (expected == actual)
         {
-                printf("%s => %d\n", code, actual);
+                printf("%s => %d(%p)\n", code, actual);
         }
         else
         {
-                printf("%s => %d expected but got %d:file %s\n", code, expected, actual, file);
+                printf("%s => %d expected but got %d(%p):file %s\n", code, expected, actual,actual, file);
                 exit(1);
         }
         return 0;
