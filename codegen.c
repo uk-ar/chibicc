@@ -511,7 +511,7 @@ Type *gen_expr(Node *node)
                 Node *n = node->head;
                 // dump();
                 // printf("  sub rsp, %d\n", ((align) % 2) * 8); // align
-                for (i = 0; i < 6 && n; i++, n = n->next)
+                for (i = 0; n && i < 6 ; i++, n = n->next)
                 {
                         gen_expr(n); // result is in stack
                 }
@@ -662,7 +662,7 @@ void function(Obj *func)
         printf("  mov rbp, rsp\n");                                  // save stack pointer
         printf("  sub rsp, %d\n", (func->stacksize + 15) / 16 * 16); // num of vals*8byte
         Obj *n = func->params;
-        for (int i = 0; i < 6 && n && n->type; i++, n = n->next)
+        for (int i = 0; n && n->type && i < 6 ; i++, n = n->next)
         {
                 // printf("  mov rax, %s\n", argreg[i]); // args to local
                 // printf("  push rax\n");               // args to local

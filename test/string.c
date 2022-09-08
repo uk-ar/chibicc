@@ -32,6 +32,6 @@ int main(int argc, char **argv) // 4+(4)+8=16
     ASSERT(0, ({char x[3];x[0]=97;x[1]=98;x[2]=0; x[2]; }));
     ASSERT(2, ({char x[3];x[0]=97;x[1]=98;x[2]=0;printVC(x,3); 2; }));
     ASSERT(1, ({char x[3];x[0]=97;x[1]=98;x[2]=0;puts(x);1; }));
-
+    //*/
     return 0;
 }

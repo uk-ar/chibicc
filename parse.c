@@ -567,7 +567,7 @@ Node *primary()
                                 fprintf(tout, " funcall</%s>\n", __func__);
                                 return ans;
                         }
-                        for (int i = 0; i < 6 && !consume(")"); i++)
+                        for (int i = 0; !consume(")") && i < 6; i++)
                         {
                                 add_node(ans, assign());
                                 consume(",");
@@ -1514,7 +1514,7 @@ Obj *parameter_type_list()
         }
 
         // Obj *ans = NULL;
-        for (int i = 0; i < 6 && !consume(")"); i++)
+        for (int i = 0; !consume(")") && i < 6; i++)
         {
                 if (consume("..."))
                 {
