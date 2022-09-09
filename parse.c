@@ -162,6 +162,16 @@ Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs, Token *token, Type *t
         ans->rhs = rhs;
         return ans;
 }
+Node *new_node_add(Node *lhs, Node *rhs, Token *token, Type *type)
+{
+        Node *ans = new_node_binary(ND_ADD, lhs, rhs, token, type);
+        return ans;
+}
+Node *new_node_sub(Node *lhs, Node *rhs, Token *token, Type *type)
+{
+        Node *ans = new_node_binary(ND_SUB, lhs, rhs, token, type);
+        return ans;
+}
 Node *new_node_unary(NodeKind kind, Node *lhs, Token *token, Type *type)
 {
         Node *ans = new_node(kind, token, type);
@@ -653,10 +663,10 @@ Node *postfix()
                 {
                         if (ans->type->kind == TY_PTR)
                         {
-                                Type *type = ans->type->ptr_to;
+                                // Type *type = ;
                                 ans = new_node_unary(ND_DEREF,
-                                                     new_node_binary(ND_ADD, ans, expr(), tok, ans->type),
-                                                     tok, type);
+                                                     new_node_add(ans, expr(), tok, ans->type),
+                                                     tok, ans->type->ptr_to);
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
                                 continue;
@@ -665,11 +675,11 @@ Node *postfix()
                         {
                                 Type *type = ans->type->ptr_to;
                                 ans = new_node_unary(ND_DEREF,
-                                                     new_node_binary(ND_ADD,
-                                                                     new_node_unary(ND_ADDR, ans, ans->token, ans->type),
-                                                                     expr(), tok,
-                                                                     new_type_ptr(ans->type)),
+                                                     new_node_add(new_node_unary(ND_ADDR, ans, ans->token, ans->type),
+                                                                  expr(), tok,
+                                                                  new_type_ptr(ans->type)),
                                                      tok, type);
+                                // tok, ans->type->ptr_to);//Fixme cannot handle
                                 expect("]"); // important
                                 fprintf(tout, "array\n</%s>\n", __func__);
                                 continue;
@@ -692,8 +702,9 @@ Node *postfix()
                         Obj *field = find_var(tok->str, var);
                         if (!field)
                                 error_tok(token, "no %s field defined in %s struct", tok->str, ans->type->str);
-                        ans->type = field->type;
-                        ans->offset -= field->offset;
+                        ans = new_node_unary(ND_MEMBER, ans, tok, field->type);
+                        ans->member = field;
+                        // ans->offset -= field->offset;
                         continue;
                 }
                 if ((tok = consume("->")))
@@ -710,32 +721,31 @@ Node *postfix()
                         Obj *field = find_var(right->str, st_vars);
                         if (!field)
                                 error_tok(token, "no field defined %s", right->str);
-                        Node *lhs = new_node_num(field->offset, tok, ty_char);
-                        ans = new_node_unary(ND_DEREF,
+                        ans = new_node_unary(ND_MEMBER,
+                                             new_node_unary(ND_DEREF, ans, tok, ans->type->ptr_to),
+                                             tok, field->type);
+                        ans->member = field;
+                        //Node *lhs = new_node_num(field->offset, tok, ty_char);
+                        /*ans = new_node_unary(ND_DEREF,
                                              new_node_binary(ND_ADD,
                                                              lhs, // ans
                                                              ans, // lhs
                                                              tok, lhs->type),
-                                             tok, field->type);
-                        // ans->type = field->type;
-                        // ans->offset -= field->offset;
-                        // ans = new_node_unary(ND_DEREF, ans, tok, ans->type->ptr_to);
-                        // ans->offset -= field->offset;
-                        // ans = new_node(ND_LVAR, ans->token, ans->type->ptr_to);
+                                             tok, field->type);*/
                         continue;
                 }
                 if ((tok = consume("++")))
                 {
                         // TODO:return non assign value
-                        Type *type = ans->type;
+                        // Type *type = ans->type;
                         ans = new_node_binary(ND_EXPR,
                                               ans,
                                               new_node_binary(ND_ASSIGN,
                                                               ans,
-                                                              new_node_binary(ND_ADD, ans, new_node_num(1, tok, type), tok, type),
-                                                              tok, type),
+                                                              new_node_add(ans, new_node_num(1, tok, ans->type), tok, ans->type),
+                                                              tok, ans->type),
                                               tok,
-                                              type);
+                                              ans->type);
 
                         continue;
                 }
@@ -907,11 +917,10 @@ Node *unary()
         if ((tok = consume("++")))
         {
                 ans = unary();
-                Type *type = ans->type;
                 return new_node_binary(ND_ASSIGN,
                                        ans,
-                                       new_node_binary(ND_ADD, new_node_num(1, tok, type), ans, tok, type),
-                                       tok, type);
+                                       new_node_add(new_node_num(1, tok, ans->type), ans, tok, ans->type),
+                                       tok, ans->type);
         }
         if ((tok = consume("--")))
         {
@@ -1027,7 +1036,7 @@ Node *add()
                 if ((tok = consume("+")))
                 {
                         fprintf(tout, " plus\n<%s>\n", __func__);
-                        node = new_node_binary(ND_ADD, node, mul(), tok, node->type);
+                        node = new_node_add(node, mul(), tok, node->type);
                         fprintf(tout, " plus\n</%s>\n", __func__);
                         continue;
                 }
@@ -1153,7 +1162,7 @@ Node *assign()
                 fprintf(tout, " ass\n<%s>\n", __func__);
                 node = new_node_binary(ND_ASSIGN,
                                        node,
-                                       new_node_binary(ND_ADD, node, equality(), tok, node->type),
+                                       new_node_add(node, equality(), tok, node->type),
                                        tok, node->type);
                 fprintf(tout, " ass\n</%s>\n", __func__);
                 return node;

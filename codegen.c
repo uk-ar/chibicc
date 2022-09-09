@@ -28,6 +28,7 @@ HashMap *labels;
 Type *gen_expr(Node *node);
 FILE *tout2;
 char *nodeKind[] = {
+    "ND_MEMBER",
     "ND_NOP",
     "ND_CONTINUE",
     "ND_COND",
@@ -111,6 +112,15 @@ Type *gen_lval(Node *node)
                 fprintf(tout2, "#lvar </%s>\n", nodeKind[node->kind]);
                 return t;
         }
+        else if (node->kind == ND_MEMBER)
+        {
+                Type *t = gen_expr(node->lhs); // address is in stack
+                pop("rax");
+                printf("  add rax, %d\n", node->member->offset);
+                push("rax");
+                fprintf(tout2, "#lvar </%s>\n", nodeKind[node->kind]);
+                return t;
+        }
         else
         {
                 error_tok(node->token, "token is not lvalue\n", node->token->str);
@@ -120,7 +130,7 @@ Type *gen_lval(Node *node)
 int cnt = 1;
 int count()
 {
-        //static int cnt = 1;
+        // static int cnt = 1;
         return cnt++;
 }
 void dump()
@@ -292,8 +302,8 @@ Type *gen_stmt(Node *node)
 
                 printf("  jmp %s\n", cond_label);
                 printf("%s:\n", break_label);
-                break_label=parent_break_label;
-                continue_label=parent_continue_label;
+                break_label = parent_break_label;
+                continue_label = parent_continue_label;
                 // if (!add_hash(labels, format("%s:\n", break_labels[depth]), 1))
                 //         abort();
                 fprintf(tout2, "# </%s>\n", nodeK);
@@ -511,7 +521,7 @@ Type *gen_expr(Node *node)
                 Node *n = node->head;
                 // dump();
                 // printf("  sub rsp, %d\n", ((align) % 2) * 8); // align
-                for (i = 0; n && i < 6 ; i++, n = n->next)
+                for (i = 0; n && i < 6; i++, n = n->next)
                 {
                         gen_expr(n); // result is in stack
                 }
@@ -662,7 +672,7 @@ void function(Obj *func)
         printf("  mov rbp, rsp\n");                                  // save stack pointer
         printf("  sub rsp, %d\n", (func->stacksize + 15) / 16 * 16); // num of vals*8byte
         Obj *n = func->params;
-        for (int i = 0; n && n->type && i < 6 ; i++, n = n->next)
+        for (int i = 0; n && n->type && i < 6; i++, n = n->next)
         {
                 // printf("  mov rax, %s\n", argreg[i]); // args to local
                 // printf("  push rax\n");               // args to local
@@ -686,6 +696,7 @@ void function(Obj *func)
         gen_stmt(func->body);
 }
 char *global_types[] = {".byte", ".long", ".quad", ".quad"};
+// char *global_types[] = {".byte", ".byte", ".long", ".quad", ".quad"};
 void codegen(Obj *code, char *filename)
 {
         // header

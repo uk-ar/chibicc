@@ -70,6 +70,7 @@ char *read_file(char *path)
 Type *ty_int = NULL;  //&(Type){TY_INT, NULL, 4, "int"};//TODO:SUPPORT
 Type *ty_char = NULL; //&(Type){TY_CHAR, NULL, 1, "char"};
 Type *ty_long = NULL; //&(Type){TY_LONG, NULL, 8, "long"};
+Type *ty_bool = NULL;
 
 int main(int argc, char **argv)
 {
@@ -82,23 +83,23 @@ int main(int argc, char **argv)
         // tout=stderr;
         // hashmap_test();
         tout = fopen("tmp.xml", "w");
-        //locals = NULL;
+        // locals = NULL;
         scope = new_scope(NULL, 0);
 
-        //calloc(1, sizeof(Obj));
+        // calloc(1, sizeof(Obj));
         strings = new_hash(1000);
         structs = new_hash(100);
         labels = new_hash(100);
-        
 
         types = new_hash(100);
         ty_int = new_type(TY_INT, NULL, 4, "int", 4);
         ty_char = new_type(TY_CHAR, NULL, 1, "char", 1);
         ty_long = new_type(TY_LONG, NULL, 8, "long", 8);
+        ty_bool = new_type(TY_CHAR, NULL, 1, "char", 1);
         add_hash(types, "int", ty_int);
         add_hash(types, "char", ty_char);
         add_hash(types, "long", ty_long);
-        add_hash(types, "_Bool", ty_char);
+        add_hash(types, "_Bool", ty_bool);
         add_hash(types, "long int", ty_long);
         add_hash(types, "long long int", ty_long);
         add_hash(types, "void", ty_int);

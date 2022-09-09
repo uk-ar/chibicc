@@ -3,6 +3,7 @@
 
 typedef enum
 {
+       //TY_BOOL,
        TY_CHAR,
        TY_INT,
        TY_LONG,
@@ -57,6 +58,7 @@ struct Token
 
 typedef enum
 {
+       ND_MEMBER,
        ND_NOP,
        ND_CONTINUE,
        ND_COND,
@@ -133,6 +135,7 @@ struct Node
        Node *next; // treat as list
        Type *type;
        HashMap *cases;
+       Obj *member;
        long val;   // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        Token *token;
