@@ -116,7 +116,8 @@ Type *gen_lval(Node *node)
         {
                 Type *t = gen_expr(node->lhs); // address is in stack
                 pop("rax");
-                printf("  add rax, %d\n", node->member->offset);
+                //printf("  add rax, %d\n", node->member->offset);
+                printf("  add rax, %d\n", node->offset);
                 push("rax");
                 fprintf(tout2, "#lvar </%s>\n", nodeKind[node->kind]);
                 return t;

@@ -702,9 +702,10 @@ Node *postfix()
                         Obj *field = find_var(tok->str, var);
                         if (!field)
                                 error_tok(token, "no %s field defined in %s struct", tok->str, ans->type->str);
-                        ans = new_node_unary(ND_MEMBER, ans, tok, field->type);
-                        ans->member = field;
-                        // ans->offset -= field->offset;
+                        // ans = new_node_unary(ND_MEMBER, ans, tok, field->type);
+                        // ans->member = field;
+                        ans->type = field->type;
+                        ans->offset -= field->offset;
                         continue;
                 }
                 if ((tok = consume("->")))
@@ -721,11 +722,19 @@ Node *postfix()
                         Obj *field = find_var(right->str, st_vars);
                         if (!field)
                                 error_tok(token, "no field defined %s", right->str);
+                        Node *lhs = new_node_num(field->offset, tok, ty_char);
+                        ans = new_node_unary(ND_DEREF,
+                                             new_node_binary(ND_ADD,
+                                                             lhs, // ans
+                                                             ans, // lhs
+                                                             tok, lhs->type),
+                                             tok, field->type);
+                        /*
                         ans = new_node_unary(ND_MEMBER,
                                              new_node_unary(ND_DEREF, ans, tok, ans->type->ptr_to),
                                              tok, field->type);
                         ans->member = field;
-                        //Node *lhs = new_node_num(field->offset, tok, ty_char);
+                        // Node *lhs = new_node_num(field->offset, tok, ty_char);
                         /*ans = new_node_unary(ND_DEREF,
                                              new_node_binary(ND_ADD,
                                                              lhs, // ans

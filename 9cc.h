@@ -117,6 +117,7 @@ struct HashMap
        int size;
 };
 
+typedef struct Obj Obj;
 typedef struct Node Node;
 
 struct Node
@@ -135,7 +136,7 @@ struct Node
        Node *next; // treat as list
        Type *type;
        HashMap *cases;
-       Obj *member;
+       //Obj *member;
        long val;   // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        Token *token;
@@ -162,7 +163,6 @@ extern void add_list(list *l, void *value);
 
 #define bool char
 typedef long unsigned int size_t;
-typedef struct Obj Obj;
 
 struct Obj
 {

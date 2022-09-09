@@ -1,6 +1,6 @@
 #include "test.h"
-#include "../9cc.h"
-
+//#include "../9cc.h"
+/*
 struct s1
 {
     char f1; // 1
@@ -10,6 +10,7 @@ struct s1
     char f3; // 1
     // padding:4
     long int quot; // 8
+    struct s2 *foo;
 };
 
 struct s2
@@ -76,9 +77,11 @@ struct s1 *get(int i)
     printf("%d", get(i - 1)->f1); // recursive call;
     return get(i - 1);
 }
-
+//*/
 int main(int argc, char **argv)
 {
+    ASSERT(8, sizeof(struct not_exist *));
+    /*
     ASSERT(get()->f1, 0);
     ASSERT(8, _Alignof(struct s1)); // long int quato
 
