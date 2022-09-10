@@ -2,6 +2,7 @@
 
 int main(int argc, char **argv)
 {
+    ASSERT(8, sizeof(struct not_exist *));
     ASSERT(8, sizeof(long int));
     ASSERT(1, sizeof(char));
     ASSERT(4, sizeof(int));

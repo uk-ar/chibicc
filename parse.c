@@ -749,10 +749,10 @@ Node *postfix()
                         Obj *field = find_var(tok->str, var);
                         if (!field)
                                 error_tok(token, "no %s field defined in %s struct", tok->str, ans->type->str);
-                        // ans = new_node_unary(ND_MEMBER, ans, tok, field->type);
-                        // ans->member = field;
-                        ans->type = field->type;
-                        ans->offset -= field->offset;
+                        ans = new_node_unary(ND_MEMBER, ans, tok, field->type);
+                        ans->member = field;
+                        //ans->type = field->type;
+                        //ans->offset -= field->offset;
                         continue;
                 }
                 if ((tok = consume("->")))

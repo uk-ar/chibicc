@@ -136,7 +136,7 @@ struct Node
        Node *next; // treat as list
        Type *type;
        HashMap *cases;
-       //Obj *member;
+       Obj *member;
        long val;   // enable iff kind == ND_NUM
        int offset; // enable iff kind == ND_LVAR
        Token *token;
