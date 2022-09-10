@@ -11,7 +11,7 @@ TESTS1=$(TEST_SRCS:.c=.exe1)
 TESTS2=$(TEST_SRCS:.c=.exe2)
 TESTS3=$(TEST_SRCS:.c=.exe3)
 
-.PRECIOUS: $(TEST_SRCS:.c=.e) $(TEST_SRCS:.c=.1.s) $(TEST_SRCS:.c=.2.s) test/common.e test/common.1.s $(TEST_SRCS:.c=.3.s) main.e test/common.2.s hashmap.e tokenizer.e codegen.e parse_self.e
+.PRECIOUS: $(TEST_SRCS:.c=.e) $(TEST_SRCS:.c=.1.s) $(TEST_SRCS:.c=.2.s) test/common.e test/common.1.s $(TEST_SRCS:.c=.3.s) main.e test/common.2.s hashmap.e tokenizer.e codegen.e parse_self.e type.e
 
 %.e: %.c
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)

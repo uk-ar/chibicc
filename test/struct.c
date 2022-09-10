@@ -80,6 +80,7 @@ struct s1 *get(int i)
 //*/
 int main(int argc, char **argv)
 {
+    ASSERT(get()->f1, 0);
     // ASSERT(8, sizeof(struct not_exist *));
     // ASSERT(1, 0);
     {
@@ -93,18 +94,18 @@ int main(int argc, char **argv)
         ASSERT(1, o3->f1);
         ASSERT(2, o3->f2);
     }
-    //ASSERT(get()->f1, 0);
+    //ASSERT(get()->f1, 0);//FIXME
     {
         struct s1 o2, *o3 = &o2;
         //printf("c:%p\n", &(o2.f1));
         //printf("i:%p\n", &(o2.f2));
-        ASSERT(24, sizeof(o2));
-        //ASSERT(3, ({ o2.f2 = 3; o2.f2 ; }));
+        ASSERT(24, sizeof(o2));        
         ASSERT(&o2, &o2.f1);
         ASSERT(&(o2.f1), &(o3->f1));
         ASSERT(&(o2.f2), &(o3->f2));
         ASSERT(1, ({ o2.f1 = 1; o2.f1 ; }));
-        //ASSERT(4, o2.f1);
+        ASSERT(3, ({ o2.f2 = 3; o2.f2 ; }));
+        // ASSERT(4, o2.f1);
 
         // ASSERT(16, sizeof(node));
         // ASSERT(16, sizeof(list));
@@ -144,10 +145,10 @@ int main(int argc, char **argv)
         int b;                          // 4+(4)+8+24+4+(4)=48
         ASSERT(24, sizeof(struct s3));  // 81->24
         ASSERT(8, _Alignof(struct s3)); // long f3
-        //ASSERT(&(a.f1), &(c->f1));
-        //ASSERT(&(a.f2), &(c->f2));
-        //ASSERT(&(a.f3), &(c->f3));
-        //ASSERT(&(a.f4), &(c->f4));
+        ASSERT(&(a.f1), &(c->f1));
+        ASSERT(&(a.f2), &(c->f2));
+        ASSERT(&(a.f3), &(c->f3));
+        ASSERT(&(a.f4), &(c->f4));
     }
 
     {

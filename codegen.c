@@ -417,7 +417,11 @@ Type *gen_expr(Node *node)
                 gen_expr(node->rhs);
                 pop("rax"); // rhs
                 pop("rbx"); // lhs
-                if (node->type->kind == TY_CHAR)
+                if (node->type->kind == TY_BOOL)
+                {
+                        printf("  mov BYTE PTR [rbx],al\n");
+                }
+                else if (node->type->kind == TY_CHAR)
                 {
                         printf("  mov BYTE PTR [rbx],al\n");
                 } // TODO:Add short type
@@ -565,7 +569,7 @@ Type *gen_expr(Node *node)
                 // printf("  pop rdi\n");
                 if (node->type->kind == TY_STRUCT || node->type->kind == TY_STRUCT)
                 { // TODO:array
-                        // nop
+                  // nop
                 }
                 else if (node->type->kind == TY_CHAR)
                 {
@@ -702,8 +706,14 @@ void function(Obj *func)
         // dump();
         gen_stmt(func->body);
 }
-char *global_types[] = {".byte", ".long", ".quad", ".quad"};
-// char *global_types[] = {".byte", ".byte", ".long", ".quad", ".quad"};
+// char *global_types[] = {".byte", ".long", ".quad", ".quad"};//
+char *global_types[] = {
+    ".byte",
+    ".long",
+    ".quad",
+    ".quad",
+    ".byte"};
+// TY_BOOL,TY_CHAR
 void codegen(Obj *code, char *filename)
 {
         // header
