@@ -8,6 +8,7 @@ int main(int argc, char **argv)
     HashNode *nodes[10];
     h->nodes = nodes;
     printf(&(h->nodes[1]));*/
+    /*
     ASSERT(8, ({ distance(&(h->nodes[0]), &(h->nodes[1])); }));
     ASSERT(32, sizeof(HashNode));
     ASSERT(24, sizeof(HashMap));

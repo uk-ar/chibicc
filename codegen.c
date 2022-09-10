@@ -115,11 +115,11 @@ Type *gen_lval(Node *node)
         else if (node->kind == ND_MEMBER)
         {
                 Type *t = gen_expr(node->lhs); // address is in stack
-                if(t->kind!=TY_STRUCT)
+                if (t->kind != TY_STRUCT)
                         abort();
                 pop("rax");
                 printf("  add rax, %d\n", node->member->offset);
-                //printf("  add rax, %d\n", node->offset);
+                // printf("  add rax, %d\n", node->offset);
                 push("rax");
                 fprintf(tout2, "#lvar </%s>\n", nodeKind[node->kind]);
                 return node->member->type;
@@ -563,7 +563,11 @@ Type *gen_expr(Node *node)
                 gen_expr(node->lhs); // address is in stack
                 pop("rdi");          // move result to rax
                 // printf("  pop rdi\n");
-                if (node->type->kind == TY_CHAR)
+                if (node->type->kind == TY_STRUCT || node->type->kind == TY_STRUCT)
+                { // TODO:array
+                        // nop
+                }
+                else if (node->type->kind == TY_CHAR)
                 {
                         printf("  movsx rax, BYTE PTR [rdi]\n"); // get data from address
                 }
