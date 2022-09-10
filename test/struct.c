@@ -81,8 +81,9 @@ struct s1 *get(int i)
 int main(int argc, char **argv)
 {
     //ASSERT(8, sizeof(struct not_exist *));
-    
+
     ASSERT(get()->f1, 0);
+    
     ASSERT(8, _Alignof(struct s1)); // long int quato
 
     char start;

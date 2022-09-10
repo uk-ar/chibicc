@@ -7,7 +7,6 @@
             "command": "make stage1",
             "group": {
                 "kind": "build",
-                "isDefault": true
             },
             "problemMatcher": [
                 "$gcc"

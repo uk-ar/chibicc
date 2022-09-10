@@ -329,6 +329,103 @@ Obj *enumerator_list()
         return st_vars;
 }
 Type *type_name();
+/*
+declaration:
+        declaration-specifiers init-declarator-list opt ;
+        static_assert-declaration
+declaration-specifiers:
+        storage-class-specifier declaration-specifiers opt
+        type-specifier declaration-specifiers opt
+        type-qualifier declaration-specifiers opt
+        function-specifier declaration-specifiers opt
+        alignment-specifier declaration-specifiers opt
+init-declarator-list:
+        init-declarator
+        init-declarator-list , init-declarator
+init-declarator:
+        declarator
+        declarator = initializer
+*/
+/*
+int SC_TYPEDEF = 1 << 0;
+int SC_EXTERN = 1 << 1;
+int SC_STATIC = 1 << 2;
+int SC_THREAD_LOCAL = 1 << 3;
+int SC_AUTO = 1 << 4;
+int SC_REGISTER = 1 << 5;
+
+int TS_VOID = 1 << 6;
+int TS_CHAR = 1 << 7;
+int TS_SHORT = 1 << 8;
+int TS_INT = 1 << 9;
+int TS_LONG = 1 << 10;
+int TS_FLOAT = 1 << 11;
+int TS_DOUBLE = 1 << 12;
+int TS_SIGNED = 1 << 13;
+int TS_UNSIGNED = 1 << 14;
+int TS_BOOL = 1 << 15;
+int TS_COMPLEX = 1 << 16;
+*/
+/*
+struct-or-union-specifier:
+        struct-or-union identifier opt { struct-declaration-list }
+        struct-or-union identifier
+struct-or-union:
+        struct
+        union
+struct-declaration-list:
+        struct-declaration
+        struct-declaration-list struct-declaration
+struct-declaration:
+        specifier-qualifier-list struct-declarator-list opt ;
+        static_assert-declaration
+specifier-qualifier-list:
+type-specifier specifier-qualifier-list opt
+type-qualifier specifier-qualifier-list opt
+struct-declarator-list:
+        struct-declarator
+        struct-declarator-list , struct-declarator
+struct-declarator:
+        declarator
+        declarator opt : constant-expression
+*/
+Type *struct_or_union_specifier(Token *tok)
+{
+        // Token *tok = consume("struct") || consume("union");
+        if (!tok)
+                return NULL;
+        Token *identifier = consume_ident();
+        char *id_str = format("%d", count()); // for anonymous
+        if (identifier)
+                id_str = identifier->str;
+        char *full_str = format("%s %s", tok->str, id_str);
+        Type *type = get_hash(types, full_str); // TODO:get or add hash
+        if (!type)
+                type = add_hash(types, full_str, new_type_struct(0, 0))->value;
+        type->str = full_str;
+        if (!consume("{"))
+        {
+                // type only
+                if (!identifier)
+                        error_tok(tok, "need identifier");
+                return type;
+        }
+        // while(!consume("}"){
+        //  struct_declaration_list
+        Obj *st_vars = struct_declaration(type); // TODO:fix structure
+        if (get_hash(structs, full_str))
+                error_tok(tok, "already defined");
+        add_hash(structs, full_str, st_vars);
+        return type;
+        //}
+}
+
+/*Type *type_specifier()
+{
+        Token *type_spec = consume_Token(TK_TYPE_SPEC);
+
+        return type_spec;
+}*/
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
@@ -346,63 +443,13 @@ Type *declaration_specifier() // bool declaration)
         char *type_str = type_spec->str;
         if (strncmp(type_str, "struct", 6) == 0)
         {
-                Type *type = NULL;
-                Obj *st_vars = NULL;
-                if (consume("{"))
-                { // anonymous
-                        type = new_type_struct(0, 0);
-                        st_vars = struct_declaration(type);
-                }
-                else if ((identifier = consume_ident())) // struct name
-                {
-                        src_name = format("%s %s", type_str, identifier->str);
-                        if (equal(token, ";"))
-                        {
-                                // incomplete type
-                                type = get_hash(types, src_name);
-                                if (!type)
-                                {
-                                        add_hash(types, src_name, new_type_struct(0, 0));
-                                }
-                                return get_hash(types, src_name);
-                        }
-                        if (consume("{"))
-                        {
-                                type = new_type_struct(0, 0);
-                                type->str = identifier->str;
-                                if (!add_hash(types, src_name, type)) // for recursive field type
-                                        error_tok(token, "redefine %s", src_name);
-                                st_vars = struct_declaration(type);
-                                add_hash(structs, src_name, st_vars);
-                        }
-                        else
-                        { // reference
-                                type = get_hash(types, src_name);
-                                st_vars = get_hash(structs, src_name);
-                        }
-                }
-                else
-                {
-                        error_tok(token, "need identifier for struct\n");
-                }
+                Type *type = struct_or_union_specifier(type_spec);
                 if (storage && (strncmp(storage->str, "typedef", 6) == 0))
                 {
                         Token *declarator = consume_ident(); // defname
                         if (!declarator)
                                 error_tok(token, "typedef need declarator for struct\n");
-                        if (src_name)
-                        {
-                                add_hash(type_alias, declarator->str, src_name);
-                        }
-                        else if (type)
-                        {
-                                add_hash(types, declarator->str, type); // for recursive field type
-                                add_hash(structs, declarator->str, st_vars);
-                        }
-                        else
-                        {
-                                error_tok(token, "typedef need identifier for struct\n");
-                        }
+                        add_hash(type_alias, declarator->str, type->str);
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                 }
                 return type;
@@ -468,7 +515,7 @@ Type *declaration_specifier() // bool declaration)
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                         add_hash(type_alias, declarator->str, src_name);
                 }
-                Token *tok = NULL;
+                Token *tok = NULL;//handle alias
                 while ((tok = consume_Token(TK_TYPE_SPEC)))
                 {
                         src_name = format("%s %s", src_name, tok->str);
@@ -696,7 +743,7 @@ Node *postfix()
                         tok = consume_ident();
                         if (!tok)
                                 error_tok(token, "no ident defined in struct %s", ans->type->str);
-                        Obj *var = get_hash(structs, format("struct %s", ans->type->str));
+                        Obj *var = get_hash(structs, ans->type->str);
                         if (!var)
                                 error_tok(token, "no struct %s defined", ans->type->str);
                         Obj *field = find_var(tok->str, var);
@@ -713,9 +760,9 @@ Node *postfix()
                         // x->y is short for (*x).y
                         if (ans->type->kind != TY_PTR || ans->type->ptr_to->kind != TY_STRUCT)
                                 error_tok(token, "%s is not pointer to struct", ans->token->str);
-                        Obj *st_vars = get_hash(structs, format("struct %s", ans->type->ptr_to->str)); // vars for s1
+                        Obj *st_vars = get_hash(structs, ans->type->ptr_to->str); // vars for s1
                         if (!st_vars)
-                                error_tok(token, "no struct %s defined", ans->type->str);
+                                error_tok(token, "no %s defined", ans->type->ptr_to->str);
                         Token *right = consume_ident();
                         if (!right)
                                 error_tok(token, "no ident defined in struct %s", ans->type->str);
@@ -735,7 +782,7 @@ Node *postfix()
                                              tok, field->type);
                         ans->member = field;
                         // Node *lhs = new_node_num(field->offset, tok, ty_char);
-                        /*ans = new_node_unary(ND_DEREF,
+                        ans = new_node_unary(ND_DEREF,
                                              new_node_binary(ND_ADD,
                                                              lhs, // ans
                                                              ans, // lhs
@@ -776,7 +823,18 @@ Node *postfix()
                 return ans;
         }
 }
-
+/*
+direct-abstract-declarator:
+        ( abstract-declarator )
+        direct-abstract-declarator opt [ type-qualifier-list opt
+                        assignment-expression opt ]
+        direct-abstract-declarator opt [ static type-qualifier-list opt
+                        assignment-expression ]
+        direct-abstract-declarator opt [ type-qualifier-list static
+                        assignment-expression ]
+        direct-abstract-declarator opt [ * ]
+        direct-abstract-declarator opt ( parameter-type-list opt )
+*/
 Type *direct_abstract_declarator(Type *t)
 {
         //( abstract-declarator )
@@ -807,7 +865,7 @@ Type *direct_abstract_declarator(Type *t)
                         expect("]");
                         continue;
                 }
-                // direct-abstract-declaratoropt [ * ]
+                // direct-abstract-declarator opt [ * ]
                 if ((equal(token, "[") && equal(token->next, "*")))
                 {
                         expect("[");
@@ -839,9 +897,11 @@ Type *direct_abstract_declarator(Type *t)
         }
         return t;
 }
-// abstract-declarator:
-//       pointer
-//       pointer opt direct-abstract-declarator
+/*
+abstract-declarator:
+        pointer
+        pointer opt direct-abstract-declarator
+*/
 Type *abstract_declarator(Type *t)
 {
         while (consume("*"))
@@ -849,8 +909,10 @@ Type *abstract_declarator(Type *t)
         t = direct_abstract_declarator(t);
         return t;
 }
-// type-name:
-//       specifier-qualifier-list abstract-declarator opt
+/*
+type-name:
+        specifier-qualifier-list abstract-declarator opt
+*/
 Type *type_name() // TODO:need non consume version?
 {
         // specifier-qualifier
