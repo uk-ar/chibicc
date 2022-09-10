@@ -17,7 +17,6 @@ int main(int argc, char **argv)
     //type
     ASSERT(1,({_Bool x = 3; sizeof(x);}));
 
-    /*
     ASSERT(1,({_Bool x = 3; x;}));
     ASSERT(1,({_Bool x = 3; x++; x;}));
     ASSERT(0,({_Bool x = 3; x--; x;}));
@@ -25,7 +24,7 @@ int main(int argc, char **argv)
     ASSERT(0,({_Bool x = 3; x-=1; x;}));
     ASSERT(1,({_Bool x = 3; x-=4; x;}));
     ASSERT(4,({_Bool x = 3; x+3;}));
-//*/
+    //*/
 
     ASSERT(3,({char x = 3; x;}));
     ASSERT(0, strcmp("main", __func__));//fixme!!

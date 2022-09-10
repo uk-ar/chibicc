@@ -419,6 +419,8 @@ Type *gen_expr(Node *node)
                 pop("rbx"); // lhs
                 if (node->type->kind == TY_BOOL)
                 {
+                        printf("  cmp al, 0\n");
+                        printf("  setne al\n");
                         printf("  mov BYTE PTR [rbx],al\n");
                 }
                 else if (node->type->kind == TY_CHAR)
