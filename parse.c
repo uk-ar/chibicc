@@ -770,28 +770,10 @@ Node *postfix()
                         if (!field)
                                 error_tok(token, "no field defined %s", right->str);                        
                                              
-                        /*
-                        Node *lhs = new_node_num(field->offset, tok, ty_char);
-                        ans = new_node_unary(ND_DEREF,
-                                             new_node_binary(ND_ADD,
-                                                             lhs, // ans
-                                                             ans, // lhs
-                                                             tok, lhs->type),
-                                             tok, field->type);
-                        */
                         ans = new_node_unary(ND_MEMBER,
                                              new_node_unary(ND_DEREF, ans, tok, ans->type->ptr_to),
                                              tok, field->type);
                         ans->member = field;
-                        //ans = new_node_unary(ND_MEMBER, ans, tok, field->type);
-                        //ans->member = field;
-                        // Node *lhs = new_node_num(field->offset, tok, ty_char);
-                        /*ans = new_node_unary(ND_DEREF,
-                                             new_node_binary(ND_ADD,
-                                                             lhs, // ans
-                                                             ans, // lhs
-                                                             tok, lhs->type),
-                                             tok, field->type);*/
                         continue;
                 }
                 if ((tok = consume("++")))

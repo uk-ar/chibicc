@@ -392,7 +392,7 @@ Type *gen_expr(Node *node)
                 }
                 pop("rbx"); // get address
                 // printf("  pop rbx\n"); // get address
-                if (t->kind == TY_CHAR)
+                if (t->kind == TY_CHAR || t->kind == TY_BOOL)
                 {
                         printf("  movsx eax, BYTE PTR [rbx]\n"); // get data from address
                 }
@@ -571,6 +571,10 @@ Type *gen_expr(Node *node)
                 { // TODO:array
                   // nop
                 }
+                else if (node->type->kind == TY_BOOL)
+                {
+                        printf("  movsx rax, BYTE PTR [rdi]\n"); // get data from address
+                }
                 else if (node->type->kind == TY_CHAR)
                 {
                         printf("  movsx rax, BYTE PTR [rdi]\n"); // get data from address
@@ -607,7 +611,11 @@ Type *gen_expr(Node *node)
         if (t && (t->kind == TY_PTR || t->kind == TY_ARRAY))
         {
                 fprintf(tout2, "# ptr_to->ty:%d\n", t->ptr_to->kind);
-                if (t->ptr_to->kind == TY_CHAR)
+                if (t->ptr_to->kind == TY_BOOL)
+                {
+                        printf("  imul rdi, 1\n");
+                }
+                else if (t->ptr_to->kind == TY_CHAR)
                 {
                         printf("  imul rdi, 1\n");
                 }
@@ -688,7 +696,11 @@ void function(Obj *func)
                 // printf("  mov rax, %s\n", argreg[i]); // args to local
                 // printf("  push rax\n");               // args to local
                 printf("  mov rbx, %s\n", argreg[i]); // args to local
-                if (n->type->kind == TY_CHAR)
+                if (n->type->kind == TY_BOOL)
+                {
+                        printf("  mov BYTE PTR [rbp-%ld], bl\n", n->offset); // get data from address
+                }
+                else if (n->type->kind == TY_CHAR)
                 {
                         printf("  mov BYTE PTR [rbp-%ld], bl\n", n->offset); // get data from address
                 }
@@ -707,13 +719,9 @@ void function(Obj *func)
         gen_stmt(func->body);
 }
 // char *global_types[] = {".byte", ".long", ".quad", ".quad"};//
-char *global_types[] = {
-    ".byte",
-    ".long",
-    ".quad",
-    ".quad",
-    ".byte"};
-// TY_BOOL,TY_CHAR
+// char *global_types[] = {".byte", ".long", ".quad", ".quad", ".byte"};
+char *global_types[] = {".byte", ".byte", ".long", ".quad", ".quad"};
+//  TY_BOOL,TY_CHAR
 void codegen(Obj *code, char *filename)
 {
         // header

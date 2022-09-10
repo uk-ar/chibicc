@@ -95,7 +95,7 @@ int main(int argc, char **argv)
         ty_int = new_type(TY_INT, NULL, 4, "int", 4);
         ty_char = new_type(TY_CHAR, NULL, 1, "char", 1);
         ty_long = new_type(TY_LONG, NULL, 8, "long", 8);
-        ty_bool = new_type(TY_CHAR, NULL, 1, "char", 1);
+        ty_bool = new_type(TY_BOOL, NULL, 1, "bool", 1);
         add_hash(types, "int", ty_int);
         add_hash(types, "char", ty_char);
         add_hash(types, "long", ty_long);

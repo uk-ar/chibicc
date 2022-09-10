@@ -62,6 +62,7 @@ struct s7
     int v2[2];
     void *v3[2];
 };
+
 struct s8
 {
     int **a;
@@ -83,6 +84,7 @@ int main(int argc, char **argv)
     ASSERT(get()->f1, 0);
     // ASSERT(8, sizeof(struct not_exist *));
     // ASSERT(1, 0);
+    
     {
         struct s1 o2, *o3 = &o2;
         printf("c:%p\n", &(o2.f1));
@@ -99,7 +101,7 @@ int main(int argc, char **argv)
         struct s1 o2, *o3 = &o2;
         //printf("c:%p\n", &(o2.f1));
         //printf("i:%p\n", &(o2.f2));
-        ASSERT(24, sizeof(o2));        
+        ASSERT(24, sizeof(o2));
         ASSERT(&o2, &o2.f1);
         ASSERT(&(o2.f1), &(o3->f1));
         ASSERT(&(o2.f2), &(o3->f2));
@@ -114,7 +116,7 @@ int main(int argc, char **argv)
         printf("i:%p\n", o3);
         printf("c:%p\n", &(o2.f1));
         printf("i:%p\n", &(o3->f1));
-        
+
         printf("i:%p\n", &(o2.f2));
         printf("i:%p\n", &(o3->f2));
         printf("i:%d\n", o2.f1);
