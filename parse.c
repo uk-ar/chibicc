@@ -70,16 +70,7 @@ Obj *declaration();
 int align_to(int offset, int size);
 void function_definition(Obj *obj);
 
-// maybe bool causing problem?
-bool equal_Token(Token *tok, TokenKind kind)
-{
-        if (!tok)
-                return false;
-        if ((tok->kind == kind) ||
-            (tok->kind == TK_IDENT && (get_hash(keyword2token, tok->str) == (void *)kind)))
-                return true;
-        return false;
-}
+
 
 Token *consume_Token(TokenKind kind)
 {
@@ -89,6 +80,7 @@ Token *consume_Token(TokenKind kind)
         token = token->next;
         return ans;
 }
+
 bool equal(Token *tok, char *op)
 {
         int n = strlen(op);
