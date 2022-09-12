@@ -165,8 +165,9 @@ Type *gen_stmt(Node *node)
                         gen_expr(node->lhs);
                         pop("rax"); // move result to rax
                 }
-                printf("  mov rsp,rbp\n"); // restore stack pointer
-                printf("  pop rbp\n");     // restore base pointer
+                printf("  leave\n"); // restore stack pointer
+                // printf("  mov rsp,rbp\n"); // restore stack pointer
+                // printf("  pop rbp\n");     // restore base pointer
                 printf("  ret\n");
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
         }
@@ -563,7 +564,7 @@ Type *gen_expr(Node *node)
                 int i;
                 Node *n = node->head;
                 // dump();
-                // printf("  sub rsp, %d\n", ((align) % 2) * 8); // align
+                //printf("  sub rsp, %d\n", ((align) % 2) * 8); // align
                 for (i = 0; n && i < 6; i++, n = n->next)
                 {
                         gen_expr(n); // result is in stack
@@ -575,9 +576,9 @@ Type *gen_expr(Node *node)
                         // printf("  pop %s\n", argreg[i]);
                 }
                 printf("  mov eax, 0\n"); // set al to 0 for printf
-                // int offset = ((align) % 2) * 8;
+                int offset = ((align) % 2) * 8;
                 // int offset = 8;
-                int offset = 0;
+                //int offset = 0;
                 if (offset != 0)
                         printf("  sub rsp, %d\n", offset);
                 // dump();
@@ -604,8 +605,8 @@ Type *gen_expr(Node *node)
                 pop("rdi");          // move result to rax
                 // printf("  pop rdi\n");
                 if (node->type->kind == TY_STRUCT || node->type->kind == TY_STRUCT)
-                { // TODO:array
-                  // nop
+                { 
+                        printf("  mov rax, rdi\n"); // get data from address
                 }
                 else if (node->type->kind == TY_BOOL)
                 {

@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     //printf(&(h->nodes[1]));
 
     ASSERT(8, ({ distance(&(h->nodes[0]), &(h->nodes[1])); }));
-    ASSERT(32, sizeof(HashNode));
+    /*ASSERT(32, sizeof(HashNode));
     ASSERT(24, sizeof(HashMap));
     //  print_hash(h);
     //  printf("%p\n", h);
@@ -85,6 +85,12 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "TypeKind", 1);
         ASSERT(get_hash(keyword2token, "TypeKind"), 1);
     }
+    /*{
+        int a, b;
+        Node *n=new_node(1, &a, &b);
+        ASSERT(&a, n->token);
+        ASSERT(&b, n->type);
+    }*/
         /*for (HashNode *c = h->begin; c; c = c->next)
         {
             printf("%d\n", c->value);

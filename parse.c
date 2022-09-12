@@ -7,7 +7,6 @@ extern FILE *stderr; /* Standard error output stream.  */
 typedef long unsigned int size_t;
 //#include <stdbool.h>
 // typedef char _Bool;
-#define bool char
 //#define bool _Bool
 #define true 1
 #define false 0
@@ -69,6 +68,20 @@ Type *abstract_declarator(Type *t);
 Obj *declaration();
 int align_to(int offset, int size);
 void function_definition(Obj *obj);
+
+bool equal_Token(Token *tok, TokenKind kind) // 8=cf98,12
+{
+        if (!tok) // 6d4cb0
+                return false;
+        if ((tok->kind == kind) ||
+            (tok->kind == TK_IDENT &&
+             (get_hash(keyword2token, tok->str) == (void *)kind)
+             //(get_hash(keyword2token, tok->str) == kind) //FIXME
+             //(kind == get_hash(keyword2token, tok->str))
+             )) // keyword2token=6d1ef0
+                return true;
+        return false;
+}
 
 Token *consume_Token(TokenKind kind)
 {
@@ -133,17 +146,7 @@ bool at_eof()
         return !token || token->kind == TK_EOF;
 }
 
-HashMap *strings;
 extern Obj *new_obj(Token *tok, Obj *next, Type *t);
-
-Node *new_node(NodeKind kind, Token *token, Type *type)
-{
-        Node *ans = calloc(1, sizeof(Node));
-        ans->kind = kind;
-        ans->token = token;
-        ans->type = type;
-        return ans;
-}
 
 Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs, Token *token, Type *type)
 {
@@ -159,6 +162,9 @@ Node *new_node_num(long val, Token *token, Type *type)
         ans->val = val;
         return ans;
 }
+
+//^^^^^^^^^^^^^ works
+
 Node *new_node_add(Node *lhs, Node *rhs, Token *token, Type *type)
 {
         if (lhs->type->kind == TY_ARRAY || lhs->type->kind == TY_PTR)
@@ -182,8 +188,6 @@ Node *new_node_sub(Node *lhs, Node *rhs, Token *token, Type *type)
                                        token, type);
         }
         return new_node_binary(ND_SUB, lhs, rhs, token, type);
-        // Node *ans = new_node_binary(ND_SUB, lhs, rhs, token, type);
-        // return ans;
 }
 Node *new_node_unary(NodeKind kind, Node *lhs, Token *token, Type *type)
 {
@@ -191,6 +195,8 @@ Node *new_node_unary(NodeKind kind, Node *lhs, Token *token, Type *type)
         ans->lhs = lhs;
         return ans;
 }
+
+HashMap *strings;
 long get_string_offset(char *s)
 {
         long var = (long)get_hash(strings, s); //
@@ -620,7 +626,6 @@ Node *primary()
         else if ((tok = consume_Token(TK_STR)))
         {
                 fprintf(tout, "<%s>\"\n", __func__);
-                // Node *ans = new_node(ND_STR, tok, NULL);
                 Node *ans = new_node_string(tok->str, tok);
                 fprintf(tout, "\"\n</%s>\n", __func__);
                 return ans;
@@ -634,7 +639,7 @@ Node *primary()
         } // tk_num
         else if ((tok = consume_ident()))
         {
-                if (consume("("))
+                if (consume("("))//TODO: move to postfix
                 { // call
                         fprintf(tout, "<%s>funcall\n", __func__);
 
@@ -727,9 +732,10 @@ Node *postfix()
                         else if (ans->type->kind == TY_ARRAY)
                         {
                                 Type *type = ans->type->ptr_to;
+                                Node *rhs = expr();//for debug
                                 ans = new_node_unary(ND_DEREF,
                                                      new_node_add(new_node_unary(ND_ADDR, ans, ans->token, ans->type),
-                                                                  expr(), tok,
+                                                                  rhs, tok,
                                                                   new_type_ptr(ans->type)),
                                                      tok, type);
                                 // tok, ans->type->ptr_to);//Fixme cannot handle
@@ -777,8 +783,8 @@ Node *postfix()
                                 error_tok(token, "no field defined %s", right->str);
 
                         ans = new_node_unary(ND_MEMBER,
-                                             new_node_unary(ND_DEREF, ans, tok, ans->type->ptr_to),
-                                             tok, field->type);
+                                             new_node_unary(ND_DEREF, ans, ans->token, ans->type->ptr_to),
+                                             right, field->type);
                         ans->member = field;
                         continue;
                 }
@@ -931,8 +937,18 @@ Type *type_name() // TODO:need non consume version?
         }
         return abstract_declarator(get_hash(types, str));
 }
-/* unary   = "-"? primary | "+"? primary
-           | "*" unary | "&" unary  | "sizeof" unary */
+/*
+unary-expression:
+        postfix-expression
+        ++ unary-expression
+        -- unary-expression
+        unary-operator cast-expression
+        sizeof unary-expression
+        sizeof ( type-name )
+        _Alignof ( type-name )
+unary-operator: one of
+        & * + - ~             !           
+        */
 Node *unary()
 {
         Token *tok = NULL;
@@ -997,7 +1013,7 @@ Node *unary()
         if ((tok = consume("+")))
         {
                 fprintf(tout, " <%s>+\"\n", __func__);
-                ans = unary();
+                ans = primary();
                 fprintf(tout, " +\n</%s>\n", __func__);
                 return ans;
         }
@@ -1006,9 +1022,9 @@ Node *unary()
                 // important
                 fprintf(tout, " <%s>-\"\n", __func__);
                 Type *type = ty_int;
-                ans = new_node_binary(ND_SUB,
-                                      new_node_num(0, tok, type),
-                                      unary(), tok, type); // 0-primary()
+                Node *rhs = primary();//for debug
+                ans = new_node_sub(new_node_num(0, tok, type),
+                                   rhs, tok, type); // 0-primary()
                 return ans;
                 fprintf(tout, " -\n</%s>\n", __func__);
         }

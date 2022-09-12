@@ -70,17 +70,12 @@ Obj *declaration();
 int align_to(int offset, int size);
 void function_definition(Obj *obj);
 
-// maybe bool causing problem?
-bool equal_Token(Token *tok, TokenKind kind)//8=cf98,12
+// Fixme
+Node *new_node(NodeKind kind, Token *token, Type *type)
 {
-        if (!tok)//6d4cb0
-                return false;
-        if ((tok->kind == kind) ||
-            (tok->kind == TK_IDENT &&
-            (get_hash(keyword2token, tok->str) == (void *)kind)
-            //(get_hash(keyword2token, tok->str) == kind) //FIXME
-            //(kind == get_hash(keyword2token, tok->str))
-            ))//keyword2token=6d1ef0
-                return true;
-        return false;
+        Node *ans = calloc(1, sizeof(Node));
+        ans->kind = kind;
+        ans->token = token;
+        ans->type = type;
+        return ans;
 }

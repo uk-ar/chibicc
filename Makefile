@@ -1,6 +1,6 @@
 CFLAGS=-std=c99 -g -static -Wall
-SELF_SRCS=main.c hashmap.c tokenizer.c codegen.c type.c parse_self.c #parse.c#
-#SELF_SRCS=parse_self.c #parse.c#
+#SELF_SRCS=main.c hashmap.c tokenizer.c codegen.c type.c parse_self.c #parse.c
+SELF_SRCS=parse_self.c #parse.c#
 HOST_SRCS=$(filter-out $(SELF_SRCS) ,$(wildcard *.c))
 SELF_OBJS=$(SELF_SRCS:.c=.o)
 HOST_OBJS=$(HOST_SRCS:.c=.o)
@@ -12,7 +12,7 @@ TESTS1=$(TEST_SRCS:.c=.exe1)
 TESTS2=$(TEST_SRCS:.c=.exe2)
 TESTS3=$(TEST_SRCS:.c=.exe3)
 
-.PRECIOUS: $(TEST_SRCS:.c=.e) $(TEST_SRCS:.c=.1.s) $(TEST_SRCS:.c=.2.s) test/common.e test/common.1.s $(TEST_SRCS:.c=.3.s) main.e test/common.2.s hashmap.e tokenizer.e codegen.e parse_self.e type.e
+.PRECIOUS: $(TEST_SRCS:.c=.e) $(TEST_SRCS:.c=.1.s) $(TEST_SRCS:.c=.2.s) test/common.e test/common.1.s $(TEST_SRCS:.c=.3.s) main.e test/common.2.s hashmap.e tokenizer.e codegen.e parse_self.e type.e hashmap.1.s
 
 %.e: %.c
 #プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)

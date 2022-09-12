@@ -227,3 +227,14 @@ Type *new_type_ptr(Type *ptr_to);
 Type *new_type_array(Type *ptr_to, int elem);
 
 bool equal_Token(Token *tok, TokenKind kind);
+
+Token *consume_Token(TokenKind kind);
+bool equal(Token *tok, char *op);
+Token *consume(char *op);
+Token *consume_ident();
+void expect(char *op);
+long expect_num();
+bool at_eof();
+Node *new_node(NodeKind kind, Token *token, Type *type);
+Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs, Token *token, Type *type);
+Node *new_node_num(long val, Token *token, Type *type);

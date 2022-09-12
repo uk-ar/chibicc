@@ -4,6 +4,7 @@
 char *x;
 int main(int argc, char **argv) // 4+(4)+8=16
 {
+    
     ASSERT(10, '\n');
     ASSERT(97, 'a');
     ASSERT(3, ({printf("abc");3; }));
@@ -28,6 +29,7 @@ int main(int argc, char **argv) // 4+(4)+8=16
     ASSERT(98, ({char *x;x="abc";*(x+1); }));
     ASSERT(3, ({char x[3];x[0]=-1;x[1]=2;int y;y=4;x[0]+y; }));
 
+    
     // local array
     ASSERT(0, ({char x[3];x[0]=97;x[1]=98;x[2]=0; x[2]; }));
     ASSERT(2, ({char x[3];x[0]=97;x[1]=98;x[2]=0;printVC(x,3); 2; }));
