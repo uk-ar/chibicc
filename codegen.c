@@ -643,8 +643,8 @@ Type *gen_expr(Node *node)
         {
                 error_tok(node->token, "no type");
         }
-        fprintf(tout2, "# ty:%d\n", t->kind);
-        if (t && (t->kind == TY_PTR || t->kind == TY_ARRAY))
+        //fprintf(tout2, "# ty:%d\n", t->kind);
+        /*if (t && (t->kind == TY_PTR || t->kind == TY_ARRAY))
         {
                 fprintf(tout2, "# ptr_to->ty:%d\n", t->ptr_to->kind);
                 if (t->ptr_to->kind == TY_BOOL)
@@ -663,7 +663,7 @@ Type *gen_expr(Node *node)
                 {
                         printf("  imul rdi, 8\n");
                 }
-        }
+        }*/
         switch (node->kind)
         {
         case ND_ADD:

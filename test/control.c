@@ -6,6 +6,8 @@ enum
 };
 int main(int argc, char **argv)
 {
+    //ASSERT(1,EB);
+
     ASSERT(6, ({int i;for(i=0;i<12;i++){if(i==6) break;}i; }));
     ASSERT(6, ({int i;for(i=0;i<12;i++){while(i<0);if(i==6) break;}i; }));
     ASSERT(6, ({int i;for(i=0;i<12;i++){while(i<0);while(i<0);if(i==6) break;}i; }));

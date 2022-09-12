@@ -9,7 +9,7 @@ void add_hash(HashMap *h, char *key, void *value);
 void error_at(char *loc, char *fmt, ...);
 void program();
 int f1(); // declaration
-
+/*
 int f1()
 {
     return 1;
@@ -57,15 +57,16 @@ int qux()
 void no_return()
 {
 }
-//*/
 
 int a6(int a, int b, int c, int d, int e, int f)
 {
     return 0;
 }
+//*/
 
 int main(int argc, char **argv)
 {
+    /*
     ASSERT(0, a6(1, 2, 3, 4, 5, 6));
     ASSERT(1, f1());
     ASSERT(2, f2(2));
@@ -86,8 +87,9 @@ int main(int argc, char **argv)
     ASSERT(3, qux());
 
     ASSERT(2, ({int *p;alloc4(&p,1,2,4,8);int *q;q=p+2;2; }));
-    ASSERT(2, ({int *p;alloc4(&p,1,2,4,8);int *q;q=p+2;printI(p);printI(q); 2; }));
+    ASSERT(2, ({int *p;alloc4(&p,1,2,4,8);int *q;q=p+2;printI(p);printI(q); 2; }));*/
     ASSERT(4, ({int *p;alloc4(&p,1,2,4,8);int *q;q=p+2; *q; }));
+    /*
     ASSERT(8, ({int *p;alloc4(&p,1,2,4,8);int *q;q=p+3; *q; }));
 
     ASSERT(1, arg2(0, 1));

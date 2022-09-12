@@ -70,8 +70,6 @@ Obj *declaration();
 int align_to(int offset, int size);
 void function_definition(Obj *obj);
 
-
-
 Token *consume_Token(TokenKind kind)
 {
         if (!equal_Token(token, kind))
@@ -154,27 +152,43 @@ Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs, Token *token, Type *t
         ans->rhs = rhs;
         return ans;
 }
-Node *new_node_add(Node *lhs, Node *rhs, Token *token, Type *type)
-{
-        Node *ans = new_node_binary(ND_ADD, lhs, rhs, token, type);
-        return ans;
-}
-Node *new_node_sub(Node *lhs, Node *rhs, Token *token, Type *type)
-{
-        Node *ans = new_node_binary(ND_SUB, lhs, rhs, token, type);
-        return ans;
-}
-Node *new_node_unary(NodeKind kind, Node *lhs, Token *token, Type *type)
-{
-        Node *ans = new_node(kind, token, type);
-        ans->lhs = lhs;
-        return ans;
-}
 Node *new_node_num(long val, Token *token, Type *type)
 {
         // leaf node
         Node *ans = new_node(ND_NUM, token, type);
         ans->val = val;
+        return ans;
+}
+Node *new_node_add(Node *lhs, Node *rhs, Token *token, Type *type)
+{
+        if (lhs->type->kind == TY_ARRAY || lhs->type->kind == TY_PTR)
+        {
+                return new_node_binary(ND_ADD, lhs,
+                                       new_node_binary(ND_MUL, rhs,
+                                                       new_node_num(lhs->type->ptr_to->size, token, type),
+                                                       lhs->token, rhs->type),
+                                       token, type);
+        }
+        return new_node_binary(ND_ADD, lhs, rhs, token, type);
+}
+Node *new_node_sub(Node *lhs, Node *rhs, Token *token, Type *type)
+{
+        if (lhs->type->kind == TY_ARRAY || lhs->type->kind == TY_PTR)
+        {
+                return new_node_binary(ND_SUB, lhs,
+                                       new_node_binary(ND_MUL, rhs,
+                                                       new_node_num(lhs->type->ptr_to->size, token, type),
+                                                       lhs->token, rhs->type),
+                                       token, type);
+        }
+        return new_node_binary(ND_SUB, lhs, rhs, token, type);
+        // Node *ans = new_node_binary(ND_SUB, lhs, rhs, token, type);
+        // return ans;
+}
+Node *new_node_unary(NodeKind kind, Node *lhs, Token *token, Type *type)
+{
+        Node *ans = new_node(kind, token, type);
+        ans->lhs = lhs;
         return ans;
 }
 long get_string_offset(char *s)
@@ -507,7 +521,7 @@ Type *declaration_specifier() // bool declaration)
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                         add_hash(type_alias, declarator->str, src_name);
                 }
-                Token *tok = NULL;//handle alias
+                Token *tok = NULL; // handle alias
                 while ((tok = consume_Token(TK_TYPE_SPEC)))
                 {
                         src_name = format("%s %s", src_name, tok->str);
@@ -702,7 +716,7 @@ Node *postfix()
                 {
                         if (ans->type->kind == TY_PTR)
                         {
-                                // Type *type = ;
+
                                 ans = new_node_unary(ND_DEREF,
                                                      new_node_add(ans, expr(), tok, ans->type),
                                                      tok, ans->type->ptr_to);
@@ -743,8 +757,8 @@ Node *postfix()
                                 error_tok(token, "no %s field defined in %s struct", tok->str, ans->type->str);
                         ans = new_node_unary(ND_MEMBER, ans, tok, field->type);
                         ans->member = field;
-                        //ans->type = field->type;
-                        //ans->offset -= field->offset;
+                        // ans->type = field->type;
+                        // ans->offset -= field->offset;
                         continue;
                 }
                 if ((tok = consume("->")))
@@ -760,8 +774,8 @@ Node *postfix()
                                 error_tok(token, "no ident defined in struct %s", ans->type->str);
                         Obj *field = find_var(right->str, st_vars);
                         if (!field)
-                                error_tok(token, "no field defined %s", right->str);                        
-                                             
+                                error_tok(token, "no field defined %s", right->str);
+
                         ans = new_node_unary(ND_MEMBER,
                                              new_node_unary(ND_DEREF, ans, tok, ans->type->ptr_to),
                                              tok, field->type);
@@ -1031,7 +1045,7 @@ Node *cast()
                 expect("(");
                 Type *type = type_name();
                 expect(")");
-                Node*node=new_node_unary(ND_CAST,cast(),token,type);
+                Node *node = new_node_unary(ND_CAST, cast(), token, type);
                 /*
                 Node *node = cast();
                 node->type = type;
@@ -1739,7 +1753,7 @@ void initializer_list(Obj *obj)
 Obj *init_declarator(Obj *declarator)
 {
         fprintf(tout, " \n<%s>\n", __func__);
-        //Obj *var = find_gvar(declarator->token);
+        // Obj *var = find_gvar(declarator->token);
         if (consume("="))
         {
                 initializer_list(declarator);

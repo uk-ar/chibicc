@@ -4,11 +4,12 @@
 int main(int argc, char **argv)
 {
     HashMap a, *h = new_hash(10);
-    /*HashMap a, *h = &a;
-    HashNode *nodes[10];
-    h->nodes = nodes;
-    printf(&(h->nodes[1]));*/
-    /*
+    HashNode *n;
+    //HashMap a, *h = &a;//need 0 clear
+    //HashNode *nodes[10];//need 0 clear
+    //h->nodes = nodes;
+    //printf(&(h->nodes[1]));
+
     ASSERT(8, ({ distance(&(h->nodes[0]), &(h->nodes[1])); }));
     ASSERT(32, sizeof(HashNode));
     ASSERT(24, sizeof(HashMap));
@@ -21,7 +22,6 @@ int main(int argc, char **argv)
     ASSERT(0, h->begin);
     ASSERT(10, h->size);
 
-    HashNode *n;
     n = new_hashnode("2", 4, 0, 0);
     // print_hashnode(n);
     // printf("%p\n", n);
@@ -33,8 +33,7 @@ int main(int argc, char **argv)
     ASSERT(4, n->value);
     ASSERT(0, n->next);
     ASSERT(0, n->next_bucket);
-
-    n = add_hash(h, "3", 6);
+    n = add_hash(h, "3", 6); //"3"=0x401ca5
     printf("n=%p\n", n);
     ASSERT(n, h->begin);
     ASSERT(6, n->value);
@@ -81,9 +80,14 @@ int main(int argc, char **argv)
         // get_node_value(o2);
         ASSERT(32, sizeof(HashNode));
     }
-    /*for (HashNode *c = h->begin; c; c = c->next)
-    {
-        printf("%d\n", c->value);
-    }*/
+        {
+        HashMap *keyword2token = new_hash(100);
+        add_hash(keyword2token, "TypeKind", 1);
+        ASSERT(get_hash(keyword2token, "TypeKind"), 1);
+    }
+        /*for (HashNode *c = h->begin; c; c = c->next)
+        {
+            printf("%d\n", c->value);
+        }*/
     return 0;
 }
