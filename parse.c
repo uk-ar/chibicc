@@ -1031,8 +1031,11 @@ Node *cast()
                 expect("(");
                 Type *type = type_name();
                 expect(")");
+                Node*node=new_node_unary(ND_CAST,cast(),token,type);
+                /*
                 Node *node = cast();
                 node->type = type;
+                */
                 return node;
         }
         return unary();

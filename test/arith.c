@@ -2,6 +2,18 @@
 
 int main(int argc, char **argv)
 {
+    {
+        char c1=1,c2=2,c3=3;
+        int i1=2;
+        //ASSERT(1, i1 == (int)c2);
+        ASSERT(131585, (int)8590066177);//0x200020201
+        //ASSERT(513, (short)8590066177);
+        ASSERT(1, (char)8590066177);
+        ASSERT(1, (long)1);
+        //ASSERT(0, (long)&*(int *)0);
+        //ASSERT(513, ({ int x=512; *(char *)&x=1; x; }));
+        //ASSERT(5, ({ int x=5; long y=(long)&x; *(int*)y; }));
+    }//*/
     ASSERT(0, 1 > 2);
     ASSERT(3, 1 + 2);
     ASSERT(7, 10 - 1 - 2);

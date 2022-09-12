@@ -442,6 +442,39 @@ Type *gen_expr(Node *node)
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
                 return t;
         }
+        else if (node->kind == ND_CAST)
+        {
+                //TODO:merge ND_ASSIGN
+                Type *t = gen_expr(node->lhs);//value is in stack
+                if(t->kind==TY_ARRAY ||t->kind==TY_STRUCT)
+                        return node->type;
+                        //abort();//TODO:FIXME
+                if(t->size==node->type->size)
+                        return node->type;
+                pop("rax");
+                if (node->type->kind == TY_BOOL)
+                {
+                        printf("  cmp al, 0\n");
+                        printf("  setne al\n");
+                        printf("  movzx eax, al\n");
+                }
+                else if (node->type->kind == TY_CHAR)
+                {
+                        printf("  movsx rax, al\n");
+                } // TODO:Add short type
+                //printf("  movsx rax, ax\n");
+                else if (node->type->kind == TY_INT)
+                {
+                        printf("  cdqe\n");
+                }
+                else
+                {
+                        //nop
+                }
+                push("rax");
+                fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
+                return node->type;
+        }
         else if (node->kind == ND_COND)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
