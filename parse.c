@@ -1625,7 +1625,7 @@ Obj *parameter_type_list()
 <declarator> ::= {<pointer>}? <direct-declarator>
 */
 Obj *declarator(Type *base_t);
-Obj *direct_declarator()
+/*Obj *direct_declarator()
 {
         Token *tok;
         if ((tok = consume("(")))
@@ -1633,7 +1633,7 @@ Obj *direct_declarator()
                 // Obj *ans = declarator();
                 expect(")");
         }
-}
+}*/
 Obj *declarator(Type *base_t)
 {
         // declarator
@@ -1711,7 +1711,7 @@ int initializer(Type *type, Obj *obj)
                 return 1;
         }
 }
-Obj *initializer_list(Obj *obj)
+void initializer_list(Obj *obj)
 {
         Token *tok = NULL;
         int cnt = 0;
@@ -1736,7 +1736,7 @@ Obj *initializer_list(Obj *obj)
 Obj *init_declarator(Obj *declarator)
 {
         fprintf(tout, " \n<%s>\n", __func__);
-        Obj *var = find_gvar(declarator->token);
+        //Obj *var = find_gvar(declarator->token);
         if (consume("="))
         {
                 initializer_list(declarator);

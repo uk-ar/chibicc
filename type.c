@@ -82,13 +82,13 @@ Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str, int align)
 }
 Type *new_type_struct(int size, int align)
 {
-        Type *ans = new_type(TY_STRUCT, NULL, size, NULL, align);
+        return new_type(TY_STRUCT, NULL, size, NULL, align);
 }
 Type *new_type_ptr(Type *ptr_to)
 {
-        Type *ans = new_type(TY_PTR, ptr_to, 8, NULL, 8);
+        return new_type(TY_PTR, ptr_to, 8, NULL, 8);
 }
 Type *new_type_array(Type *ptr_to, int elem)
 {
-        Type *ans = new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL, ptr_to->size);
+        return new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL, ptr_to->size);
 }

@@ -161,7 +161,7 @@ struct list
 extern list *new_list();
 extern void add_list(list *l, void *value);
 
-#define bool char
+#define bool _Bool
 typedef long unsigned int size_t;
 
 struct Obj
@@ -225,3 +225,5 @@ Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str, int align);
 Type *new_type_struct(int size, int align);
 Type *new_type_ptr(Type *ptr_to);
 Type *new_type_array(Type *ptr_to, int elem);
+
+bool equal_Token(Token *tok, TokenKind kind);

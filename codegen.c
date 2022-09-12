@@ -15,16 +15,17 @@ extern int strcmp(const char *__s1, const char *__s2);
 
 #include "9cc.h"
 HashMap *labels;
-/*#include <stdio.h>
+/*
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <ctype.h>
 #include <stdarg.h>
 
-*/
+//*/
 //#include <assert.h>
-
+void abort (void);
 Type *gen_expr(Node *node);
 FILE *tout2;
 char *nodeKind[] = {
@@ -118,7 +119,7 @@ Type *gen_lval(Node *node)
                 if (t->kind != TY_STRUCT)
                         abort();
                 pop("rax");
-                printf("  add rax, %d\n", node->member->offset);
+                printf("  add rax, %ld\n", node->member->offset);
                 // printf("  add rax, %d\n", node->offset);
                 push("rax");
                 fprintf(tout2, "#lvar </%s>\n", nodeKind[node->kind]);
@@ -193,7 +194,7 @@ Type *gen_stmt(Node *node)
                         gen_stmt(node->els);
                 }
                 printf(".Lend%d:\n", num);
-                if (!add_hash(labels, format(".Lend%d:\n", num), 1))
+                if (!add_hash(labels, format(".Lend%d:\n", num), (void*)1))
                         abort();
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
@@ -332,7 +333,7 @@ Type *gen_stmt(Node *node)
                 continue_label = format(".Lnext%d", num);
                 char *parent_break_label = break_label;
                 break_label = format(".Lend%d", num);
-                char *cond_label = format(".Lbegin%d", num);
+                //char *cond_label = format(".Lbegin%d", num);
 
                 printf("%s:\n", continue_label);
                 fprintf(tout2, "# <cond>\n");
@@ -369,7 +370,7 @@ Type *gen_expr(Node *node)
         if (node->kind == ND_STR)
         {
                 // printf("  .loc 1 %d\n", node->token->loc);
-                printf("  mov rax , OFFSET FLAT:.LC%ld\n", node->offset);
+                printf("  mov rax , OFFSET FLAT:.LC%d\n", node->offset);
                 push("rax");
                 // printf("  push rax\n");
                 return node->type;
@@ -463,7 +464,7 @@ Type *gen_expr(Node *node)
                 pop("rax"); // move result to rax
 
                 printf(".Lend%d:\n", num);
-                if (!add_hash(labels, format(".Lend%d:\n", num), 1))
+                if (!add_hash(labels, format(".Lend%d:\n", num), (void*)1))
                         abort();
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
@@ -483,7 +484,7 @@ Type *gen_expr(Node *node)
                 Type *t = gen_expr(node->rhs); // result is in stack
                 pop("rax");                    // move result to rax
 
-                if (!add_hash(labels, format(".Lend%d:\n", num), 1))
+                if (!add_hash(labels, format(".Lend%d:\n", num), (void*)1))
                         abort();
                 printf(".Lend%d:\n", num);
                 push("rax");
@@ -503,7 +504,7 @@ Type *gen_expr(Node *node)
                 Type *t = gen_expr(node->rhs); // result is in stack
                 pop("rax");                    // move result to rax
 
-                if (!add_hash(labels, format(".Lend%d:\n", num), 1))
+                if (!add_hash(labels, format(".Lend%d:\n", num), (void*)1))
                         abort();
                 printf(".Lend%d:\n", num);
                 push("rax");

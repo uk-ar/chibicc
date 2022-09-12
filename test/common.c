@@ -33,15 +33,15 @@ struct s3 *func()
         return o1;
 }
 
-int assert(int expected, int actual, char *code, char *file)
+int assert(long expected, long actual, char *code, char *file)
 {
         if (expected == actual)
         {
-                printf("%s => %d(%p)\n", code, actual);
+                printf("%s => %ld(%p)\n", code, actual,(void*)actual);
         }
         else
         {
-                printf("%s => %d expected but got %d(%p):file %s\n", code, expected, actual,actual, file);
+                printf("%s => %ld expected but got %d(%p):file %s\n", code, expected, actual,(void*)actual, file);
                 exit(1);
         }
         return 0;
