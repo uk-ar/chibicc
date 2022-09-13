@@ -238,3 +238,20 @@ bool at_eof();
 Node *new_node(NodeKind kind, Token *token, Type *type);
 Node *new_node_binary(NodeKind kind, Node *lhs, Node *rhs, Token *token, Type *type);
 Node *new_node_num(long val, Token *token, Type *type);
+
+Node *new_node_add(Node *lhs, Node *rhs, Token *token, Type *type);
+Node *new_node_sub(Node *lhs, Node *rhs, Token *token, Type *type);
+Node *new_node_unary(NodeKind kind, Node *lhs, Token *token, Type *type);
+
+long get_string_offset(char *s);
+Node *new_node_string(char *s, Token *token);
+void add_node(Node *node, Node *new_node);
+
+Obj *find_var(char *str, Obj *var0);
+Obj *find_lvar(Token *tok);
+Obj *find_lvar_all(Token *tok);
+Obj *find_gvar(Token *tok);
+Obj *new_obj(Token *tok, Obj *next, Type *t);
+Obj *new_obj_local(Token *tok, Obj *next, Type *t);
+Obj *struct_declarator_list(Obj *lvar);
+int align_to(int offset, int size);
