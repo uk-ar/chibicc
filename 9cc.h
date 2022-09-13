@@ -296,3 +296,13 @@ void external_declaration();
 Obj *rev(Obj *obj);
 void function_definition(Obj *declarator);
 Obj *program();
+
+Node *constant_expr();
+Node *equality();
+Node *logical_expr();
+
+Node *mul();
+Node *add();
+Node *relational();
+
+Type *direct_abstract_declarator(Type *t);
