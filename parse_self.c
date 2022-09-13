@@ -1154,7 +1154,7 @@ Node *stmt()
                 fprintf(tout, " <init>\n");
                 if (!consume(";"))
                 {
-                        node->init = stmt();
+                        node->init = stmt(); // include ";"
                         // expect(";");
                 }
                 fprintf(tout, " </init>\n");
@@ -1535,4 +1535,23 @@ Obj *program()
         fprintf(tout, " \n</%s>\n", __func__);
 
         return globals;
+}
+
+// easy to debug
+extern Node *stmt();
+Node *expr()
+{
+        Node *node = assign();
+        Token *tok = NULL;
+
+        for (;;)
+        {
+                if ((tok = consume(",")))
+                {
+                        node = new_node_binary(ND_EXPR, node, assign(), tok, node->type);
+                        continue;
+                }
+                return node;
+        }
+        return node;
 }

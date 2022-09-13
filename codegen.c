@@ -299,12 +299,12 @@ Type *gen_stmt(Node *node)
                         fprintf(tout2, "# <cond>\n");
                         gen_expr(node->cond);
                         pop("rax"); // move result to rax
+                        printf("  cmp rax, 0\n");
+                        printf("  je %s\n", break_label);
                         fprintf(tout2, "# </cond>\n");
                 }
 
                 // printf("  pop rax\n"); // move result to rax
-                printf("  cmp rax, 0\n");
-                printf("  je %s\n", break_label);
                 if (node->then)
                 {
                         fprintf(tout2, "# <then>\n");

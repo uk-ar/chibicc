@@ -6,7 +6,8 @@ enum
 };
 int main(int argc, char **argv)
 {
-    //ASSERT(1,EB);
+    ASSERT(6, ({int i=0;for(;;){i++;if(i==3)continue; else if(i==6) break;}i; }));
+    // ASSERT(1,EB);
 
     ASSERT(6, ({int i;for(i=0;i<12;i++){if(i==6) break;}i; }));
     ASSERT(6, ({int i;for(i=0;i<12;i++){while(i<0);if(i==6) break;}i; }));
@@ -30,23 +31,23 @@ int main(int argc, char **argv)
     ASSERT(2, ({int a=0;for(int a=1;a;a=a-1) y=2;y; }));
     ASSERT(5, ({int b=3;for(int a=2;a;a=a-1,b++){}b; }));
     ASSERT(4, ({int b=3;for(int i=0;i<3;i++,b++){if(i==1)
-                break;
-        }
-        b; }));
+                    break;
+            }
+            b; }));
     ASSERT(5, ({int b=3;for(int i=0;i<3;i++){if(i==1)
-                continue;
-            b++;
-        }
-        b; }));
+                    continue;
+                b++;
+            }
+            b; }));
 
     ASSERT(2, ({int a;a=1;while(a)a=a-1; y=2;y; }));
     ASSERT(0, ({int a;a=1;while(a)a=a-1; y=0;a;y; }));
     ASSERT(2, ({int a=0;while(1){if(a==2){
-                break;
-    }
-            a++;
+                    break;
         }
-        a; }));
+                a++;
+            }
+            a; }));
     ASSERT(4, ({int a=5,b=0;while(a--){if (a == 2)continue;b++;}b; }));
     ASSERT(2, (0 || 2));
     ASSERT(2, (0 || 2 || 3));
