@@ -255,3 +255,44 @@ Obj *new_obj(Token *tok, Obj *next, Type *t);
 Obj *new_obj_local(Token *tok, Obj *next, Type *t);
 Obj *struct_declarator_list(Obj *lvar);
 int align_to(int offset, int size);
+
+Obj *struct_declaration(Type *type);
+Obj *enumerator_list();
+Type *struct_or_union_specifier(Token *tok);
+
+Type *declaration_specifier();
+Scope *new_scope(Scope *next, int offset);
+Scope *enter_scope();
+int leave_scope();
+
+Node *expr();
+Node *stmt();
+Node *assign();
+
+Node *primary();
+Node *postfix();
+Type *direct_abstract_declarator(Type *t);
+
+Type *abstract_declarator(Type *t);
+Type *type_name();
+Node *unary();
+
+Type *direct_abstract_declarator(Type *t);
+Node *cast();
+
+Node *assign();
+
+Node *compound_statement(Token *tok, bool create);
+Node *stmt();
+Node *parameter_declaration();
+Obj *struct_declarator_list(Obj *lvar);
+Obj *parameter_type_list();
+
+Obj *declarator(Type *base_t);
+int initializer(Type *type, Obj *obj);
+void initializer_list(Obj *obj);
+Obj *init_declarator(Obj *declarator);
+void external_declaration();
+Obj *rev(Obj *obj);
+void function_definition(Obj *declarator);
+Obj *program();
