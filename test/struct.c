@@ -1,7 +1,7 @@
 #include "test.h"
 //#include "../9cc.h"
 
-/*struct s1
+struct s1
 {
     char f1; // 1
     // padding:3
@@ -23,7 +23,7 @@ struct s2
 struct
 {
     int anonymous;
-};*/
+};
 
 typedef struct TNode node;
 
@@ -32,7 +32,7 @@ struct TNode
     int val;
     node *next;
 };
-/*
+
 typedef struct tnode TNODE;
 struct tnode
 {
@@ -81,11 +81,11 @@ struct s1 *get(int i)
 //*/
 int main(int argc, char **argv)
 {
-    /*
-    ASSERT(get()->f1, 0);
+
+    //ASSERT(get()->f1, 0);
     // ASSERT(8, sizeof(struct not_exist *));
     // ASSERT(1, 0);
-    
+
     {
         struct s1 o2, *o3 = &o2;
         printf("c:%p\n", &(o2.f1));
@@ -226,11 +226,17 @@ int main(int argc, char **argv)
         struct s8 o1, *o2 = &o1;
         int *v[3];
 
+        v[0] = 1;
         o2->a = v;
         ASSERT(&(o2->a[0]), &(v[0]));
         o2->a[0] = 1;
         ASSERT(1, v[0]);
         ASSERT(1, o2->a[0]);
+    }
+    {
+        //https://github.com/rui314/chibicc/commit/9443e4b8bc587b670f9b448b03842530cd355760
+        //ASSERT(16, ({ struct {char a; int b;} x; sizeof(x); }));
+        //ASSERT(16, ({ struct {int a; char b;} x; sizeof(x); }));
     }
     //*/
     return 0;

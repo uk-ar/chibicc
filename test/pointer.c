@@ -7,7 +7,7 @@ int main(int argc, char **argv)
     ASSERT(8, ({int x; sizeof(&x); }));
 
     ASSERT(3, sizeof(char[3]));//
-    // ASSERT(24, ({sizeof(int *[3]); }));//(c) array of three pointer to int = 8*3 = 24
+    ASSERT(24, ({sizeof(int *[3]); }));//(c) array of three pointer to int = 8*3 = 24
     // ASSERT(8, ({ sizeof(int(*)[3]); })); //(d) pointer to an array of three ints = 8
     // ASSERT(8, ({ sizeof(int(*)[*]); })); //(e) pointer to a variable length array of an unspecified number of ints,
 
@@ -29,7 +29,11 @@ int main(int argc, char **argv)
 
     ASSERT(3, ({int x;int *y;x=3;y=&x;*y; }));
     ASSERT(4, ({int x;int y;distance(&y,&x); }));
-    //ASSERT(3, ({int x;int y;int *z;x=3;y=5;z=&y+4;*z; }));
+
+    ASSERT(3, ({int x;int y;int *z;x=3;y=5;z=&y+1;*z; }));//x
+    //https://github.com/rui314/chibicc/commit/dfec1157b41bb86c8cb66eee0b0cbdb9dcccb6f4
+    //ASSERT(15, ({ int x; int y; char z; char *a=&y; char *b=&z; b-a; }));
+    //ASSERT(1, ({ int x; char y; int z; char *a=&y; char *b=&z; b-a; }));
 
     ASSERT(1, ({char x;sizeof(x); }));
     ASSERT(8, ({char x;char *y;sizeof(y); }));

@@ -1,6 +1,6 @@
 CFLAGS=-std=c99 -g -static -Wall
-#SELF_SRCS=main.c hashmap.c tokenizer.c codegen.c type.c parse_self.c #parse.c
-SELF_SRCS=parse_self.c #parse.c#
+SELF_SRCS=main.c hashmap.c tokenizer.c codegen.c type.c parse_self.c #parse.c
+#SELF_SRCS=parse_self.c #parse.c#
 HOST_SRCS=$(filter-out $(SELF_SRCS) ,$(wildcard *.c))
 SELF_OBJS=$(SELF_SRCS:.c=.o)
 HOST_OBJS=$(HOST_SRCS:.c=.o)

@@ -90,5 +90,8 @@ Type *new_type_ptr(Type *ptr_to)
 }
 Type *new_type_array(Type *ptr_to, int elem)
 {
-        return new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL, ptr_to->size);
+        return new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL,
+        //MAX(16, var->type->align2) : var->type->align2;
+        ptr_to->size
+        );
 }

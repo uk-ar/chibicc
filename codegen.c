@@ -23,6 +23,22 @@ HashMap *labels;
 #include <ctype.h>
 #include <stdarg.h>
 
+/*
+https://freak-da.hatenablog.com/entry/2021/03/25/172248
+System V AMD64 ABI
+関数呼び出し
+整数 or ポインタ RDI, RSI, RDX, RCX, R8, R9
+不動小数点 XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6 and XMM7
+戻り値
+整数64ビットまでRAX
+整数128ビットまでRAX & RDX
+不動小数点 XMM0 and XMM1
+caller/callee-save
+RBX, RSP, RBP, and R12–R15 : non-volatile (= callee save)
+RAX, RCX, RDX, RSI, RDI, R8-R11 XMM0-XMM15, YMM0-YMM15, ZMM0-ZMM31: volatile (= caller save)
+システムコールでは RCX の代わりに R10 を使用
+*/
+
 //*/
 //#include <assert.h>
 void abort (void);
@@ -392,20 +408,20 @@ Type *gen_expr(Node *node)
                 {
                         return t;
                 }
-                pop("rbx"); // get address
-                // printf("  pop rbx\n"); // get address
+                pop("rdi"); // get address
+                // printf("  pop rdi\n"); // get address
                 if (t->kind == TY_CHAR || t->kind == TY_BOOL)
                 {
-                        printf("  movsx eax, BYTE PTR [rbx]\n"); // get data from address
+                        printf("  movsx eax, BYTE PTR [rdi]\n"); // get data from address
                 }
                 else if (t->kind == TY_INT)
                 {
-                        printf("  mov eax, DWORD PTR [rbx]\n"); // get data from address
+                        printf("  mov eax, DWORD PTR [rdi]\n"); // get data from address
                         printf("  cdqe\n");
                 }
                 else
                 {
-                        printf("  mov rax, QWORD PTR [rbx]\n"); // get data from address
+                        printf("  mov rax, QWORD PTR [rdi]\n"); // get data from address
                 }
                 push("rax");
                 // printf("  push rax\n"); // save local variable value
@@ -418,25 +434,25 @@ Type *gen_expr(Node *node)
                 Type *t = gen_lval(node->lhs);
                 gen_expr(node->rhs);
                 pop("rax"); // rhs
-                pop("rbx"); // lhs
+                pop("rdi"); // lhs
                 if (node->type->kind == TY_BOOL)
                 {
                         printf("  cmp al, 0\n");
                         printf("  setne al\n");
-                        printf("  mov BYTE PTR [rbx],al\n");
+                        printf("  mov BYTE PTR [rdi],al\n");
                 }
                 else if (node->type->kind == TY_CHAR)
                 {
-                        printf("  mov BYTE PTR [rbx],al\n");
+                        printf("  mov BYTE PTR [rdi],al\n");
                 } // TODO:Add short type
                 else if (node->type->kind == TY_INT)
                 {
-                        printf("  mov DWORD PTR [rbx],eax\n");
+                        printf("  mov DWORD PTR [rdi],eax\n");
                         printf("  cdqe\n");
                 }
                 else
                 { // todo fix for struct
-                        printf("  mov [rbx],rax\n");
+                        printf("  mov [rdi],rax\n");
                 }
                 push("rax");
                 // printf("  push [rax]\n"); // save expression result(ex. a=b=c)
@@ -644,27 +660,6 @@ Type *gen_expr(Node *node)
         {
                 error_tok(node->token, "no type");
         }
-        //fprintf(tout2, "# ty:%d\n", t->kind);
-        /*if (t && (t->kind == TY_PTR || t->kind == TY_ARRAY))
-        {
-                fprintf(tout2, "# ptr_to->ty:%d\n", t->ptr_to->kind);
-                if (t->ptr_to->kind == TY_BOOL)
-                {
-                        printf("  imul rdi, 1\n");
-                }
-                else if (t->ptr_to->kind == TY_CHAR)
-                {
-                        printf("  imul rdi, 1\n");
-                }
-                else if (t->ptr_to->kind == TY_INT)
-                {
-                        printf("  imul rdi, 4\n");
-                }
-                else
-                {
-                        printf("  imul rdi, 8\n");
-                }
-        }*/
         switch (node->kind)
         {
         case ND_ADD:
@@ -732,23 +727,23 @@ void function(Obj *func)
         {
                 // printf("  mov rax, %s\n", argreg[i]); // args to local
                 // printf("  push rax\n");               // args to local
-                printf("  mov rbx, %s\n", argreg[i]); // args to local
+                printf("  mov rdi, %s\n", argreg[i]); // args to local
                 if (n->type->kind == TY_BOOL)
                 {
-                        printf("  mov BYTE PTR [rbp-%ld], bl\n", n->offset); // get data from address
+                        printf("  mov BYTE PTR [rbp-%ld], dil\n", n->offset); // get data from address
                 }
                 else if (n->type->kind == TY_CHAR)
                 {
-                        printf("  mov BYTE PTR [rbp-%ld], bl\n", n->offset); // get data from address
+                        printf("  mov BYTE PTR [rbp-%ld], dil\n", n->offset); // get data from address
                 }
                 else if (n->type->kind == TY_INT)
                 {
-                        printf("  mov DWORD PTR [rbp-%ld], ebx\n", n->offset); // get data from address
+                        printf("  mov DWORD PTR [rbp-%ld], edi\n", n->offset); // get data from address
                 }
                 else
                 {
-                        printf("  mov QWORD PTR [rbp-%ld], rbx\n", n->offset); // get data from address
-                        // printf("  mov rax, rbx\n"); // get data from address
+                        printf("  mov QWORD PTR [rbp-%ld], rdi\n", n->offset); // get data from address
+                        // printf("  mov rax, rdi\n"); // get data from address
                 }
                 // printf("  push rax\n"); // args to local
         }

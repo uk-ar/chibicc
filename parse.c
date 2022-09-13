@@ -297,8 +297,8 @@ Obj *new_obj(Token *tok, Obj *next, Type *t)
 Obj *new_obj_local(Token *tok, Obj *next, Type *t)
 {
         Obj *ans = new_obj(tok, next, t);
-        ans->offset = align_to(scope->offset, t->size);
-        scope->offset = ans->offset += t->size;
+        ans->offset = align_to(scope->offset, t->align);
+        scope->offset = ans->offset += t->align;
         return ans;
 }
 Obj *struct_declarator_list(Obj *lvar);
