@@ -41,7 +41,7 @@ RAX, RCX, RDX, RSI, RDI, R8-R11 XMM0-XMM15, YMM0-YMM15, ZMM0-ZMM31: volatile (= 
 
 //*/
 //#include <assert.h>
-void abort (void);
+void abort(void);
 Type *gen_expr(Node *node);
 FILE *tout2;
 char *nodeKind[] = {
@@ -211,7 +211,7 @@ Type *gen_stmt(Node *node)
                         gen_stmt(node->els);
                 }
                 printf(".Lend%d:\n", num);
-                if (!add_hash(labels, format(".Lend%d:\n", num), (void*)1))
+                if (!add_hash(labels, format(".Lend%d:\n", num), (void *)1))
                         abort();
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
@@ -350,7 +350,7 @@ Type *gen_stmt(Node *node)
                 continue_label = format(".Lnext%d", num);
                 char *parent_break_label = break_label;
                 break_label = format(".Lend%d", num);
-                //char *cond_label = format(".Lbegin%d", num);
+                // char *cond_label = format(".Lbegin%d", num);
 
                 printf("%s:\n", continue_label);
                 fprintf(tout2, "# <cond>\n");
@@ -461,12 +461,12 @@ Type *gen_expr(Node *node)
         }
         else if (node->kind == ND_CAST)
         {
-                //TODO:merge ND_ASSIGN
-                Type *t = gen_expr(node->lhs);//value is in stack
-                if(t->kind==TY_ARRAY ||t->kind==TY_STRUCT)
+                // TODO:merge ND_ASSIGN
+                Type *t = gen_expr(node->lhs); // value is in stack
+                if (t->kind == TY_ARRAY || t->kind == TY_STRUCT)
                         return node->type;
-                        //abort();//TODO:FIXME
-                if(t->size==node->type->size)
+                // abort();//TODO:FIXME
+                if (t->size == node->type->size)
                         return node->type;
                 pop("rax");
                 if (node->type->kind == TY_BOOL)
@@ -479,14 +479,14 @@ Type *gen_expr(Node *node)
                 {
                         printf("  movsx rax, al\n");
                 } // TODO:Add short type
-                //printf("  movsx rax, ax\n");
+                // printf("  movsx rax, ax\n");
                 else if (node->type->kind == TY_INT)
                 {
                         printf("  cdqe\n");
                 }
                 else
                 {
-                        //nop
+                        // nop
                 }
                 push("rax");
                 fprintf(tout2, "# </%s>\n", nodeKind[node->kind]);
@@ -514,7 +514,7 @@ Type *gen_expr(Node *node)
                 pop("rax"); // move result to rax
 
                 printf(".Lend%d:\n", num);
-                if (!add_hash(labels, format(".Lend%d:\n", num), (void*)1))
+                if (!add_hash(labels, format(".Lend%d:\n", num), (void *)1))
                         abort();
                 // printf("  push 0\n", num);//
                 fprintf(tout2, "# </%s>\n", nodeK);
@@ -534,7 +534,7 @@ Type *gen_expr(Node *node)
                 Type *t = gen_expr(node->rhs); // result is in stack
                 pop("rax");                    // move result to rax
 
-                if (!add_hash(labels, format(".Lend%d:\n", num), (void*)1))
+                if (!add_hash(labels, format(".Lend%d:\n", num), (void *)1))
                         abort();
                 printf(".Lend%d:\n", num);
                 push("rax");
@@ -554,7 +554,7 @@ Type *gen_expr(Node *node)
                 Type *t = gen_expr(node->rhs); // result is in stack
                 pop("rax");                    // move result to rax
 
-                if (!add_hash(labels, format(".Lend%d:\n", num), (void*)1))
+                if (!add_hash(labels, format(".Lend%d:\n", num), (void *)1))
                         abort();
                 printf(".Lend%d:\n", num);
                 push("rax");
@@ -580,7 +580,7 @@ Type *gen_expr(Node *node)
                 int i;
                 Node *n = node->head;
                 // dump();
-                //printf("  sub rsp, %d\n", ((align) % 2) * 8); // align
+                // printf("  sub rsp, %d\n", ((align) % 2) * 8); // align
                 for (i = 0; n && i < 6; i++, n = n->next)
                 {
                         gen_expr(n); // result is in stack
@@ -594,7 +594,7 @@ Type *gen_expr(Node *node)
                 printf("  mov eax, 0\n"); // set al to 0 for printf
                 int offset = ((align) % 2) * 8;
                 // int offset = 8;
-                //int offset = 0;
+                // int offset = 0;
                 if (offset != 0)
                         printf("  sub rsp, %d\n", offset);
                 // dump();
@@ -621,7 +621,7 @@ Type *gen_expr(Node *node)
                 pop("rdi");          // move result to rax
                 // printf("  pop rdi\n");
                 if (node->type->kind == TY_STRUCT || node->type->kind == TY_STRUCT)
-                { 
+                {
                         printf("  mov rax, rdi\n"); // get data from address
                 }
                 else if (node->type->kind == TY_BOOL)
@@ -754,7 +754,7 @@ void function(Obj *func)
 // char *global_types[] = {".byte", ".long", ".quad", ".quad", ".byte"};
 char *global_types[] = {".byte", ".byte", ".long", ".quad", ".quad"};
 //  TY_BOOL,TY_CHAR
-void codegen(Obj *code, char *filename)
+void codegen(HashMap *code, char *filename)
 {
         // header
         printf(".file \"%s\"\n", filename);
@@ -771,8 +771,9 @@ void codegen(Obj *code, char *filename)
         // for debug
         printf(".LCdebug:\n");
         printf("  .string \"%s\"\n", "rsp:%p\\n");
-        for (Obj *var = code; var; var = var->next)
+        for (HashNode *v = code->begin; v; v = v->next)
         { // gvar
+                Obj *var = v->value;
                 if (var->is_function)
                         continue;
                 // https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
@@ -820,7 +821,7 @@ void codegen(Obj *code, char *filename)
                         }
                 }
         }
-        for (Obj *var = code; var; var = var->next)
+        for (HashNode *v = code->begin; v; v = v->next)
         { // gvar
                 if (!var->is_function || !var->body)
                         continue;

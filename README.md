@@ -1,3 +1,8 @@
+# yucc
+* This is a small c compiler.
+* yucc does not support all C11 language feature.
+* yucc can compile its self (self hosted).
+* yucc supports x86-64 Linux only.
 # debug
 http://nanoappli.com/blog/archives/3933
 https://qiita.com/nirasan/items/65e8107ae21fcc36d0c9

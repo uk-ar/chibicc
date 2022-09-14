@@ -184,7 +184,7 @@ struct Obj
        Obj *locals;
        Node *body;
 };
-extern Obj *globals; //*locals,
+extern HashMap *globals;
 
 typedef struct Scope Scope;
 struct Scope
@@ -200,7 +200,6 @@ Token *tokenize(char *p);
 Node *expr();
 Type *gen_stmt(Node *root);
 // extern FILE *tout;
-Obj *program();
 void error_tok(Token *tok, char *fmt, ...);
 void error_at(char *s, char *fmt, ...);
 HashMap *new_hash(int size);
@@ -208,7 +207,7 @@ HashNode *add_hash(HashMap *h, char *key, void *value);
 void *get_hash(HashMap *h, char *key);
 void *get_node_value(HashNode *n);
 char *format(char *fmt, ...);
-void codegen(Obj *code, char *filename);
+void codegen(HashMap *code, char *filename);
 long get_string_offset(char *s);
 extern int count();
 extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str, int align);
@@ -295,7 +294,7 @@ Obj *init_declarator(Obj *declarator);
 void external_declaration();
 Obj *rev(Obj *obj);
 void function_definition(Obj *declarator);
-Obj *program();
+void program();
 
 Node *constant_expr();
 Node *equality();

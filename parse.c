@@ -239,8 +239,7 @@ void add_node(Node *node, Node *new_node)
         return;
 }
 
-// Obj *scope->locals = NULL;
-Obj *globals = NULL;
+HashMap *globals = NULL; //=>Obj*
 // Obj *functions = NULL;
 
 Obj *find_var(char *str, Obj *var0)
@@ -286,7 +285,9 @@ Obj *find_lvar_all(Token *tok)
 }
 Obj *find_gvar(Token *tok)
 {
-        return find_var(tok->str, globals);
+
+        // return find_var(tok->str, globals);
+        return get_hash(globals, tok->str);
 }
 Obj *new_obj(Token *tok, Obj *next, Type *t)
 {
@@ -557,10 +558,6 @@ Scope *enter_scope()
 {
         scope = new_scope(scope, scope->offset);
         return scope;
-        // lstack[lstack_i++] = scope->locals;
-        // scope->locals = NULL;
-        // calloc(1, sizeof(Obj));
-        // return scope->locals;
 }
 int leave_scope() // return scope->offset?
 {
@@ -568,8 +565,6 @@ int leave_scope() // return scope->offset?
                 scope->next->offset = scope->offset;
         scope = scope->next;
         return scope->offset;
-        // lstack[lstack_i] = NULL;
-        // scope->locals = lstack[--lstack_i];
 }
 
 // https://cs.wmich.edu/~gupta/teaching/cs4850/sumII06/The%20syntax%20of%20C%20in%20Backus-Naur%20form.htm
@@ -1021,7 +1016,6 @@ Node *stmt()
                         scope->locals = new_obj_local(tok, scope->locals, t);
                 }
 
-                // scope->offset = scope->locals->offset;
                 fprintf(tout, " var decl\n</%s>\n", __func__);
                 if (consume("="))
                 {
@@ -1324,9 +1318,7 @@ Obj *declarator(Type *base_t)
         if (!obj)
         {
                 // todo:Check type
-                globals = new_obj(tok, globals, t);
-                // globals = obj;
-                obj = globals;
+                obj = add_hash(globals, tok->str, new_obj(tok, NULL, t))->value;
         }
         int n = 0;
         if (consume("[")) // declarator?
@@ -1511,9 +1503,6 @@ void function_definition(Obj *declarator)
 
         add_node(node, compound_statement(tok, false));
 
-        // if(scope->offset != scope->locals->offset)
-        //         error_at(token, "scope->offset != scope->locals->offset");
-
         declarator->stacksize = scope->offset;
         leave_scope();
         declarator->body = node;
@@ -1524,7 +1513,7 @@ void function_definition(Obj *declarator)
         return;
 }
 // Node *code[10000] = {0};
-Obj *program()
+void program()
 {
         fprintf(tout, " \n<%s>\n", __func__);
         fprintf(tout, " %s\n", user_input);
@@ -1534,7 +1523,7 @@ Obj *program()
         }
         fprintf(tout, " \n</%s>\n", __func__);
 
-        return globals;
+        return;
 }
 
 // easy to debug

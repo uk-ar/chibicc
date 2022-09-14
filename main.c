@@ -83,13 +83,13 @@ int main(int argc, char **argv)
         // tout=stderr;
         // hashmap_test();
         tout = fopen("tmp.xml", "w");
-        // locals = NULL;
         scope = new_scope(NULL, 0);
 
         // calloc(1, sizeof(Obj));
         strings = new_hash(1000);
         structs = new_hash(100);
         labels = new_hash(100);
+        globals = new_hash(1000);
 
         types = new_hash(100);
         ty_int = new_type(TY_INT, NULL, 4, "int", 4);
@@ -155,11 +155,11 @@ int main(int argc, char **argv)
         user_input = read_file(filename);
 
         token = tokenize(user_input);
-        Obj *code = program();
+        program();
         // assert(lstack_i == 0);
         fclose(tout);
 
-        codegen(code, filename);
+        codegen(globals, filename);
 
         return 0;
 }
