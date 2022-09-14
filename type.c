@@ -6,9 +6,7 @@ typedef struct _IO_FILE FILE;
 extern FILE *stderr; /* Standard error output stream.  */
 typedef long unsigned int size_t;
 //#include <stdbool.h>
-// typedef char _Bool;
-#define bool char
-//#define bool _Bool
+#define bool _Bool
 #define true 1
 #define false 0
 #define NULL (0)
