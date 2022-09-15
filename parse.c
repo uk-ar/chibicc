@@ -989,6 +989,10 @@ Node *stmt()
                 fprintf(tout, " var decl\n<%s>\n", __func__);
                 while (consume("*"))
                         t = new_type_ptr(t);
+                if (consume(";")){
+                        // only declaration_specifier
+                        return stmt();
+                }
                 Token *tok = consume_ident(); // ident
                 if (!tok)
                 {

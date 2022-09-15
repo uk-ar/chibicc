@@ -62,11 +62,6 @@ struct s7
     int v2[2];
     void *v3[2];
 };
-
-struct s8
-{
-    int **a;
-};
 // TODO:
 // struct empty{};
 struct s1 o11;
@@ -223,10 +218,10 @@ int main(int argc, char **argv)
         ASSERT(8, ({ distance(&(o2->v3[0]), &(o2->v3[1])); }));
     }
     {
-        /*struct s8
+        struct s8
         {
             int **a;
-        };*/
+        };
         struct s8 o1, *o2 = &o1;
         int *v[3];
 
