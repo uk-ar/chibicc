@@ -438,13 +438,56 @@ Type *struct_or_union_specifier(Token *tok)
         return type;
         //}
 }
-
-/*Type *type_specifier()
+/*
+enum-specifier:
+        enum identifieropt { enumerator-list }
+        enum identifieropt { enumerator-list , }
+        enum identifier
+enumerator-list:
+        enumerator
+        enumerator-list , enumerator
+enumerator:
+        enumeration-constant
+        enumeration-constant = constant-expression
+*/
+Type *enum_specifier(Token *tok)
+{
+        // Token *tok = consume("enum")
+        if (!tok)
+                return NULL;
+        Token *identifier = consume_ident();
+        char *id_str = format("%d", count()); // for anonymous
+        if (identifier)
+                id_str = identifier->str;
+        char *full_str = format("%s %s", tok->str, id_str);
+        Type *type = get_hash(types, full_str); // TODO:get or add hash
+        if (!type)
+                type = add_hash(types, full_str, ty_int)->value;
+        type->str = full_str;
+        if (!consume("{"))
+        {
+                // type only
+                if (!identifier)
+                        error_tok(tok, "need identifier");
+                return type;
+        }
+        Obj *st_vars = enumerator_list(); // TODO:fix structure
+        if (get_hash(structs, full_str))
+                error_tok(tok, "already defined");
+        add_hash(structs, full_str, st_vars);
+        return type;
+}
+Type *type_specifier()
 {
         Token *type_spec = consume_Token(TK_TYPE_SPEC);
-
-        return type_spec;
-}*/
+        if (!type_spec)
+                return NULL;
+        if (strncmp(type_spec->str, "struct", 6) == 0)        
+                return struct_or_union_specifier(type_spec);
+        if (strcmp(type_spec->str, "enum") == 0)
+                return enum_specifier(type_spec);
+        return NULL;
+}
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
@@ -476,41 +519,14 @@ Type *declaration_specifier() // bool declaration)
         // if (type_spec->kind == TY_STRUCT)
         if (strcmp(type_str, "enum") == 0)
         {
-                Type *type = NULL;
-                Obj *st_vars = NULL;
-                if (consume("{"))
-                { // anonymous
-                        st_vars = enumerator_list();
-                }
-                else if ((identifier = consume_ident())) // struct name
-                {
-                        src_name = format("%s %s", type_str, identifier->str);
-                        if (consume("{"))
-                        {
-                                st_vars = enumerator_list();
-                                add_hash(types, src_name, ty_int);
-                                add_hash(structs, src_name, st_vars);
-                        }
-                        else
-                        { // reference
-                                type = get_hash(types, src_name);
-                                st_vars = get_hash(structs, src_name);
-                        }
-                }
-                else
-                {
-                        error_tok(token, "need identifier for struct\n");
-                }
+                Type *type = enum_specifier(type_spec);
                 if (storage && (strncmp(storage->str, "typedef", 6) == 0))
                 {
                         Token *declarator = consume_ident(); // defname
                         if (!declarator)
                                 error_tok(token, "typedef need declarator for struct\n");
-                        if (src_name)
-                        {
-                                add_hash(type_alias, declarator->str, src_name);
-                        }
-                        add_hash(types, declarator->str, ty_int);
+                        //add_hash(types, declarator->str, ty_int);
+                        add_hash(type_alias, declarator->str, type->str);
                         add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
                 }
                 return type;

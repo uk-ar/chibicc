@@ -223,6 +223,10 @@ int main(int argc, char **argv)
         ASSERT(8, ({ distance(&(o2->v3[0]), &(o2->v3[1])); }));
     }
     {
+        /*struct s8
+        {
+            int **a;
+        };*/
         struct s8 o1, *o2 = &o1;
         int *v[3];
 
