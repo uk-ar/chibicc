@@ -1,4 +1,5 @@
 #include "test.h"
+//extern Type *new_type(TypeKind ty, Type *ptr_to, size_t size, char *str, int align);
 #include "../9cc.h"
 
 void f11(void);

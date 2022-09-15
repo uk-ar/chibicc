@@ -114,6 +114,7 @@ int main(int argc, char **argv)
         add_hash(keyword2token, "long", (void *)TK_TYPE_SPEC);
         add_hash(keyword2token, "_Bool", (void *)TK_TYPE_SPEC);
         add_hash(keyword2token, "struct", (void *)TK_TYPE_SPEC);
+        add_hash(keyword2token, "unsigned", (void *)TK_TYPE_SPEC);
         // add_hash(keyword2token, "__builtin_va_list", (void *)TK_TYPE_SPEC);
 
         add_hash(keyword2token, "auto", (void *)TK_STORAGE);
@@ -129,7 +130,6 @@ int main(int argc, char **argv)
 
         add_hash(keyword2token, "__extension__", (void *)TK_NOT_SUPPORT);
         add_hash(keyword2token, "__attribute__", (void *)TK_NOT_SUPPORT);
-        add_hash(keyword2token, "unsigned", (void *)TK_NOT_SUPPORT);
         add_hash(keyword2token, "__restrict", (void *)TK_NOT_SUPPORT);
 
         add_hash(keyword2token, "switch", (void *)TK_IF);

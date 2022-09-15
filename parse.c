@@ -477,92 +477,67 @@ Type *enum_specifier(Token *tok)
         add_hash(structs, full_str, st_vars);
         return type;
 }
+/*
+type-specifier:
+        void
+        char
+        short
+        int
+        long
+        float
+        double
+        signed
+        unsigned
+        _Bool
+        _Complex
+        atomic-type-specifier
+        struct-or-union-specifier
+        enum-specifier
+        typedef-name
+*/
 Type *type_specifier()
 {
         Token *type_spec = consume_Token(TK_TYPE_SPEC);
         if (!type_spec)
+                type_spec = consume_Token(TK_TYPEDEF_NAME);
+        if (!type_spec)
                 return NULL;
-        if (strncmp(type_spec->str, "struct", 6) == 0)        
+        if (strncmp(type_spec->str, "struct", 6) == 0)
                 return struct_or_union_specifier(type_spec);
         if (strcmp(type_spec->str, "enum") == 0)
                 return enum_specifier(type_spec);
-        return NULL;
+        char *src_name = type_spec->str;
+        Token *tok = NULL;
+        while ((tok = consume_Token(TK_TYPE_SPEC)))
+        {
+                if ((strcmp(tok->str, "unsigned") != 0)) // FIXME
+                        src_name = format("%s %s", src_name, tok->str);
+        }
+        while (get_hash(type_alias, src_name))
+        {
+                src_name = get_hash(type_alias, src_name);
+        }
+        return get_hash(types, src_name);
 }
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
         // Token *type_qual =
         consume_Token(TK_TYPE_QUAL);
-        Token *type_spec = consume_Token(TK_TYPE_SPEC);
-        if (!type_spec)
-                type_spec = consume_Token(TK_TYPEDEF_NAME);
         // Type *type_spec = type_name();
         Token *identifier = NULL;
         // char *def_name = NULL;
         char *src_name = NULL;
-        if (!type_spec)
-                return NULL;
-        // char *type_str = type_spec->str;
-
-        char *type_str = type_spec->str;
-        if (strncmp(type_str, "struct", 6) == 0)
+        Type *type = type_specifier();
+        if (storage && (strncmp(storage->str, "typedef", 6) == 0))
         {
-                Type *type = struct_or_union_specifier(type_spec);
-                if (storage && (strncmp(storage->str, "typedef", 6) == 0))
-                {
-                        Token *declarator = consume_ident(); // defname
-                        if (!declarator)
-                                error_tok(token, "typedef need declarator for struct\n");
-                        add_hash(type_alias, declarator->str, type->str);
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPEDEF_NAME);
-                }
-                return type;
+                Token *declarator = consume_ident(); // defname
+                if (!declarator)
+                        error_tok(token, "typedef need declarator for struct\n");
+                add_hash(type_alias, declarator->str, type->str);
+                add_hash(keyword2token, declarator->str, (void *)TK_TYPEDEF_NAME);
         }
-        // if (type_spec->kind == TY_STRUCT)
-        if (strcmp(type_str, "enum") == 0)
-        {
-                Type *type = enum_specifier(type_spec);
-                if (storage && (strncmp(storage->str, "typedef", 6) == 0))
-                {
-                        Token *declarator = consume_ident(); // defname
-                        if (!declarator)
-                                error_tok(token, "typedef need declarator for struct\n");
-                        //add_hash(types, declarator->str, ty_int);
-                        add_hash(type_alias, declarator->str, type->str);
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPEDEF_NAME);
-                }
-                return type;
-        }
-        else
-        {
-                src_name = type_str;
-                if (storage && (strncmp(storage->str, "typedef", 6) == 0))
-                {
-                        while (!equal(token->next, ";"))
-                        {
-                                src_name = format("%s %s", src_name, token->str);
-                                if (!consume_ident())
-                                        consume_Token(TK_TYPE_SPEC);
-                        }
-                        Token *declarator = consume_ident();
-                        if (!declarator) // || !type || !st_vars)
-                                error_tok(token, "need declarator for\n");
-                        // src_name = format("%s %s", type_str, identifier->str);
-                        // add_hash(types, declarator->str, type);
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPEDEF_NAME);
-                        add_hash(type_alias, declarator->str, src_name);
-                }
-                Token *tok = NULL; // handle alias
-                while ((tok = consume_Token(TK_TYPE_SPEC)))
-                {
-                        src_name = format("%s %s", src_name, tok->str);
-                }
-                while (get_hash(type_alias, src_name))
-                {
-                        src_name = get_hash(type_alias, src_name);
-                }
-                return get_hash(types, src_name);
-        }
+        return type;
 }
 Scope *scope = NULL; // TODO:init
 Scope *new_scope(Scope *next, int offset)
@@ -790,7 +765,7 @@ Node *unary()
         {
                 fprintf(tout, " <%s>\"\n", __func__);
                 Type *t = NULL;
-                if (equal(token, "(") && (equal_Token(token->next, TK_TYPE_SPEC)) || equal_Token(token->next, TK_TYPEDEF_NAME))
+                if (equal(token, "(") && (equal_Token(token->next, TK_TYPE_SPEC) || equal_Token(token->next, TK_TYPEDEF_NAME)))
                 {
                         consume("(");
                         t = type_name();
@@ -809,7 +784,7 @@ Node *unary()
         {
                 fprintf(tout, " <%s>\"\n", __func__);
                 Type *t = NULL;
-                if (equal(token, "(") && (equal_Token(token->next, TK_TYPE_SPEC)) || equal_Token(token->next, TK_TYPEDEF_NAME))
+                if (equal(token, "(") && (equal_Token(token->next, TK_TYPE_SPEC) || equal_Token(token->next, TK_TYPEDEF_NAME)))
                 {
                         consume("(");
                         t = type_name();
