@@ -1,4 +1,4 @@
-![ci](https://github.com/uk-ar/yucc/actions/workflows/main.yml/badge.svg)
+[![C/C++ CI](https://github.com/uk-ar/yucc/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/uk-ar/yucc/actions/workflows/c-cpp.yml)
 # yucc
 * This is a small c compiler.
 * yucc does not support all C11 language feature.
