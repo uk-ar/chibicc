@@ -494,6 +494,8 @@ Type *declaration_specifier() // bool declaration)
         // Token *type_qual =
         consume_Token(TK_TYPE_QUAL);
         Token *type_spec = consume_Token(TK_TYPE_SPEC);
+        if (!type_spec)
+                type_spec = consume_Token(TK_TYPEDEF_NAME);
         // Type *type_spec = type_name();
         Token *identifier = NULL;
         // char *def_name = NULL;
@@ -512,7 +514,7 @@ Type *declaration_specifier() // bool declaration)
                         if (!declarator)
                                 error_tok(token, "typedef need declarator for struct\n");
                         add_hash(type_alias, declarator->str, type->str);
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPEDEF_NAME);
                 }
                 return type;
         }
@@ -527,7 +529,7 @@ Type *declaration_specifier() // bool declaration)
                                 error_tok(token, "typedef need declarator for struct\n");
                         //add_hash(types, declarator->str, ty_int);
                         add_hash(type_alias, declarator->str, type->str);
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPEDEF_NAME);
                 }
                 return type;
         }
@@ -547,7 +549,7 @@ Type *declaration_specifier() // bool declaration)
                                 error_tok(token, "need declarator for\n");
                         // src_name = format("%s %s", type_str, identifier->str);
                         // add_hash(types, declarator->str, type);
-                        add_hash(keyword2token, declarator->str, (void *)TK_TYPE_SPEC);
+                        add_hash(keyword2token, declarator->str, (void *)TK_TYPEDEF_NAME);
                         add_hash(type_alias, declarator->str, src_name);
                 }
                 Token *tok = NULL; // handle alias
@@ -745,6 +747,8 @@ Type *type_name() // TODO:need non consume version?
         consume_Token(TK_TYPE_QUAL);
         Token *t = consume_Token(TK_TYPE_SPEC);
         if (!t)
+                t = consume_Token(TK_TYPEDEF_NAME);
+        if (!t)
                 return NULL;
 
         char *str = t->str;
@@ -786,14 +790,14 @@ Node *unary()
         {
                 fprintf(tout, " <%s>\"\n", __func__);
                 Type *t = NULL;
-                if (equal(token, "(") && equal_Token(token->next, TK_TYPE_SPEC))
+                if (equal(token, "(") && (equal_Token(token->next, TK_TYPE_SPEC)) || equal_Token(token->next, TK_TYPEDEF_NAME))
                 {
                         consume("(");
                         t = type_name();
                         expect(")");
                         return new_node_num(t->align, token, t);
                 }
-                if (equal_Token(token->next, TK_TYPE_SPEC))
+                if (equal_Token(token->next, TK_TYPE_SPEC) || equal_Token(token->next, TK_TYPEDEF_NAME))
                 {
                         t = type_name();
                         return new_node_num(t->align, token, t);
@@ -805,14 +809,14 @@ Node *unary()
         {
                 fprintf(tout, " <%s>\"\n", __func__);
                 Type *t = NULL;
-                if (equal(token, "(") && equal_Token(token->next, TK_TYPE_SPEC))
+                if (equal(token, "(") && (equal_Token(token->next, TK_TYPE_SPEC)) || equal_Token(token->next, TK_TYPEDEF_NAME))
                 {
                         consume("(");
                         t = type_name();
                         expect(")");
                         return new_node_num(t->size, token, t);
                 }
-                if (equal_Token(token->next, TK_TYPE_SPEC))
+                if (equal_Token(token->next, TK_TYPE_SPEC) || equal_Token(token->next, TK_TYPEDEF_NAME))
                 {
                         t = type_name();
                         fprintf(tout, " sizeof %d\n</%s>\n", t->kind, __func__);
@@ -885,7 +889,7 @@ Node *cast()
 {
         if (equal(token, "(") &&
             token->next &&
-            equal_Token(token->next, TK_TYPE_SPEC)) // TODO: fix to is_typename
+            (equal_Token(token->next, TK_TYPE_SPEC) || equal_Token(token->next, TK_TYPEDEF_NAME))) // TODO: fix to is_typename
         {
                 expect("(");
                 Type *type = type_name();
