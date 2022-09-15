@@ -823,6 +823,7 @@ void codegen(HashMap *code, char *filename)
         }
         for (HashNode *v = code->begin; v; v = v->next)
         { // gvar
+                Obj *var = v->value;
                 if (!var->is_function || !var->body)
                         continue;
                 function(var);
