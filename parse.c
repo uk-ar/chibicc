@@ -263,14 +263,6 @@ Obj *find_lvar_all(Token *tok)
         Obj *ans = find_lvar(tok);
         if (ans)
                 return ans;
-        /*for (int i = lstack_i; i >= 0; i--)
-        {
-                Obj *ans = find_var(tok->str, lstack[i]);
-                if (ans)
-                {
-                        return ans;
-                }
-        }*/
         Scope *cur = scope;
         while (cur)
         {
@@ -294,7 +286,7 @@ Obj *new_obj(Token *tok, Obj *next, Type *t)
         Obj *var;
         var = calloc(1, sizeof(Obj));
         var->next = next;
-        var->token = token;
+        var->token = tok;
         var->name = tok->str;
         var->len = tok->len;
         var->type = t;
@@ -314,22 +306,6 @@ int align_to(int offset, int size)
 {
         offset = (offset + size - 1) / size * size;
         return offset;
-}
-
-Obj *struct_declaration(Type *type)
-{
-        Obj *st_vars = calloc(1, sizeof(Obj));
-        int max_offset = 0;
-        while (!consume("}"))
-        {
-                st_vars = struct_declarator_list(st_vars);
-                max_offset = MAX(max_offset, st_vars->type->size);
-                consume(";");
-        }
-        // add_hash(structs, str1, st_vars);
-        type->align = MIN(16, max_offset);
-        type->size = align_to(scope->offset, type->align);
-        return st_vars;
 }
 
 Obj *enumerator_list()
@@ -399,8 +375,8 @@ struct-declaration:
         specifier-qualifier-list struct-declarator-list opt ;
         static_assert-declaration
 specifier-qualifier-list:
-type-specifier specifier-qualifier-list opt
-type-qualifier specifier-qualifier-list opt
+        type-specifier specifier-qualifier-list opt
+        type-qualifier specifier-qualifier-list opt
 struct-declarator-list:
         struct-declarator
         struct-declarator-list , struct-declarator
@@ -989,7 +965,8 @@ Node *stmt()
                 fprintf(tout, " var decl\n<%s>\n", __func__);
                 while (consume("*"))
                         t = new_type_ptr(t);
-                if (consume(";")){
+                if (consume(";"))
+                {
                         // only declaration_specifier
                         return stmt();
                 }
