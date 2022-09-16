@@ -300,7 +300,6 @@ Obj *new_obj_local(Token *tok, Obj *next, Type *t)
         scope->offset = ans->offset += t->align;
         return ans;
 }
-Obj *struct_declarator_list(Obj *lvar);
 // in order to reset offset
 int align_to(int offset, int size)
 {
@@ -324,43 +323,6 @@ Obj *enumerator_list()
         return st_vars;
 }
 Type *type_name();
-/*
-declaration:
-        declaration-specifiers init-declarator-list opt ;
-        static_assert-declaration
-declaration-specifiers:
-        storage-class-specifier declaration-specifiers opt
-        type-specifier declaration-specifiers opt
-        type-qualifier declaration-specifiers opt
-        function-specifier declaration-specifiers opt
-        alignment-specifier declaration-specifiers opt
-init-declarator-list:
-        init-declarator
-        init-declarator-list , init-declarator
-init-declarator:
-        declarator
-        declarator = initializer
-*/
-/*
-int SC_TYPEDEF = 1 << 0;
-int SC_EXTERN = 1 << 1;
-int SC_STATIC = 1 << 2;
-int SC_THREAD_LOCAL = 1 << 3;
-int SC_AUTO = 1 << 4;
-int SC_REGISTER = 1 << 5;
-
-int TS_VOID = 1 << 6;
-int TS_CHAR = 1 << 7;
-int TS_SHORT = 1 << 8;
-int TS_INT = 1 << 9;
-int TS_LONG = 1 << 10;
-int TS_FLOAT = 1 << 11;
-int TS_DOUBLE = 1 << 12;
-int TS_SIGNED = 1 << 13;
-int TS_UNSIGNED = 1 << 14;
-int TS_BOOL = 1 << 15;
-int TS_COMPLEX = 1 << 16;
-*/
 /*
 struct-or-union-specifier:
         struct-or-union identifier opt { struct-declaration-list }
@@ -405,14 +367,26 @@ Type *struct_or_union_specifier(Token *tok)
                         error_tok(tok, "need identifier");
                 return type;
         }
-        // while(!consume("}"){
-        //  struct_declaration_list
-        Obj *st_vars = struct_declaration(type); // TODO:fix structure
+        Obj *st_vars = calloc(1, sizeof(Obj)); // for calc offset
+        int max_offset = 0;
+        // struct_declaration_list
+        while (!consume("}"))
+        {
+                /*
+                struct-declaration:
+                        specifier-qualifier-list struct-declarator-list opt ;
+                        static_assert-declaration
+                */
+                st_vars = struct_declarator_list(st_vars);
+                max_offset = MAX(max_offset, st_vars->type->size);
+                expect(";");
+        }
+        type->align = MIN(16, max_offset);
+        type->size = align_to(st_vars->offset + st_vars->type->size, type->align);
         if (get_hash(structs, full_str))
                 error_tok(tok, "already defined");
         add_hash(structs, full_str, st_vars);
         return type;
-        //}
 }
 /*
 enum-specifier:
@@ -495,6 +469,43 @@ Type *type_specifier()
         }
         return get_hash(types, src_name);
 }
+/*
+declaration:
+        declaration-specifiers init-declarator-list opt ;
+        static_assert-declaration
+declaration-specifiers:
+        storage-class-specifier declaration-specifiers opt
+        type-specifier declaration-specifiers opt
+        type-qualifier declaration-specifiers opt
+        function-specifier declaration-specifiers opt
+        alignment-specifier declaration-specifiers opt
+init-declarator-list:
+        init-declarator
+        init-declarator-list , init-declarator
+init-declarator:
+        declarator
+        declarator = initializer
+*/
+/*
+int SC_TYPEDEF = 1 << 0;
+int SC_EXTERN = 1 << 1;
+int SC_STATIC = 1 << 2;
+int SC_THREAD_LOCAL = 1 << 3;
+int SC_AUTO = 1 << 4;
+int SC_REGISTER = 1 << 5;
+
+int TS_VOID = 1 << 6;
+int TS_CHAR = 1 << 7;
+int TS_SHORT = 1 << 8;
+int TS_INT = 1 << 9;
+int TS_LONG = 1 << 10;
+int TS_FLOAT = 1 << 11;
+int TS_DOUBLE = 1 << 12;
+int TS_SIGNED = 1 << 13;
+int TS_UNSIGNED = 1 << 14;
+int TS_BOOL = 1 << 15;
+int TS_COMPLEX = 1 << 16;
+*/
 Type *declaration_specifier() // bool declaration)
 {
         Token *storage = consume_Token(TK_STORAGE);
@@ -1184,51 +1195,38 @@ Node *parameter_declaration()
         fprintf(tout, " \n</%s>\n", __func__);
         return ans;
 }
+/*
+struct-declarator-list:
+        struct-declarator
+        struct-declarator-list , struct-declarator
+struct-declarator:
+        declarator
+        declarator opt : constant-expression
+*/
 Obj *struct_declarator_list(Obj *lvar)
 {
         Type *base_t = declaration_specifier();
         if (!base_t)
                 error_tok(token, "declaration should start with \"type\"");
-
-        while (base_t)
+        int offset = 0;
+        while (!equal(token, ";"))
         {
-                Type *t = base_t;
-                t = abstract_declarator(t);
-                Token *tok = consume_ident();
-                if (!tok)
-                {
-                        break;
-                }
-                fprintf(tout, " \n<%s>\n", __func__);
-                Obj *var = find_lvar(tok); //
-
-                if (var)
-                {
-                        error_tok(tok, "token '%s' is already defined", tok->str);
-                }
-                else if (consume("["))
-                {
-                        int n = expect_num();
-                        lvar = new_obj(tok, lvar, new_type_array(t, n));
-                        expect("]");
-                }
-                else
-                {
-                        lvar = new_obj(tok, lvar, t);
-                }
-                // int align=(lvar->type==TY_ARRAY) ? MAX(16,lvar->type->size) :
+                Obj *obj = declarator(base_t);
+                if (!obj)
+                        error_tok(token, "no declarator");
+                if (find_lvar(obj->token))
+                        error_tok(obj->token, "duplicated member");
+                obj->next = lvar;
+                lvar = obj;
                 scope->offset = align_to(scope->offset, lvar->type->size);
+                // offset = align_to(offset, lvar->type->align);
                 lvar->offset = scope->offset;
-                // struct_declaration 側でクリアされる
+                // lvar->offset = offset;
+                //   struct_declaration 側でクリアされる
                 scope->offset += lvar->type->size;
-
-                if (consume(","))
-                {
-                        continue;
-                }
-                fprintf(tout, " \n</%s>\n", __func__);
+                // offset += lvar->type->size;
+                consume(",");
         }
-
         return lvar;
 }
 Obj *parameter_type_list()
@@ -1373,6 +1371,11 @@ void initializer_list(Obj *obj)
                 obj->type->size = MAX(obj->type->size, cnt * obj->type->ptr_to->size); // todo fix for escape charactors
         }
 }
+/*
+init-declarator:
+                declarator
+                declarator = initializer
+                */
 Obj *init_declarator(Obj *declarator)
 {
         fprintf(tout, " \n<%s>\n", __func__);

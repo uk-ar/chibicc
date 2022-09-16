@@ -92,6 +92,7 @@ int main(int argc, char **argv)
         ASSERT(1, o3->f1);
         ASSERT(2, o3->f2);
     }
+    /*
     //ASSERT(get()->f1, 0);//FIXME
     {
         struct s1 o2, *o3 = &o2;
