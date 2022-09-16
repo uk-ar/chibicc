@@ -12,14 +12,6 @@ struct s1
     long int quot; // 8
 };
 
-struct s2
-{
-    int f3;
-    int f4;
-    struct s1 f5;
-    struct s2 *f6; // recursive
-    struct unknown *foo;
-};
 struct
 {
     int anonymous;
@@ -47,21 +39,6 @@ typedef struct
 } foo;
 foo c, *d;
 
-struct s3
-{
-    char f1; // 1 -> 0
-    int f2;  // 4 -> 1
-    long f3; // 8 -> 8
-    char f4; // 1 -> 17
-    // 1+(3)+4+8+1+(7)=24;
-};
-
-struct s7
-{
-    char v1[2];
-    int v2[2];
-    void *v3[2];
-};
 // TODO:
 // struct empty{};
 struct s1 o11;
@@ -77,10 +54,10 @@ struct s1 *get(int i)
 int main(int argc, char **argv)
 {
 
-    //ASSERT(get()->f1, 0);
-    // ASSERT(8, sizeof(struct not_exist *));
-    // ASSERT(1, 0);
-    
+    // ASSERT(get()->f1, 0);
+    //  ASSERT(8, sizeof(struct not_exist *));
+    //  ASSERT(1, 0);
+
     {
         struct s1 o2, *o3 = &o2;
         printf("c:%p\n", &(o2.f1));
@@ -92,14 +69,12 @@ int main(int argc, char **argv)
         ASSERT(1, o3->f1);
         ASSERT(2, o3->f2);
     }
-    //ASSERT(12, ({ struct {char a; int b;} x; sizeof(x); }));
-    //ASSERT(8, ({ struct {int a; char b;} x; sizeof(x); }));
-    
-    //ASSERT(get()->f1, 0);//FIXME
+
+    // ASSERT(get()->f1, 0);//FIXME
     {
         struct s1 o2, *o3 = &o2;
-        //printf("c:%p\n", &(o2.f1));
-        //printf("i:%p\n", &(o2.f2));
+        // printf("c:%p\n", &(o2.f1));
+        // printf("i:%p\n", &(o2.f2));
         ASSERT(24, sizeof(o2));
         ASSERT(&o2, &o2.f1);
         ASSERT(&(o2.f1), &(o3->f1));
@@ -124,7 +99,7 @@ int main(int argc, char **argv)
         printf("fail?\n");
         o2.f1 = 1;
         ASSERT(1, o3->f1);
-        //ASSERT(2, o3->f2);
+        // ASSERT(2, o3->f2);
     }
 
     ASSERT(8, _Alignof(struct s1)); // long int quato
@@ -142,6 +117,14 @@ int main(int argc, char **argv)
     //   ASSERT(10, distance(&o2, &start));
     //   ASSERT(8, distance(&o3, &o2));
     {
+        struct s3
+        {
+            char f1; // 1 -> 0
+            int f2;  // 4 -> 1
+            long f3; // 8 -> 8
+            char f4; // 1 -> 17
+            // 1+(3)+4+8+1+(7)=24;
+        };
         struct s3 a, *c = &a;           // 4+(4)+8+24=40
         int b;                          // 4+(4)+8+24+4+(4)=48
         ASSERT(24, sizeof(struct s3));  // 81->24
@@ -182,34 +165,51 @@ int main(int argc, char **argv)
             printf("i:%p\n", &(o1.f2));
             printf("i:%p\n", &(o3->f2));
             printf("i:%d\n", o1.f1);
-            //printf("i:%d\n", o3->f1);
-            // printf("i:%p\n", o3->f2);
+            // printf("i:%d\n", o3->f1);
+            //  printf("i:%p\n", o3->f2);
             ASSERT(1, o3->f1);
             ASSERT(2, o3->f2);
         }
     }
-
-    struct s2 a, c, *b = &a, d;
-    ASSERT(16, _Alignof(struct s2)); // long f3
-    ASSERT(4, _Alignof(foo));        // int
-    ASSERT(1, ({ a.f3 = 1; a.f3; }));
-    ASSERT(1, ({ b->f3; }));
-    ASSERT(2, ({ c.f3 = 2; c.f3; }));
-    // ASSERT(2, ({ c.3}));//raise error
-
-    d.f3 = 3;
-    // TODO: copy struct
-    // a.f5 = d;
-    // ASSERT(3, ({ a.f5->f3; }));
-    // ASSERT(3, ({ b->f5->f3; }));
-    a.f6 = &c;
-    ASSERT(2, ({ b->f6->f3; }));
-    ASSERT(2, ({ a.f6->f3; }));
-    // ASSERT(2, ({ a.next->val; }));
-    //  ASSERT(2, 3);
-    // struct list l = calloc(1, sizeof(struct list));
-    //  ASSERT(16, sizeof(Node));
     {
+        struct s2
+        {
+            int f3;
+            int f4;
+            struct s1 f5;
+            struct s2 *f6; // recursive
+            struct unknown *foo;
+        };
+        struct s2 a, c, *b = &a, d;
+        ASSERT(16, _Alignof(struct s2)); // long f3
+        ASSERT(1, ({ a.f3 = 1; a.f3; }));
+        ASSERT(1, ({ b->f3; }));
+        ASSERT(2, ({ c.f3 = 2; c.f3; }));
+        d.f3 = 3;
+        a.f6 = &c;
+        // ASSERT(2, ({ c.3}));//raise error
+
+        // TODO: copy struct
+        // a.f5 = d;
+        // ASSERT(3, ({ a.f5->f3; }));
+        // ASSERT(3, ({ b->f5->f3; }));
+
+        ASSERT(2, ({ b->f6->f3; }));
+        ASSERT(2, ({ a.f6->f3; }));
+        // ASSERT(2, ({ a.next->val; }));
+        //  ASSERT(2, 3);
+        // struct list l = calloc(1, sizeof(struct list));
+        //  ASSERT(16, sizeof(Node));
+    }
+    ASSERT(4, _Alignof(foo)); // int
+
+    {
+        struct s7
+        {
+            char v1[2];
+            int v2[2];
+            void *v3[2];
+        };
         struct s7 o1, *o2 = &o1;
         ASSERT(2, ({o2->v1[1] = 2;o2->v1[1]; }));
         ASSERT(2, ({ o1.v1[1]; }));
@@ -236,9 +236,12 @@ int main(int argc, char **argv)
         ASSERT(1, o2->a[0]);
     }
     {
-        //https://github.com/rui314/chibicc/commit/9443e4b8bc587b670f9b448b03842530cd355760
-        //ASSERT(16, ({ struct {char a; int b;} x; sizeof(x); }));
-        //ASSERT(16, ({ struct {int a; char b;} x; sizeof(x); }));
+        // https://github.com/rui314/chibicc/commit/9443e4b8bc587b670f9b448b03842530cd355760
+        // ASSERT(16, ({ struct {char a; int b;} x; sizeof(x); }));
+        // ASSERT(16, ({ struct {int a; char b;} x; sizeof(x); }));
+        //  difference in result but gcc result is below
+        ASSERT(8, ({ struct {char a; int b;} x; sizeof(x); }));
+        ASSERT(8, ({ struct {int a; char b;} x; sizeof(x); }));
     }
     //*/
     return 0;
