@@ -1208,7 +1208,7 @@ Obj *struct_declarator_list(Obj *lvar)
         Type *base_t = declaration_specifier();
         if (!base_t)
                 error_tok(token, "declaration should start with \"type\"");
-        int offset = 0;
+        // int offset = 0;
         while (!equal(token, ";"))
         {
                 Obj *obj = declarator(base_t);
@@ -1216,15 +1216,12 @@ Obj *struct_declarator_list(Obj *lvar)
                         error_tok(token, "no declarator");
                 if (find_lvar(obj->token))
                         error_tok(obj->token, "duplicated member");
+                int offset = lvar->offset;
+                if (lvar->type)
+                        offset += lvar->type->size;
                 obj->next = lvar;
                 lvar = obj;
-                scope->offset = align_to(scope->offset, lvar->type->size);
-                // offset = align_to(offset, lvar->type->align);
-                lvar->offset = scope->offset;
-                // lvar->offset = offset;
-                //   struct_declaration 側でクリアされる
-                scope->offset += lvar->type->size;
-                // offset += lvar->type->size;
+                lvar->offset = align_to(offset, lvar->type->size);
                 consume(",");
         }
         return lvar;

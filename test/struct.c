@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     //ASSERT(get()->f1, 0);
     // ASSERT(8, sizeof(struct not_exist *));
     // ASSERT(1, 0);
-
+    
     {
         struct s1 o2, *o3 = &o2;
         printf("c:%p\n", &(o2.f1));
@@ -92,7 +92,9 @@ int main(int argc, char **argv)
         ASSERT(1, o3->f1);
         ASSERT(2, o3->f2);
     }
-    /*
+    //ASSERT(12, ({ struct {char a; int b;} x; sizeof(x); }));
+    //ASSERT(8, ({ struct {int a; char b;} x; sizeof(x); }));
+    
     //ASSERT(get()->f1, 0);//FIXME
     {
         struct s1 o2, *o3 = &o2;
