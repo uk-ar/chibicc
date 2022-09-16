@@ -1290,12 +1290,7 @@ Obj *declarator(Type *base_t)
         Token *tok = consume_ident();
         if (!tok)
                 return NULL;
-        Obj *obj = find_gvar(tok);
-        if (!obj)
-        {
-                // todo:Check type
-                obj = add_hash(globals, tok->str, new_obj(tok, NULL, t))->value;
-        }
+        Obj *obj = new_obj(tok, NULL, t);
         int n = 0;
         if (consume("[")) // declarator?
         {
@@ -1384,6 +1379,8 @@ Obj *init_declarator(Obj *declarator)
         // Obj *var = find_gvar(declarator->token);
         if (consume("="))
         {
+                if (declarator->init)
+                        error_tok(declarator->token, "already initialized");
                 initializer_list(declarator);
         }
         fprintf(tout, " \n</%s>\n", __func__);
@@ -1411,18 +1408,23 @@ void external_declaration()
         if (!base_t)
                 error_tok(token, "declaration should start with \"type\"");
 
-        Obj *obj = declarator(base_t);
+        Obj *obj = declarator(base_t); // type
+        if (!find_gvar(obj->token))
+                add_hash(globals, obj->token->str, obj);
+        obj = find_gvar(obj->token); // TODO: type check
         if (equal(token, "("))
         {
                 function_definition(obj);
                 return;
         }
-
         init_declarator(obj);
         while (!consume(";"))
         {
                 expect(","); // should consume anywhere else
                 obj = declarator(base_t);
+                if (!find_gvar(obj->token))
+                        add_hash(globals, obj->token->str, obj);
+                obj = find_gvar(obj->token);
                 init_declarator(obj);
         }
         return;
