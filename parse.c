@@ -293,11 +293,12 @@ Obj *new_obj(Token *tok, Obj *next, Type *t)
         return var;
 }
 // int scope->offset = 0;
-Obj *new_obj_local(Token *tok, Obj *next, Type *t)
+Obj *new_obj_local(Token *tok, Type *t)
 {
-        Obj *ans = new_obj(tok, next, t);
+        Obj *ans = new_obj(tok, scope->locals, t);
         ans->offset = align_to(scope->offset, t->align);
         scope->offset = ans->offset += t->align;
+        scope->locals = ans;
         return ans;
 }
 // in order to reset offset
@@ -995,12 +996,12 @@ Node *stmt()
                 if (consume("["))
                 {
                         int n = expect_num();
-                        scope->locals = new_obj_local(tok, scope->locals, new_type_array(t, n));
+                        new_obj_local(tok, new_type_array(t, n));
                         expect("]");
                 }
                 else
                 {
-                        scope->locals = new_obj_local(tok, scope->locals, t);
+                        new_obj_local(tok, t);
                 }
 
                 fprintf(tout, " var decl\n</%s>\n", __func__);
@@ -1187,7 +1188,7 @@ Node *parameter_declaration()
         {
                 error_tok(tok, "dumpicate param name '%s'", tok->str);
         }
-        scope->locals = new_obj_local(tok, scope->locals, t);
+        new_obj_local(tok, t);
 
         // init_declarator側でクリアされる
         scope->offset = scope->locals->offset;
@@ -1468,7 +1469,7 @@ void function_definition(Obj *declarator)
 
         Node *node = new_node(ND_BLOCK, tok, NULL);
         Type *t = new_type_ptr(ty_char);
-        scope->locals = new_obj_local(tok, scope->locals, t);
+        new_obj_local(tok, t);
         scope->locals->name = "__func__";
         scope->locals->len = strlen(scope->locals->name);
 

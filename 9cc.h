@@ -254,7 +254,7 @@ Obj *find_lvar(Token *tok);
 Obj *find_lvar_all(Token *tok);
 Obj *find_gvar(Token *tok);
 Obj *new_obj(Token *tok, Obj *next, Type *t);
-Obj *new_obj_local(Token *tok, Obj *next, Type *t);
+Obj *new_obj_local(Token *tok, Type *t);
 Obj *struct_declarator_list(Obj *lvar);
 int align_to(int offset, int size);
 
