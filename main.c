@@ -89,7 +89,6 @@ int main(int argc, char **argv)
         strings = new_hash(1000);
         structs = new_hash(100);
         labels = new_hash(100);
-        globals = new_hash(1000);
 
         types = new_hash(100);
         ty_int = new_type(TY_INT, NULL, 4, "int", 4);
@@ -159,7 +158,7 @@ int main(int argc, char **argv)
         // assert(lstack_i == 0);
         fclose(tout);
 
-        codegen(globals, filename);
+        codegen(scope->locals, filename);
 
         return 0;
 }

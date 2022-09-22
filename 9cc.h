@@ -174,6 +174,7 @@ struct Obj
        Type *type;
        bool is_function;
        Token *token;
+       long value;
        // deprecated
        char *name; // null terminated string
        int len;    // string length of name
@@ -188,7 +189,6 @@ struct Obj
        Obj *locals;
        Node *body;
 };
-extern HashMap *globals;
 
 typedef struct Scope Scope;
 struct Scope
@@ -199,7 +199,6 @@ struct Scope
 };
 extern Scope *scope;
 
-Scope *new_scope(Scope *next, int offset);
 Token *tokenize(char *p);
 Node *expr();
 Type *gen_stmt(Node *root);
@@ -211,7 +210,7 @@ HashNode *add_hash(HashMap *h, char *key, void *value);
 void *get_hash(HashMap *h, char *key);
 void *get_node_value(HashNode *n);
 char *format(char *fmt, ...);
-void codegen(HashMap *code, char *filename);
+void codegen(Obj *code, char *filename);
 long get_string_offset(char *s);
 extern int count();
 

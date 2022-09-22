@@ -23,7 +23,6 @@ HashMap *labels;
 #include <ctype.h>
 #include <stdarg.h>
 
-/*
 https://freak-da.hatenablog.com/entry/2021/03/25/172248
 System V AMD64 ABI
 関数呼び出し
@@ -754,7 +753,7 @@ void function(Obj *func)
 // char *global_types[] = {".byte", ".long", ".quad", ".quad", ".byte"};
 char *global_types[] = {".byte", ".byte", ".long", ".quad", ".quad"};
 //  TY_BOOL,TY_CHAR
-void codegen(HashMap *code, char *filename)
+void codegen(Obj *code, char *filename)
 {
         // header
         printf(".file \"%s\"\n", filename);
@@ -771,9 +770,8 @@ void codegen(HashMap *code, char *filename)
         // for debug
         printf(".LCdebug:\n");
         printf("  .string \"%s\"\n", "rsp:%p\\n");
-        for (HashNode *v = code->begin; v; v = v->next)
+        for (Obj *var = code; var; var = var->next)
         { // gvar
-                Obj *var = v->value;
                 if (var->is_function)
                         continue;
                 // https://github.com/rui314/chibicc/commit/a4d3223a7215712b86076fad8aaf179d8f768b14
@@ -821,9 +819,8 @@ void codegen(HashMap *code, char *filename)
                         }
                 }
         }
-        for (HashNode *v = code->begin; v; v = v->next)
+        for (Obj *var = code; var; var = var->next)
         { // gvar
-                Obj *var = v->value;
                 if (!var->is_function || !var->body)
                         continue;
                 function(var);

@@ -239,8 +239,6 @@ void add_node(Node *node, Node *new_node)
         return;
 }
 
-HashMap *globals = NULL; //=>Obj*
-// Obj *functions = NULL;
 
 Obj *find_var(char *str, Obj *var0)
 {
@@ -256,15 +254,14 @@ Obj *find_var(char *str, Obj *var0)
 }
 Obj *find_lvar(Token *tok)
 {
+        if(!scope->next)
+                return NULL;
         return find_var(tok->str, scope->locals);
 }
 Obj *find_lvar_all(Token *tok)
 {
-        Obj *ans = find_lvar(tok);
-        if (ans)
-                return ans;
         Scope *cur = scope;
-        while (cur)
+        while (cur->next)//exclude top scope=globals
         {
                 Obj *ans = find_var(tok->str, cur->locals);
                 if (ans)
@@ -277,9 +274,11 @@ Obj *find_lvar_all(Token *tok)
 }
 Obj *find_gvar(Token *tok)
 {
-
-        // return find_var(tok->str, globals);
-        return get_hash(globals, tok->str);
+        Scope *cur = scope;
+        while(cur->next){
+                cur = cur->next;
+        }
+        return find_var(tok->str, cur->locals);
 }
 Obj *new_obj(Token *tok, Obj *next, Type *t)
 {
@@ -311,14 +310,14 @@ int align_to(int offset, int size)
 Obj *enumerator_list()
 {
         Obj *st_vars = calloc(1, sizeof(Obj));
-        st_vars->offset = -1;
+        int offset=0;
         while (!consume("}"))
         {
                 Token *tok = consume_ident();
-                st_vars = new_obj(tok, st_vars, ty_int);
-                st_vars->offset = st_vars->next->offset + 1;
+                st_vars = new_obj(tok, st_vars, ty_int);//globals
                 add_hash(keyword2token, tok->str, (void *)TK_ENUM);
-                add_hash(enums, tok->str, (void *)st_vars->offset);
+                add_hash(enums, tok->str, offset);
+                offset++;
                 consume(",");
         }
         return st_vars;
@@ -1286,7 +1285,7 @@ Obj *declarator(Type *base_t)
         Token *tok = consume_ident();
         if (!tok)
                 return NULL;
-        Obj *obj = new_obj(tok, NULL, t);
+        Obj *obj = new_obj(tok, NULL, t);//globals
         int n = 0;
         if (consume("[")) // declarator?
         {
@@ -1410,8 +1409,10 @@ void external_declaration()
                 error_tok(token, "declaration should start with \"type\"");
 
         Obj *obj = declarator(base_t); // type
-        if (!find_gvar(obj->token))
-                add_hash(globals, obj->token->str, obj);
+        if (!find_gvar(obj->token)){
+                obj->next=scope->locals;
+                scope->locals=obj;
+        }
         obj = find_gvar(obj->token); // TODO: type check
         if (equal(token, "("))
         {
@@ -1423,8 +1424,10 @@ void external_declaration()
         {
                 expect(","); // should consume anywhere else
                 obj = declarator(base_t);
-                if (!find_gvar(obj->token))
-                        add_hash(globals, obj->token->str, obj);
+                if (!find_gvar(obj->token)){
+                        obj->next = scope->locals;
+                        scope->locals=obj;
+                }
                 obj = find_gvar(obj->token);
                 init_declarator(obj);
         }
