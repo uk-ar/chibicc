@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <assert.h>
 */
-#include "9cc.h"
+#include "yucc.h"
 
 #define NULL 0 //((void *)0) TODO:SUPPORT
 struct _IO_FILE;

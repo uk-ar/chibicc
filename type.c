@@ -50,7 +50,7 @@ extern int strncmp(const char *__s1, const char *__s2, size_t __n);
 #define isspace(c) __isctype((c), _ISspace)*/
 extern int memcmp(const void *__s1, const void *__s2, size_t __n);
 
-#include "9cc.h"
+#include "yucc.h"
 
 // constant variables
 char *filename;
@@ -89,7 +89,6 @@ Type *new_type_ptr(Type *ptr_to)
 Type *new_type_array(Type *ptr_to, int elem)
 {
         return new_type(TY_ARRAY, ptr_to, elem * (ptr_to->size), NULL,
-        //MAX(16, var->type->align2) : var->type->align2;
-        ptr_to->size
-        );
+                        // MAX(16, var->type->align2) : var->type->align2;
+                        ptr_to->size);
 }

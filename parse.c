@@ -52,7 +52,7 @@ extern int strncmp(const char *__s1, const char *__s2, size_t __n);
 #define isspace(c) __isctype((c), _ISspace)*/
 extern int memcmp(const void *__s1, const void *__s2, size_t __n);
 
-#include "9cc.h"
+#include "yucc.h"
 
 // constant variables
 char *filename;
@@ -239,7 +239,6 @@ void add_node(Node *node, Node *new_node)
         return;
 }
 
-
 Obj *find_var(char *str, Obj *var0)
 {
         int n = strlen(str);
@@ -254,14 +253,14 @@ Obj *find_var(char *str, Obj *var0)
 }
 Obj *find_lvar(Token *tok)
 {
-        if(!scope->next)
+        if (!scope->next)
                 return NULL;
         return find_var(tok->str, scope->locals);
 }
 Obj *find_lvar_all(Token *tok)
 {
         Scope *cur = scope;
-        while (cur->next)//exclude top scope=globals
+        while (cur->next) // exclude top scope=globals
         {
                 Obj *ans = find_var(tok->str, cur->locals);
                 if (ans)
@@ -275,7 +274,8 @@ Obj *find_lvar_all(Token *tok)
 Obj *find_gvar(Token *tok)
 {
         Scope *cur = scope;
-        while(cur->next){
+        while (cur->next)
+        {
                 cur = cur->next;
         }
         return find_var(tok->str, cur->locals);
@@ -310,11 +310,11 @@ int align_to(int offset, int size)
 Obj *enumerator_list()
 {
         Obj *st_vars = calloc(1, sizeof(Obj));
-        int offset=0;
+        int offset = 0;
         while (!consume("}"))
         {
                 Token *tok = consume_ident();
-                st_vars = new_obj(tok, st_vars, ty_int);//globals
+                st_vars = new_obj(tok, st_vars, ty_int); // globals
                 add_hash(keyword2token, tok->str, (void *)TK_ENUM);
                 add_hash(enums, tok->str, offset);
                 offset++;
@@ -1285,7 +1285,7 @@ Obj *declarator(Type *base_t)
         Token *tok = consume_ident();
         if (!tok)
                 return NULL;
-        Obj *obj = new_obj(tok, NULL, t);//globals
+        Obj *obj = new_obj(tok, NULL, t); // globals
         int n = 0;
         if (consume("[")) // declarator?
         {
@@ -1409,9 +1409,10 @@ void external_declaration()
                 error_tok(token, "declaration should start with \"type\"");
 
         Obj *obj = declarator(base_t); // type
-        if (!find_gvar(obj->token)){
-                obj->next=scope->locals;
-                scope->locals=obj;
+        if (!find_gvar(obj->token))
+        {
+                obj->next = scope->locals;
+                scope->locals = obj;
         }
         obj = find_gvar(obj->token); // TODO: type check
         if (equal(token, "("))
@@ -1424,9 +1425,10 @@ void external_declaration()
         {
                 expect(","); // should consume anywhere else
                 obj = declarator(base_t);
-                if (!find_gvar(obj->token)){
+                if (!find_gvar(obj->token))
+                {
                         obj->next = scope->locals;
-                        scope->locals=obj;
+                        scope->locals = obj;
                 }
                 obj = find_gvar(obj->token);
                 init_declarator(obj);

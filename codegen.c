@@ -13,7 +13,7 @@ extern int strcmp(const char *__s1, const char *__s2);
 //#include <stddef.h>
 #define NULL 0 // TODO:((void *)0)
 
-#include "9cc.h"
+#include "yucc.h"
 HashMap *labels;
 /*
 #include <stdio.h>

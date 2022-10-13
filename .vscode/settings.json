@@ -2,7 +2,7 @@
     "makefile.extensionOutputFolder": "./.vscode",
     "C_Cpp.errorSquiggles": "Disabled",
     "files.associations": {
-        "9cc.h": "c",
+        "yucc.h": "c",
         "test.h": "c",
         "stdlib.h": "c",
         "stdbool.h": "c"

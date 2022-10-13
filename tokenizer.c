@@ -5,7 +5,7 @@ extern long int strtol(const char *__restrict __nptr,
                        char **__restrict __endptr, int __base);
 extern void *calloc(size_t __nmemb, size_t __size);
 
-#include "9cc.h"
+#include "yucc.h"
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len, int loc)
 {
@@ -50,7 +50,7 @@ Token *tokenize(char *p)
         if (*p == '\'')
         {
             char *pre = p;
-            char val=0;
+            char val = 0;
             p++;
             if (*p == '\\')
             {
@@ -104,8 +104,8 @@ Token *tokenize(char *p)
             if (*p != '\'')
                 error_at(p, "'\'' is not closing");
             p++;
-            cur = new_token(TK_NUM, cur, pre, p-pre, loc);
-            cur->val=val;
+            cur = new_token(TK_NUM, cur, pre, p - pre, loc);
+            cur->val = val;
             continue;
         }
         if (isspace(*p))
@@ -164,8 +164,8 @@ Token *tokenize(char *p)
         if (isdigit(*p))
         {
             char *pre = p;
-            long val=strtol(p, &p, 0);
-            cur = new_token(TK_NUM, cur, pre, p-pre, loc);
+            long val = strtol(p, &p, 0);
+            cur = new_token(TK_NUM, cur, pre, p - pre, loc);
             cur->val = val;
             // printf("%d",p-pre);
             continue;

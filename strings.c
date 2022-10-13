@@ -61,7 +61,7 @@ extern long int strtol(const char *__restrict __nptr,
                        char **__restrict __endptr, int __base);
 extern int memcmp(const void *__s1, const void *__s2, size_t __n);
 
-#include "9cc.h"
+#include "yucc.h"
 
 Token *token; // current token
 
@@ -84,7 +84,7 @@ char *format(char *fmt, ...)
         return ptr;
 }
 static void verror_at(char *s, char *fmt, va_list ap)
-{       
+{
         char *loc = s;
         char *start = loc;
         while (user_input < start && start[-1] != '\n') //*(start-1)
@@ -114,7 +114,7 @@ void error_at(char *s, char *fmt, ...)
 {
         va_list ap;
         va_start(ap, fmt);
-        verror_at(s,fmt,ap);
+        verror_at(s, fmt, ap);
 }
 void error_tok(Token *tok, char *fmt, ...)
 {

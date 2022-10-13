@@ -1,3 +1,5 @@
+#ifndef YUCC_H
+#define YUCC_H
 //#include <stdlib.h>
 //#include <stdio.h>
 
@@ -307,3 +309,5 @@ Node *add();
 Node *relational();
 
 Type *direct_abstract_declarator(Type *t);
+
+#endif //YUCC_H

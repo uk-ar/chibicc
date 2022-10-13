@@ -14,7 +14,7 @@ TESTS3=$(TEST_SRCS:.c=.exe3)
 .PRECIOUS: $(TEST_SRCS:.c=.e) $(TEST_SRCS:.c=.1.s) $(TEST_SRCS:.c=.2.s) test/common.e test/common.1.s $(TEST_SRCS:.c=.3.s) main.e test/common.2.s hashmap.e tokenizer.e codegen.e parse_self.e type.e hashmap.1.s
 
 %.e: %.c
-#プリプロセス結果をcompile(9ccが標準入力に対応しないため一時ファイルに保存)
+#プリプロセス結果をcompile(yuccが標準入力に対応しないため一時ファイルに保存)
 	$(CC) -o $*.e -E -P -C $*.c
 	
 %.1.s: %.c stage1 %.e
@@ -55,7 +55,7 @@ stage2: test1 stage1 $(ASMS1) $(HOST_OBJS)
 stage3: test2 stage2 $(ASMS2) $(HOST_OBJS)
 	$(CC) -o $@ $(ASMS2) $(HOST_OBJS) $(CFLAGS)
 
-$(OBJS):9cc.h
+$(OBJS):yucc.h
 
 test1: $(TESTS1)
 #実行時エラー解析のため名前を統一
@@ -97,6 +97,6 @@ test_o: stage1 test/common.o
 	sh ./test.sh
 
 clean:
-	rm -f *.o *~ tmp* 9cc stage1 stage2 stage3 *.e *.s test/*.s test/*.e test/*.exe test/*.exe1 test/*.exe2 test/*.exe3 test/*.o
+	rm -f *.o *~ tmp* yucc stage1 stage2 stage3 *.e *.s test/*.s test/*.e test/*.exe test/*.exe1 test/*.exe2 test/*.exe3 test/*.o
 
 .PHONY: test1 test2 test3 clean

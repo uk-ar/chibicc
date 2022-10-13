@@ -1,5 +1,5 @@
 #include "test.h"
-//#include "../9cc.h"
+//#include "../yucc.h"
 
 enum hue
 {

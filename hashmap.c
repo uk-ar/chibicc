@@ -1,4 +1,4 @@
-#include "9cc.h"
+#include "yucc.h"
 //#include <stdlib.h>
 extern void *calloc(size_t __nmemb, size_t __size);
 //#include <stdio.h>
