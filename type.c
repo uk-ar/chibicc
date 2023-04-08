@@ -53,13 +53,11 @@ extern int memcmp(const void *__s1, const void *__s2, size_t __n);
 #include "yucc.h"
 
 // constant variables
-char *filename;
-char *user_input;
-FILE *tout;
+extern FILE *tout;
 
 // global variables
-Token *token; // current token
-HashMap *structs, *types, *keyword2token, *type_alias, *enums;
+extern Token *token; // current token
+extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
 
 // function prototypes
 Obj *parameter_type_list();

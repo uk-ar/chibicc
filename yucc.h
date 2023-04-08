@@ -218,8 +218,10 @@ extern int count();
 
 extern HashMap *keyword2token;
 // extern HashMap *structs, *types, *keyword2token, *type_alias, *enums;
-Type *ty_int;
-Type *ty_char;
+extern Type *ty_int;
+extern Type *ty_char;
+extern char *filename;
+extern char *user_input;
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

@@ -5,6 +5,7 @@
         "yucc.h": "c",
         "test.h": "c",
         "stdlib.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "memory_resource": "c"
     }
 }

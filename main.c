@@ -35,8 +35,8 @@ extern int printf(const char *__restrict __format, ...);
 
 extern FILE *tout;
 extern FILE *tout2;
-extern char *user_input;
-extern char *filename;
+char *user_input;
+char *filename;
 extern Token *token;
 // extern Node *code[];
 extern HashMap *strings, *labels;

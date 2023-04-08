@@ -65,8 +65,6 @@ extern int memcmp(const void *__s1, const void *__s2, size_t __n);
 
 Token *token; // current token
 
-char *filename;
-char *user_input;
 FILE *tout;
 
 char *format(char *fmt, ...)
