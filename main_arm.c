@@ -31,6 +31,7 @@ struct Token
 
 typedef enum
 {
+  ND_BLOCK,
   ND_IF,
   ND_ELSE,
   ND_WHILE,
@@ -56,15 +57,16 @@ typedef struct Node Node;
 struct Node
 { // binary tree node
   NodeKind kind;
-  Node *lhs;  // left hand side;
-  Node *rhs;  // right hand side;
-  Node *cond; // if cond
-  Node *then; // if then
-  Node *els;  // if else
-  Node *init; // for init
-  Node *next; // for next
-  int val;    // enable iff kind == ND_NUM
-  int offset; // enable iff kind == ND_LVAR
+  Node *lhs;    // left hand side;
+  Node *rhs;    // right hand side;
+  Node *cond;   // if cond
+  Node *then;   // if then
+  Node *els;    // if else
+  Node *init;   // for init
+  Node **stmts; // for next
+  Node *next;   // for next
+  int val;      // enable iff kind == ND_NUM
+  int offset;   // enable iff kind == ND_LVAR
 };
 
 Token *tokenize(char *p);
@@ -203,7 +205,8 @@ Token *tokenize(char *p)
       p += 2;
       continue;
     }
-    if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '=' || *p == ';')
+    if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' 
+    || *p == '=' || *p == ';' || *p == '{' || *p =='}')
     {
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
@@ -469,6 +472,20 @@ Node *stmt()
     fprintf(tout, "</for>\n", __func__);
     return node;
   }
+  if (consume("{"))
+  {
+    node = new_node(ND_BLOCK, NULL, NULL);
+    Node **stmts = calloc(100, sizeof(Node *));
+    int i;
+    for (i = 0; i < 100 && !consume("}"); i++)
+    {
+      stmts[i] = stmt();
+    }
+    //assert(i != 100);
+    node->stmts = stmts;
+    fprintf(tout, "</%s>\n", __func__);
+    return node;
+  }
   node = expr();
   expect(";");
   return node;
@@ -588,8 +605,8 @@ void gen(Node *node)
     gen(node->cond);
     fprintf(tout, "</cond>\n");
     printf("  ldr x0,[SP],#16\n"); // pop return value
-    //printf("  pop rax\n"); // move result to rax
-    //printf("  cmp rax, 0\n");
+    // printf("  pop rax\n"); // move result to rax
+    // printf("  cmp rax, 0\n");
     printf("  cmp x0, 0\n");
     printf("  beq .Lend%d\n", num);
     fprintf(tout, "<then>\n");
@@ -610,19 +627,28 @@ void gen(Node *node)
       gen(node->cond);
     fprintf(tout, "</cond>\n");
     printf("  ldr x0,[SP],#16\n"); // pop return value
-    //printf("  pop rax\n"); // move result to rax
-    //printf("  cmp rax, 0\n");
+    // printf("  pop rax\n"); // move result to rax
+    // printf("  cmp rax, 0\n");
     printf("  cmp x0, 0\n");
-    //printf("  je .Lend%d\n", num);
+    // printf("  je .Lend%d\n", num);
     printf("  beq .Lend%d\n", num);
     fprintf(tout, "<then>\n");
     gen(node->then);
     if (node->next)
       gen(node->next);
     fprintf(tout, "</then>\n");
-    //printf("  jmp .Lbegin%d\n", num);
+    // printf("  jmp .Lbegin%d\n", num);
     printf("  b .Lbegin%d\n", num);
     printf(".Lend%d:\n", num);
+    return;
+  }
+  else if (node->kind == ND_BLOCK)
+  {
+    for (int i = 0; i < 100 && node->stmts[i]; i++)
+    {
+      gen(node->stmts[i]);
+      printf("  ldr x0,[SP],#16\n"); // pop return value
+    }
     return;
   }
 

@@ -15,7 +15,8 @@ assert() {
     exit 1
   fi
 }
-
+assert 3 "if(1==1){2;return 3;}"
+assert 4 "if(1==1){2;3;}return 4;"
 assert 2 "for(a=1;a;a=a-1)return 2;"
 assert 0 "a=1;for(;a;)a=a-1;return a;"
 assert 1 "if(1==1)return 1;"
