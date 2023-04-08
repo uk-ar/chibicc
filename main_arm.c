@@ -31,6 +31,8 @@ struct Token
 
 typedef enum
 {
+  ND_FUNC,
+  ND_FUNCALL,
   ND_BLOCK,
   ND_IF,
   ND_ELSE,
@@ -64,9 +66,21 @@ struct Node
   Node *els;    // if else
   Node *init;   // for init
   Node **stmts; // for next
+  Node **params;// for funcall
   Node *next;   // for next
   int val;      // enable iff kind == ND_NUM
   int offset;   // enable iff kind == ND_LVAR
+  char *name;   // enable iff kind == ND_FUNCALL
+};
+
+typedef struct LVar LVar;
+
+struct LVar
+{
+  LVar *next;
+  char *name; // start pos
+  int len;
+  int offset; // offset from RBP
 };
 
 Token *tokenize(char *p);
@@ -206,7 +220,7 @@ Token *tokenize(char *p)
       continue;
     }
     if (*p == '<' || *p == '>' || *p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' 
-    || *p == '=' || *p == ';' || *p == '{' || *p =='}')
+    || *p == '=' || *p == ';' || *p == '{' || *p =='}' || *p==',')
     {
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
@@ -253,6 +267,19 @@ Node *new_node_num(int val)
   ans->val = val;
   return ans;
 }
+LVar *locals = NULL;
+
+LVar *find_lvar(Token *tok)
+{
+  for (LVar *var = locals; var; var = var->next)
+  {
+    if (tok->len == var->len && !memcmp(tok->str, var->name, tok->len))
+    {
+      return var;
+    }
+  }
+  return NULL;
+}
 /* program    = stmt* */
 /* stmt       = expr ";" */
 /* expr       = assign */
@@ -277,9 +304,51 @@ Node *primary()
   Token *tok = consume_ident();
   if (tok)
   {
+    if (consume("("))
+    { // call
+      Node *ans = new_node(ND_FUNCALL, NULL, NULL);
+      //ans->name = strndup(tok->str, tok->len);
+      ans->name = malloc(sizeof(char) * tok->len + 1);
+      strncpy(ans->name, tok->str, tok->len);
+      ans->params = NULL;
+      if (consume(")"))
+      {
+        fprintf(tout, "</%s>\n", __func__);
+        return ans;
+      }
+      ans->params = calloc(6, sizeof(Node *));
+      int i = 0;
+      ans->params[i++] = expr();
+      for (; i < 6 && !consume(")"); i++)
+      {
+        consume(",");
+        ans->params[i] = expr();
+      }
+      fprintf(tout, "</%s>\n", __func__);
+      return ans;
+    }
     Node *ans = new_node(ND_LVAR, NULL, NULL);
-    ans->offset = (tok->str[0] - 'a' + 1) * 8;
-    fprintf(tout, "</%s>\n", __func__);
+    LVar *var = find_lvar(tok);
+    if (var)
+    {
+      ans->offset = var->offset;
+    }
+    else
+    {
+      /* LVar *next; */
+      /* char *name;//start pos */
+      /* int len; */
+      /* int offset;//offset from RBP */
+      var = calloc(1, sizeof(LVar));
+      var->next = locals;
+      var->name = tok->str;
+      var->len = tok->len;
+      var->offset = locals->offset + 8; // last offset+1;
+      ans->offset = var->offset;
+      locals = var;
+    }
+    fprintf(tout, "# </%s>\n", __func__);
+    // ans->offset=(tok->str[0]-'a'+1)*8;
     return ans;
   }
   fprintf(tout, "</%s>\n", __func__);
@@ -651,6 +720,22 @@ void gen(Node *node)
     }
     return;
   }
+  else if (node->kind == ND_FUNCALL)
+  {
+    for (int i = 0; i < 6 && node->params && node->params[i]; i++)
+    {
+      gen(node->params[i]);
+    }
+    for (int i = 0; i < 6 && node->params && node->params[i]; i++)
+    {
+      printf("  ldr %s,[SP],#16\n",argreg[i]); // pop return value
+      //printf("  pop %s\n", argreg[i]);
+    }
+    printf("  bl %s\n", node->name);
+    printf("  str x0,[SP, #-16]!\n");
+    //printf("  push rax\n"); // save result to sp
+    return;
+  }
 
   gen(node->lhs);
   gen(node->rhs);
@@ -723,6 +808,7 @@ int main(int argc, char **argv)
   // printf("  sub rsp, 208\n"); // 26*8byte
 
   char *p = argv[1];
+  locals = calloc(1, sizeof(LVar));
   user_input = argv[1];
   token = tokenize(p);
   program();
