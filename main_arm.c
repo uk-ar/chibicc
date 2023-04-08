@@ -7,6 +7,10 @@
 
 typedef enum
 {
+  TK_IF,
+  TK_ELSE,
+  TK_WHILE,
+  TK_FOR,
   TK_RESERVED, // symbol
   TK_RETURN,   // return
   TK_IDENT,    // identifier
@@ -27,6 +31,10 @@ struct Token
 
 typedef enum
 {
+  ND_IF,
+  ND_ELSE,
+  ND_WHILE,
+  ND_FOR,
   ND_ADD,
   ND_SUB,
   ND_MUL,
@@ -49,7 +57,10 @@ struct Node
 { // binary tree node
   NodeKind kind;
   Node *lhs;  // left hand side;
-  Node *rhs;  // left hand side;
+  Node *rhs;  // right hand side;
+  Node *cond; // if cond
+  Node *then; // if then
+  Node *els;  // if else
   int val;    // enable iff kind == ND_NUM
   int offset; // enable iff kind == ND_LVAR
 };
@@ -157,6 +168,30 @@ Token *tokenize(char *p)
     {
       cur = new_token(TK_RETURN, cur, p, 6);
       p += 6;
+      continue;
+    }
+    if (!strncmp(p, "if", 2) && !isIdent(p[2]))
+    {
+      cur = new_token(TK_IF, cur, p, 2);
+      p += 2;
+      continue;
+    }
+    if (!strncmp(p, "else", 4) && !isIdent(p[4]))
+    {
+      cur = new_token(TK_ELSE, cur, p, 4);
+      p += 4;
+      continue;
+    }
+    if (!strncmp(p, "while", 5) && !isIdent(p[5]))
+    {
+      cur = new_token(TK_WHILE, cur, p, 5);
+      p += 5;
+      continue;
+    }
+    if (!strncmp(p, "for", 3) && !isIdent(p[3]))
+    {
+      cur = new_token(TK_FOR, cur, p, 3);
+      p += 3;
       continue;
     }
     if (!strncmp(p, "<=", 2) || !strncmp(p, ">=", 2) ||
@@ -374,6 +409,29 @@ Node *stmt()
     fprintf(tout, "</%s>\n", __func__);
     return node;
   }
+  if (consume_Token(TK_IF))
+  {
+    expect("(");
+    node = new_node(ND_IF, NULL, NULL);
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    if (consume_Token(TK_ELSE))
+    {
+      node->els = stmt();
+    }
+    fprintf(tout, "</%s>\n", __func__);
+    return node;
+  }
+  if (consume_Token(TK_WHILE))
+  {
+    expect("(");
+    node = new_node(ND_WHILE, node, expr());
+    expect(")");
+    stmt();
+    fprintf(tout, "</%s>\n", __func__);
+    return node;
+  }
   node = expr();  
   expect(";");
   return node;
@@ -401,6 +459,11 @@ void gen_lval(Node *node)
   printf("  mov x0, x29\n");//base pointer
   printf("  sub x0, x0, %d\n",node->offset);//calc local variable address
   printf("  str x0,[SP, #-16]!\n");//push local variable address
+}
+int count()
+{
+  static int cnt = 0;
+  return cnt++;
 }
 //
 // Code generator
@@ -454,6 +517,28 @@ void gen(Node *node) {
     //printf("  pop rbp\n");     // restore base pointer
     //printf("  ret\n");
     //fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
+    return;
+  }
+  else if (node->kind == ND_IF)
+  {
+    fprintf(tout, "<cond>\n");
+    gen(node->cond);
+    fprintf(tout, "</cond>\n");
+    printf("  ldr x0,[SP],#16\n"); // pop return value
+    //printf("  pop rax\n"); // move result to rax
+    printf("  cmp x0, 0\n");
+    int num = count();
+    printf("  beq .Lelse%d\n", num);
+    //fprintf(tout, "<then>\n");
+    gen(node->then);
+    //fprintf(tout, "</then>\n");
+    printf("  b .Lend%d\n", num);
+    printf(".Lelse%d:\n", num);
+    if (node->els)
+    {
+      gen(node->els);
+    }
+    printf(".Lend%d:\n", num);
     return;
   }
 
