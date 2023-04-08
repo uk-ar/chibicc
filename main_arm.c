@@ -8,6 +8,7 @@
 typedef enum
 {
   TK_RESERVED, // symbol
+  TK_RETURN,   // return
   TK_IDENT,    // identifier
   TK_NUM,      // int
   TK_EOF,
@@ -33,6 +34,7 @@ typedef enum
   ND_NUM,    // integer
   ND_LVAR,   // variable
   ND_ASSIGN, //=
+  ND_RETURN, // return
   ND_LT,     //??
   ND_GT,
   ND_EQ,
@@ -72,6 +74,14 @@ void error_at(char *loc, char *fmt, ...)
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
   exit(1);
+}
+
+bool consume_Token(TokenKind kind)
+{
+  if (!token || token->kind != kind)
+    return false;
+  token = token->next;
+  return true;
 }
 
 bool consume(char *op)
@@ -129,6 +139,10 @@ bool at_eof()
 {
   return !token || token->kind == TK_EOF;
 }
+bool isIdent(char c)
+{
+  return isdigit(c) || isalpha(c);
+}
 Token *tokenize(char *p)
 {
   Token head, *cur = &head;
@@ -137,6 +151,12 @@ Token *tokenize(char *p)
     if (isspace(*p))
     {
       p++;
+      continue;
+    }
+    if (!strncmp(p, "return", 6) && !isIdent(p[6]))
+    {
+      cur = new_token(TK_RETURN, cur, p, 6);
+      p += 6;
       continue;
     }
     if (!strncmp(p, "<=", 2) || !strncmp(p, ">=", 2) ||
@@ -162,7 +182,12 @@ Token *tokenize(char *p)
     }
     if (isalpha(*p))
     {
-      cur = new_token(TK_IDENT, cur, p++, 1);
+      char *pre = p;
+      while (isalpha(*p) || isdigit(*p))
+      {
+        p++;
+      }
+      cur = new_token(TK_IDENT, cur, pre, p - pre);
       continue;
     }
     // printf("eee");
@@ -340,7 +365,16 @@ Node *expr()
 }
 Node *stmt()
 {
-  Node *node = expr();
+  Node *node = NULL;
+  fprintf(tout, "<%s>\n", __func__);
+  if (consume_Token(TK_RETURN))
+  {
+    node = new_node(ND_RETURN, node, expr());
+    expect(";");
+    fprintf(tout, "</%s>\n", __func__);
+    return node;
+  }
+  node = expr();  
   expect(";");
   return node;
 }
@@ -402,6 +436,23 @@ void gen(Node *node) {
     //printf("  pop rax\n"); // lhs
     //printf("  mov [rax],rdi\n");
     //printf("  push rdi\n"); // expression result
+    //fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
+    return;
+  }
+  else if (node->kind == ND_RETURN)
+  {
+    gen(node->rhs);
+    // rbp = base pointer = x29
+    // rsp = stack pointer = x30
+    printf("  ldr x0,[SP],#16\n"); // pop return value
+    printf("  mov SP,x29\n");
+    printf("  ldp x29,x30,[SP],#16\n");
+    printf("  ret\n");
+
+    //printf("  pop rax\n");     // move result to rax
+    //printf("  mov rsp,rbp\n"); // restore stack pointer
+    //printf("  pop rbp\n");     // restore base pointer
+    //printf("  ret\n");
     //fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
     return;
   }
