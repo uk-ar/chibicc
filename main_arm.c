@@ -588,6 +588,7 @@ int count()
   static int cnt = 0;
   return cnt++;
 }
+static char *argreg[] = {"x0", "x1", "x2", "x3", "x4", "x5"};
 //
 // Code generator
 //
