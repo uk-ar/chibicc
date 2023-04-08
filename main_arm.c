@@ -61,6 +61,8 @@ struct Node
   Node *cond; // if cond
   Node *then; // if then
   Node *els;  // if else
+  Node *init; // for init
+  Node *next; // for next
   int val;    // enable iff kind == ND_NUM
   int offset; // enable iff kind == ND_LVAR
 };
@@ -426,13 +428,48 @@ Node *stmt()
   if (consume_Token(TK_WHILE))
   {
     expect("(");
-    node = new_node(ND_WHILE, node, expr());
+    node = new_node(ND_WHILE, NULL, NULL);
+    node->cond = expr();
     expect(")");
-    stmt();
+    node->then = stmt();
     fprintf(tout, "</%s>\n", __func__);
     return node;
   }
-  node = expr();  
+  if (consume_Token(TK_FOR))
+  {
+    /* Node *init;//for init */
+    /* Node *cond;//if,while,for cond */
+    /* Node *next;//for next */
+    /* Node *then;//if,while,for then */
+    fprintf(tout, "<for>\n", __func__);
+    expect("(");
+    node = new_node(ND_FOR, NULL, NULL);
+    fprintf(tout, "<init>\n", __func__);
+    if (!consume(";"))
+    {
+      node->init = expr();
+      expect(";");
+    }
+    fprintf(tout, "</init>\n", __func__);
+    fprintf(tout, "<cond>\n", __func__);
+    if (!consume(";"))
+    {
+      node->cond = expr();
+      expect(";");
+    }
+    fprintf(tout, "</cond>\n", __func__);
+    fprintf(tout, "<next>\n", __func__);
+    if (!consume(")"))
+    {
+      node->next = expr();
+      expect(")");
+    }
+    fprintf(tout, "</next>\n", __func__);
+    node->then = stmt();
+    fprintf(tout, "</for>\n", __func__);
+    return node;
+  }
+  node = expr();
   expect(";");
   return node;
 }
@@ -456,9 +493,9 @@ void gen_lval(Node *node)
     abort();
   }
 
-  printf("  mov x0, x29\n");//base pointer
-  printf("  sub x0, x0, %d\n",node->offset);//calc local variable address
-  printf("  str x0,[SP, #-16]!\n");//push local variable address
+  printf("  mov x0, x29\n");                  // base pointer
+  printf("  sub x0, x0, %d\n", node->offset); // calc local variable address
+  printf("  str x0,[SP, #-16]!\n");           // push local variable address
 }
 int count()
 {
@@ -468,38 +505,40 @@ int count()
 //
 // Code generator
 //
-void gen(Node *node) {
-  if (node->kind == ND_NUM) {
-    //printf("  push %d\n", node->val);
-    printf("  mov x0,%d\n",node->val);
-    printf("  str x0,[SP, #-16]!\n");//push
+void gen(Node *node)
+{
+  if (node->kind == ND_NUM)
+  {
+    // printf("  push %d\n", node->val);
+    printf("  mov x0,%d\n", node->val);
+    printf("  str x0,[SP, #-16]!\n"); // push
     return;
   }
   else if (node->kind == ND_LVAR)
   {
     gen_lval(node);
-    printf("  ldr x0,[SP],#16\n");//pop
-    printf("  ldr x0,[x0]\n");//get data from address
-    printf("  str x0,[SP, #-16]!\n");//push local variable value
-    //printf("  pop rax\n");        // get address
-    //printf("  mov rax, [rax]\n"); // get data from address
-    //printf("  push rax\n");       // save local variable value
-    //fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
+    printf("  ldr x0,[SP],#16\n");    // pop
+    printf("  ldr x0,[x0]\n");        // get data from address
+    printf("  str x0,[SP, #-16]!\n"); // push local variable value
+    // printf("  pop rax\n");        // get address
+    // printf("  mov rax, [rax]\n"); // get data from address
+    // printf("  push rax\n");       // save local variable value
+    // fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
     return;
   }
   else if (node->kind == ND_ASSIGN)
   {
     gen_lval(node->lhs);
     gen(node->rhs);
-    printf("  ldr x1,[SP],#16\n"); // pop rhs
-    printf("  ldr x0,[SP],#16\n"); // pop lhs
-    printf("  str x1,[x0]\n");     // assign
+    printf("  ldr x1,[SP],#16\n");    // pop rhs
+    printf("  ldr x0,[SP],#16\n");    // pop lhs
+    printf("  str x1,[x0]\n");        // assign
     printf("  str x1,[SP, #-16]!\n"); // push expression result
-    //printf("  pop rdi\n"); // rhs
-    //printf("  pop rax\n"); // lhs
-    //printf("  mov [rax],rdi\n");
-    //printf("  push rdi\n"); // expression result
-    //fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
+    // printf("  pop rdi\n"); // rhs
+    // printf("  pop rax\n"); // lhs
+    // printf("  mov [rax],rdi\n");
+    // printf("  push rdi\n"); // expression result
+    // fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
     return;
   }
   else if (node->kind == ND_RETURN)
@@ -512,11 +551,11 @@ void gen(Node *node) {
     printf("  ldp x29,x30,[SP],#16\n");
     printf("  ret\n");
 
-    //printf("  pop rax\n");     // move result to rax
-    //printf("  mov rsp,rbp\n"); // restore stack pointer
-    //printf("  pop rbp\n");     // restore base pointer
-    //printf("  ret\n");
-    //fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
+    // printf("  pop rax\n");     // move result to rax
+    // printf("  mov rsp,rbp\n"); // restore stack pointer
+    // printf("  pop rbp\n");     // restore base pointer
+    // printf("  ret\n");
+    // fprintf(tout, "g</%s>\n", nodeKind[node->kind]);
     return;
   }
   else if (node->kind == ND_IF)
@@ -525,13 +564,13 @@ void gen(Node *node) {
     gen(node->cond);
     fprintf(tout, "</cond>\n");
     printf("  ldr x0,[SP],#16\n"); // pop return value
-    //printf("  pop rax\n"); // move result to rax
+    // printf("  pop rax\n"); // move result to rax
     printf("  cmp x0, 0\n");
     int num = count();
     printf("  beq .Lelse%d\n", num);
-    //fprintf(tout, "<then>\n");
+    // fprintf(tout, "<then>\n");
     gen(node->then);
-    //fprintf(tout, "</then>\n");
+    // fprintf(tout, "</then>\n");
     printf("  b .Lend%d\n", num);
     printf(".Lelse%d:\n", num);
     if (node->els)
@@ -541,16 +580,62 @@ void gen(Node *node) {
     printf(".Lend%d:\n", num);
     return;
   }
+  else if (node->kind == ND_WHILE)
+  {
+    int num = count();
+    printf(".Lbegin%d:\n", num);
+    fprintf(tout, "<cond>\n");
+    gen(node->cond);
+    fprintf(tout, "</cond>\n");
+    printf("  ldr x0,[SP],#16\n"); // pop return value
+    //printf("  pop rax\n"); // move result to rax
+    //printf("  cmp rax, 0\n");
+    printf("  cmp x0, 0\n");
+    printf("  beq .Lend%d\n", num);
+    fprintf(tout, "<then>\n");
+    gen(node->then);
+    fprintf(tout, "</then>\n");
+    printf("  b .Lbegin%d\n", num);
+    printf(".Lend%d:\n", num);
+    return;
+  }
+  else if (node->kind == ND_FOR)
+  {
+    int num = count();
+    if (node->init)
+      gen(node->init);
+    printf(".Lbegin%d:\n", num);
+    fprintf(tout, "<cond>\n");
+    if (node->cond)
+      gen(node->cond);
+    fprintf(tout, "</cond>\n");
+    printf("  ldr x0,[SP],#16\n"); // pop return value
+    //printf("  pop rax\n"); // move result to rax
+    //printf("  cmp rax, 0\n");
+    printf("  cmp x0, 0\n");
+    //printf("  je .Lend%d\n", num);
+    printf("  beq .Lend%d\n", num);
+    fprintf(tout, "<then>\n");
+    gen(node->then);
+    if (node->next)
+      gen(node->next);
+    fprintf(tout, "</then>\n");
+    //printf("  jmp .Lbegin%d\n", num);
+    printf("  b .Lbegin%d\n", num);
+    printf(".Lend%d:\n", num);
+    return;
+  }
 
   gen(node->lhs);
   gen(node->rhs);
 
   printf("  ldr x1,[SP],#16\n");
   printf("  ldr x0,[SP],#16\n");
-  //printf("  pop rdi\n");
-  //printf("  pop rax\n");
+  // printf("  pop rdi\n");
+  // printf("  pop rax\n");
 
-  switch (node->kind) {
+  switch (node->kind)
+  {
   case ND_ADD:
     printf("  add x0,x0,x1\n");
     break;
@@ -563,7 +648,7 @@ void gen(Node *node) {
   case ND_DIV:
     printf("  sdiv x0,x0,x1\n");
     break;
-  case ND_EQ://
+  case ND_EQ: //
     printf("  cmp  x0, x1\n");
     printf("  cset x0, eq\n");
     printf("  and  x0, x0, 255\n");
@@ -584,9 +669,9 @@ void gen(Node *node) {
     printf("  and  x0, x0, 255\n");
     break;
   }
-  //printf("  stp x0,x1,[SP, #16]!\n");
+  // printf("  stp x0,x1,[SP, #16]!\n");
   printf("  str x0,[SP, #-16]!\n");
-  //printf("  push rax\n");
+  // printf("  push rax\n");
 }
 
 int main(int argc, char **argv)
@@ -605,11 +690,11 @@ int main(int argc, char **argv)
   // save base pointer
   printf("  stp x29,x30,[SP, #-16]!\n");
   printf("  mov x29,SP\n");
-  printf("  sub SP,SP,208\n");//26*8byte
-  //printf("  sub sp, sp, 208\n"); // 26*8byte
-  //printf("  push rbp\n");     // save base pointer
-  //printf("  mov rbp, rsp\n"); // save stack pointer
-  //printf("  sub rsp, 208\n"); // 26*8byte
+  printf("  sub SP,SP,208\n"); // 26*8byte
+  // printf("  sub sp, sp, 208\n"); // 26*8byte
+  // printf("  push rbp\n");     // save base pointer
+  // printf("  mov rbp, rsp\n"); // save stack pointer
+  // printf("  sub rsp, 208\n"); // 26*8byte
 
   char *p = argv[1];
   user_input = argv[1];
@@ -623,12 +708,12 @@ int main(int argc, char **argv)
     gen(code[i]);
 
     // pop each result in order not to over flow
-    //printf("  pop rax\n");
+    // printf("  pop rax\n");
     printf("  ldr x0,[SP],#16\n");
   }
-  
-  //printf("  mov rsp,rbp\n"); // restore stack pointer
-  //printf("  pop rbp\n");     // restore base pointer
+
+  // printf("  mov rsp,rbp\n"); // restore stack pointer
+  // printf("  pop rbp\n");     // restore base pointer
   printf("  mov SP,x29\n");
   printf("  ldp x29,x30,[SP],#16\n");
   printf("  ret\n");

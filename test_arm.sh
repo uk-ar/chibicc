@@ -16,8 +16,12 @@ assert() {
   fi
 }
 
+assert 2 "for(a=1;a;a=a-1)return 2;"
+assert 0 "a=1;for(;a;)a=a-1;return a;"
 assert 1 "if(1==1)return 1;"
 assert 2 "if(1!=1)return 1;else return 2;"
+assert 2 "a=1;while(a)a=a-1;return 2;"
+assert 0 "a=1;while(a)a=a-1;return a;"
 assert 3 "return 3;"
 assert 3 "foo=3;"
 assert 3 "foo=3;foo;"
